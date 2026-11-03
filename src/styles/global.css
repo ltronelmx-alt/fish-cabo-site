@@ -185,3 +185,31 @@ blockquote { margin: 0; }
 .skip-link { position: absolute; left: 12px; top: -60px; z-index: 10000; background: var(--black); color: var(--offwhite); padding: 12px 18px; text-decoration: none; }
 .skip-link:focus { top: 12px; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition: none !important; animation: none !important; } }
+
+/* ---------- Original rich text (verbatim Squarespace content) ---------- */
+.rich > :first-child { margin-top: 0; }
+.rich h2 { margin-top: 1.4em; }
+.rich h2::before, .accent::before { content: ''; display: block; width: 44px; height: 4px; border-radius: 2px; background: var(--orange); margin-bottom: 22px; }
+.rich h3 { margin-top: 1.6em; }
+.rich h4 { margin-top: 1.2em; }
+.rich p { max-width: 72ch; }
+.rich > p:first-of-type:not(.sub) { font-size: var(--fs-lead); line-height: 1.6; color: var(--ink); }
+.dark .rich > p:first-of-type { color: #ececec; }
+.rich p.sub { font-family: var(--font-head); text-transform: uppercase; letter-spacing: -0.005em; font-size: clamp(17px, 0.5vw + 14px, 21px); line-height: 1.25; margin-top: 1.8em; color: var(--ink); }
+.dark .rich p.sub { color: var(--white); }
+.rich p.sub strong { font-weight: 700; }
+.rich a { color: inherit; text-decoration-color: var(--orange); text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.rich a:hover { color: var(--orange); }
+.rich ul { list-style: none; padding: 0; margin: 18px 0 24px; display: grid; gap: 10px; }
+.rich ul li { position: relative; padding: 14px 18px 14px 44px; background: var(--sand); border-radius: var(--radius-sm); }
+.bg-sand .rich ul li { background: var(--white); }
+.dark .rich ul li { background: rgb(255 255 255 / 0.05); }
+.rich ul li::before { content: ''; position: absolute; left: 18px; top: 1.35em; width: 10px; height: 10px; border-radius: 50%; background: var(--orange); }
+.rich li p { margin: 0; max-width: none; }
+.cards-from-h3 { display: grid; gap: clamp(16px, 2vw, 28px); grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); margin-top: clamp(28px, 3vw, 48px); }
+.cards-from-h3 > .card > h3:first-child { margin-top: 0; }
+.btn:not(.no-arrow)::after { content: '→'; transition: transform 0.25s var(--ease); }
+.btn:hover::after { transform: translateX(4px); }
+.ftr strong { color: inherit; }
+.faq-list > p:first-of-type { font-size: inherit; line-height: inherit; color: inherit; }
+.band-sand .card { background: var(--white) !important; border-color: var(--line) !important; }

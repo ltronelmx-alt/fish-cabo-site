@@ -4,6 +4,16 @@ Report date: 2026-11-02 · Author: Claude (Opus 5.5), working session for Loïc 
 Scope requested at this stage: audit + 3-page prototype (Homepage, /fishing-charters, /fishing-boats) with shared header, dropdown and footer.
 Nothing was changed on the live Squarespace site, DNS, domain or Search Console.
 
+
+> **UPDATE 2026-11-02 (supersedes §5.1 structured data and §5.2 items 1, 2, 5 and the SEO parts of 6)**
+> Owner decision: **zero change to anything that can affect Google/AI ranking; design only.**
+> - The 3 pages now render the ORIGINAL Squarespace content verbatim, extracted from the export (`scripts/extract-original.py` → `src/data/original/*.json`): all text, heading tags and levels, links and anchor texts, image alt texts, and the DOM order of the content.
+> - The `<head>` is the original one, byte for byte: title, meta description (including the old /fishing-charters description), canonical, og:*, twitter:*, itemprop, `lang="en-US"`. The original JSON-LD is also kept exactly, including the 2 LocalBusiness entities and the old geo coordinates. All added structured data was removed: FAQPage, Service, ItemList and BreadcrumbList.
+> - Design only: layout, CSS and the premium visual style (cards, sticky header, buttons, typography). Arrows on buttons come from CSS. Paragraphs that are entirely bold get a CSS class for styling, with no text change.
+> - `scripts/verify-original.py` compares every page with the original: DOM order, headings, links, alts, text, head tags + JSON-LD and lang. **21/21 checks pass.**
+> - Only functional change kept, at the owner's request: the MARINA GPS / footer directions buttons point to 23.060275, −109.670677.
+> - Not yet aligned: the image *file URLs* (now self-hosted `/media/...` instead of the Squarespace CDN) and the og:image URLs still point to Squarespace static files. Both need a decision before cut-over.
+
 ---
 
 ## 1. Executive summary

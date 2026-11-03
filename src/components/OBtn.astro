@@ -1,0 +1,5 @@
+---
+interface Props { block: { href?: string; text?: string }; primary?: boolean; track?: string }
+const { block, primary, track } = Astro.props;
+---
+<a class:list={['btn', primary && 'btn-primary']} href={block.href} data-track={track}>{block.text}</a>

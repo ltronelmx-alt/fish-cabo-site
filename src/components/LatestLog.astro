@@ -11,15 +11,13 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month:
 {latest && (
   <div class="ll-wrap">
     <article class="ll">
-      <a class="ll-media" href={`/fishing-reports/${latest.id}`} tabindex="-1" aria-hidden="true">
-        <Img {...latest.data.image} sizes="(min-width: 900px) 40vw, 92vw" />
-      </a>
+      <div class="ll-media"><Img {...latest.data.image} sizes="(min-width: 900px) 40vw, 92vw" /></div>
       <div class="ll-body">
         <p class="ll-kicker">Latest Fishing Log</p>
-        <h2 class="ll-title"><a href={`/fishing-reports/${latest.id}`}>{latest.data.title}</a></h2>
-        <p class="ll-date"><time datetime={latest.data.date.toISOString().slice(0, 10)}>{fmt(latest.data.date)}</time></p>
+        <h2 class="ll-title">{latest.data.title}</h2>
+        <p class="ll-date">{fmt(latest.data.date)}</p>
         <p class="ll-excerpt">{latest.data.excerpt}</p>
-        <a class="ll-link" href={`/fishing-reports/${latest.id}`} data-track="latest_log">READ FULL FISHING LOG →</a>
+        <a class="ll-link" href={`https://fish-cabo.com/fishing-reports/${latest.id}`} data-track="latest_log">READ FULL FISHING LOG →</a>
       </div>
     </article>
   </div>

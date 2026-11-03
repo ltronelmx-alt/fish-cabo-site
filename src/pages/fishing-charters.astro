@@ -1,211 +1,69 @@
 ---
+// FISHING CHARTERS — ORIGINAL content/SEO verbatim (src/data/original/fishing-charters.json); design only here.
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
-import Img from '../components/Img.astro';
-import Facts from '../components/Facts.astro';
+import Rich from '../components/Rich.astro';
+import OImg from '../components/OImg.astro';
+import OBtn from '../components/OBtn.astro';
+import { PAGES } from '../lib/original';
 
-const serviceLd = {
-  '@context': 'https://schema.org', '@type': 'Service', '@id': 'https://fish-cabo.com/fishing-charters#service',
-  name: 'Private Fishing Charters in San José del Cabo', serviceType: 'Private sportfishing charter',
-  provider: { '@id': 'https://fish-cabo.com/#business' },
-  areaServed: [{ '@type': 'City', name: 'San José del Cabo' }, { '@type': 'City', name: 'Cabo San Lucas' }],
-  offers: [
-    { '@type': 'Offer', name: '3/4-Day Fishing Charter — 6 Hours', price: '350', priceCurrency: 'USD', description: 'Starting price per private boat (1–2 guests). Departure 6:30 AM from Puerto Los Cabos Marina.' },
-    { '@type': 'Offer', name: 'Full-Day Offshore Fishing Charter — 8 Hours', price: '600', priceCurrency: 'USD', description: 'Starting price per private boat. Departure 6:30 AM from Puerto Los Cabos Marina.' },
-  ],
-};
-const plans = [
-  { name: '3/4-Day Fishing Charter — 6 Hours', price: '$350', note: 'per private boat (1–2 guests)',
-    intro: 'A great choice for anglers looking to enjoy both inshore and offshore fishing without committing to a full day on the water.',
-    rows: [['Duration', 'Approximately 6 hours'], ['Fishing style', 'Inshore, midshore, or offshore, depending on conditions and your goals'], ['Target species', 'Marlin, tuna, dorado, wahoo, roosterfish, and other local species'], ['Best for', 'Couples, families, beginners, and experienced anglers seeking a flexible fishing adventure'], ['Departure', '6:30 AM from Puerto Los Cabos Marina'], ['Price', 'Starting at $350 USD per private boat (1–2 guests)']] },
-  { name: 'Full-Day Offshore Fishing Charter — 8 Hours', price: '$600', note: 'per private boat',
-    intro: 'Designed for anglers who want more time on the water, with opportunities to explore offshore banks, deeper fishing grounds, and seasonal big-game fishing areas.',
-    rows: [['Duration', 'Approximately 8 hours'], ['Fishing style', 'Offshore and big-game fishing, adapted to sea conditions and seasonal fish activity'], ['Target species', 'Marlin, yellowfin tuna, dorado, wahoo, and other pelagic species'], ['Best for', 'Serious anglers, groups, and anyone seeking a full-day Cabo fishing adventure'], ['Departure', '6:30 AM from Puerto Los Cabos Marina'], ['Price', 'Starting at $600 USD per private boat'], ['Group size', 'Boats available for 1–10 guests, depending on the vessel selected. Prices vary by boat and group size.']] },
-];
-const grounds = [
-  ['Gordo Banks', '/gordo-banks-fishing', "One of the region's best-known offshore fishing grounds, with opportunities to target tuna, marlin, and other pelagic species."],
-  ['Iman Bank', '/iman-bank-fishing-san-jose-del-cabo', 'A popular fishing area for yellowfin tuna and other seasonal offshore species.'],
-  ['La Fortuna', '/la-fortuna-fishing-san-jose-del-cabo', 'Another fishing ground our captains may explore depending on fish activity and ocean conditions.'],
-];
+const P = PAGES['fishing-charters'];
+const [s0, s1, s2, s3] = P.sections;
+const b1 = s1.blocks; // text(main) · text(h2 grounds) · img(amberjack) · text(grounds) · img · img · btn · btn
+const t = b1.filter((b) => b.kind === 'text');
+const im = b1.filter((b) => b.kind === 'img');
+const bt = b1.filter((b) => b.kind === 'button');
 ---
-<Base
-  title="Private Fishing Charters San José del Cabo | From $350"
-  description="Private fishing charters in San José del Cabo from $350. 6-hour and 8-hour trips from Puerto Los Cabos Marina for marlin, tuna, dorado, wahoo and roosterfish."
-  breadcrumb={[{ name: 'Fishing Charters', path: '/fishing-charters' }]}
-  jsonLd={[serviceLd]}
->
-  <Hero position="50% 35%" image={{ src: 'bf61a461-3116-4334-b90e-d51d3447171b/Fishing+San+Jose+del+Cabo+for+Giant+Rooster.webp', alt: 'Angler with a giant roosterfish on a private fishing charter in San José del Cabo' }}>
-    <p class="eyebrow">Fishing Charters · From $350 USD</p>
-    <h1>Private Fishing Charters in San José del Cabo</h1>
-    <div class="btn-row">
-      <a class="btn btn-primary" href="/fishing-boats" data-track="charters_hero_book">Book Now <span class="arrow">→</span></a>
-      <a class="btn" href="/contact" data-track="charters_hero_contact">Contact</a>
-    </div>
-    <Facts />
+<Base original={P}>
+  <Hero position="50% 35%" image={{ src: s0.bg!.path, alt: s0.bg!.alt }}>
+    {s0.blocks.map((b) => <div set:html={b.html} />)}
   </Hero>
 
+  <!-- Section 1: blocks in ORIGINAL DOM order; positions set with CSS grid -->
   <section class="section bg-white">
-    <div class="container split wide-text top">
-      <div class="reveal">
-        <p class="eyebrow">Puerto Los Cabos Marina</p>
-        <h2>6-Hour &amp; 8-Hour Private Fishing Trips from Puerto Los Cabos</h2>
-        <p class="lead">Experience the best of Cabo fishing with Exotic Fish Cabo. We offer private sportfishing charters departing from <strong>Puerto Los Cabos Marina in San José del Cabo, Baja California Sur, Mexico</strong>.</p>
-        <p>Our experienced local captains know the waters of the Sea of Cortez, including famous fishing grounds such as <strong>Gordo Banks, Iman Bank, and La Fortuna</strong>. Depending on the season, sea conditions, and your target species, our crew will help you explore some of the area's most productive inshore and offshore fishing spots.</p>
-        <p>Whether you're chasing <strong>marlin, yellowfin tuna, dorado (mahi-mahi), wahoo, or roosterfish</strong>, we tailor every fishing trip to your experience level and goals.</p>
-        <p>From beginners and families to serious offshore anglers, everyone is welcome aboard. Fly fishing enthusiasts are welcome too — just bring your own fly-fishing equipment!</p>
-        <p>Our private fishing charters feature quality fishing tackle, experienced bilingual captains, and comfortable boats selected to match your group size and fishing preferences.</p>
-      </div>
-      <div class="media ratio-4x5 sticky reveal">
-        <Img src="158e4e69-b84b-4de9-a0c2-424e7466f23e/Amberjack+Fishing+San+Jose+del+Cabo.webp" alt="A man holding a big Amberjack Fishing San Jose del Cabo." sizes="(min-width: 900px) 38vw, 92vw" />
-      </div>
+    <div class="container s1grid">
+      {s1.blocks.slice().sort((x, y) => (x as any).dom - (y as any).dom).map((bl) => {
+        const k = (bl as any).dom;
+        const cls = ['main', 'amber', 'grounds', 'gh2', 'img1', 'img2', 'btnA', 'btnB'][k];
+        return bl.kind === 'text' ? <Rich html={bl.html!} class={`${cls} reveal`} />
+          : bl.kind === 'img' ? <OImg block={bl} class={`${cls} ratio-3x2 reveal`} sizes="(min-width: 900px) 46vw, 92vw" />
+          : <div class={cls}><OBtn block={bl} /></div>;
+      })}
     </div>
+  </section>
+
+  <section class="banner dark">
+    {s2.bg && <OImg block={{ path: s2.bg.path, alt: s2.bg.alt }} class="banner-img" sizes="100vw" />}
+    <div class="container">{s2.blocks.map((b) => <div class="reveal" set:html={b.html} />)}</div>
   </section>
 
   <section class="section bg-sand">
-    <div class="container">
-      <div class="head center reveal">
-        <p class="eyebrow">6 or 8 hours</p>
-        <h2>Choose Your Private Fishing Charter</h2>
-        <p class="lead">We offer flexible 6-hour and 8-hour private fishing trips from San José del Cabo, giving you the freedom to choose the experience that suits you best.</p>
-      </div>
-      <div class="grid cols-2">
-        {plans.map((p, i) => (
-          <article class:list={['card plan reveal', i === 1 && 'featured']}>
-            <h3>{p.name}</h3>
-            <p class="plan-price"><span>Starting at</span> {p.price} <small>USD</small></p>
-            <p class="plan-note">{p.note}</p>
-            <p>{p.intro}</p>
-            <dl class="plan-rows">{p.rows.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
-            <a class={i === 1 ? 'btn btn-primary' : 'btn'} href="/fishing-boats" data-track={`plan_${i ? 8 : 6}h`}>Choose a boat <span class="arrow">→</span></a>
-          </article>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <section class="section bg-white">
-    <div class="container split">
-      <div class="reveal">
-        <p class="eyebrow">Included</p>
-        <h2>What's Included in Your Fishing Charter?</h2>
-        <p>Every private charter includes:</p>
-        <ul class="checks">
-          <li>Private fishing boat</li>
-          <li>Experienced bilingual captain and crew</li>
-          <li>Fishing rods, reels, and basic tackle</li>
-          <li>A fishing experience tailored to your group and target species</li>
-        </ul>
-        <p>Fishing licenses, bait, food, and drinks can be discussed or arranged when booking. Our team will explain what is included with your selected boat and what you should bring.</p>
-      </div>
-      <div class="card reveal">
-        <p class="eyebrow">Planning your fishing adventure?</p>
-        <p>Explore our <a href="/family-fishing-charters-san-jose-del-cabo"><strong>Family Fishing Charters in San José del Cabo</strong></a> for family-friendly options, or read our <a href="/what-to-bring-fishing-cabo"><strong>What to Bring on a Fishing Charter in Cabo</strong></a> checklist to prepare for your day on the water.</p>
-        <div class="btn-row">
-          <a class="btn" href="/family-fishing-charters-san-jose-del-cabo">Family Fishing Charters</a>
-          <a class="btn" href="/what-to-bring-fishing-cabo">What to Bring</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section bg-black dark">
-    <div class="container">
-      <div class="head reveal">
-        <p class="eyebrow">Sea of Cortez</p>
-        <h2>Best Fishing Grounds Near San José del Cabo</h2>
-        <p class="lead">Our fishing charters depart from <strong>Puerto Los Cabos Marina in San José del Cabo</strong>, providing access to some of the most productive fishing grounds in the Sea of Cortez.</p>
-        <p>Our experienced local captains select fishing locations based on the season, weather, ocean conditions, and species you're hoping to catch.</p>
-      </div>
-      <h3 class="reveal">Where do we fish?</h3>
-      <div class="grid cols-4 grounds">
-        {grounds.map(([n, h, d]) => (
-          <a class="card reveal" href={h}><h4>{n}</h4><p>{d}</p><span class="link-arrow">Explore →</span></a>
-        ))}
-        <div class="card reveal">
-          <h4>El 25, Vinorama &amp; San Luis</h4>
-          <p>Additional fishing areas that offer different opportunities depending on the season and target species.</p>
-          <p class="mini-links"><a href="/el-25-fishing-san-jose-del-cabo">El 25</a> · <a href="/vinorama-fishing-san-jose-del-cabo">Vinorama</a> · <a href="/san-luis-fishing-san-jose-del-cabo">San Luis</a></p>
-        </div>
-      </div>
-      <div class="split pair">
-        <div class="media ratio-3x2 reveal"><Img src="eb6022d1-7d00-4be5-8275-2982c83ab83e/Marlin+Fishing+San+Jode+del+Cabo.webp" alt="2 men holding a Marlin Fishing San Jode del Cabo" sizes="(min-width: 900px) 46vw, 92vw" /></div>
-        <div class="media ratio-3x2 reveal"><Img src="992bcb39-36a7-4ff5-bdd3-f419dc254fcb/wahoo+fishing+san+jose+del+cabo2.webp" alt="2 men holding a wahoo fishing san jose del cabo" sizes="(min-width: 900px) 46vw, 92vw" /></div>
-      </div>
-      <div class="split top after-pair">
-        <p class="reveal">Our 6-hour charters focus on making the most of the available fishing time, while our 8-hour trips offer greater flexibility to explore offshore grounds when conditions allow.</p>
-        <div class="reveal">
-          <h3>Want to know what's biting right now?</h3>
-          <p>Explore our <a href="/fishing-calendar"><strong>Fishing Calendar</strong></a> and latest <a href="/fishing-reports"><strong>Fishing Reports</strong></a> for seasonal information and recent catches from San José del Cabo.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section bg-sand">
-    <div class="container">
-      <div class="head center reveal"><p class="eyebrow">Guest reviews</p><h2>Catch the Best Fishing Adventure on Our Premium Boats</h2></div>
-      <div class="grid cols-2">
-        <blockquote class="card review reveal">
-          <p class="stars" aria-label="5 out of 5 stars">★★★★★</p>
-          <p>We had the best trip with these guys! We booked this trip w/Exotic Fish Cabo specifically for snagging a rooster fish (bucket list) and these guys did not disappoint! Not only did we catch several rooster fish, we also reeled in a mahi-mahi and a nice shiny jack! FANTASTIC time! You will not be disappointed with these guys!</p>
-          <footer>— Tracy W.</footer>
-        </blockquote>
-        <blockquote class="card review reveal">
-          <p class="stars" aria-label="5 out of 5 stars">★★★★★</p>
-          <p>My husband and I had an amazing time on our full-day fishing trip with Exotic Fish Cabo. The crew was so friendly and helpful, and they really knew the best spots to catch the biggest fish. We caught a ton of fish and had so much fun. I would definitely recommend this company to anyone looking for a fun and exciting fishing trip in Cabo.</p>
-          <footer>— Katie B.</footer>
-        </blockquote>
-      </div>
-      <div class="cta-band reveal">
-        <div>
-          <p class="eyebrow">Book Your San José del Cabo Fishing Adventure</p>
-          <h3>Ready to experience the excitement of fishing in Los Cabos?</h3>
-          <p><a href="/contact"><strong>Contact Exotic Fish Cabo</strong></a> to choose your <a href="/fishing-boats"><strong>Fishing boat</strong></a>, check availability, and plan your private fishing charter.</p>
-          <p>Whether you're hoping to land your first dorado, battle a powerful yellowfin tuna, or chase the marlin of a lifetime, our local crew is ready to help you make the most of your day on the water.</p>
-        </div>
-        <div class="btn-row">
-          <a class="btn btn-primary" href="/fishing-boats" data-track="charters_boats">Explore Fishing Boats <span class="arrow">→</span></a>
-          <a class="btn" href="/contact" data-track="charters_contact">Contact Us</a>
-        </div>
-      </div>
+    <div class="container grid cols-2">
+      {s3.blocks.map((b) => <div class="card review reveal" set:html={b.html} />)}
     </div>
   </section>
 </Base>
 
 <style>
-  .plan { display: flex; flex-direction: column; background: var(--white) !important; border: 1px solid var(--line) !important; }
-  .plan.featured { border: 2px solid var(--orange) !important; }
-  .plan h3 { font-size: clamp(18px, 0.5vw + 15px, 22px); }
-  .plan-price { font-family: var(--font-head); font-size: clamp(44px, 3vw + 20px, 68px); line-height: 1; color: var(--ink); letter-spacing: -0.03em; margin: 8px 0 6px !important; }
-  .plan-price span { display: block; font-family: var(--font-body); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--orange); margin-bottom: 8px; }
-  .plan-price small { font-size: 0.32em; color: var(--muted); letter-spacing: 0.05em; }
-  .plan-note { color: var(--muted); font-size: 0.9em !important; margin-bottom: 20px !important; }
-  .plan-rows { margin: 8px 0 28px; border-top: 1px solid var(--line); }
-  .plan-rows > div { display: grid; grid-template-columns: 9.5em 1fr; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 0.92em; }
-  .plan-rows dt { font-weight: 700; color: var(--ink); }
-  .plan-rows dd { margin: 0; }
-  .plan .btn { margin-top: auto; align-self: flex-start; }
-  @media (max-width: 520px) { .plan-rows > div { grid-template-columns: 1fr; gap: 2px; } }
-  .checks { list-style: none; padding: 0; margin: 16px 0 24px; display: grid; gap: 10px; }
-  .checks li { display: flex; gap: 12px; align-items: baseline; color: var(--ink); }
-  .checks li::before { content: '✓'; flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--orange); color: var(--white); font-size: 13px; transform: translateY(5px); }
-  .grounds { margin-top: 24px; }
-  .grounds a.card { text-decoration: none; display: flex; flex-direction: column; }
-  .grounds a.card:hover { border-color: var(--orange); }
-  .grounds h4 { color: var(--white); margin-bottom: 0.5em; }
-  .grounds .link-arrow { margin-top: auto; align-self: flex-start; color: var(--orange); }
-  .mini-links a { color: var(--orange); font-weight: 700; }
-  .pair { margin-top: clamp(40px, 5vw, 72px); gap: clamp(16px, 2vw, 28px); }
-  .after-pair { margin-top: 48px; }
-  .review { display: flex; flex-direction: column; background: var(--white) !important; }
-  .review p:not(.stars) { font-size: var(--fs-lead); line-height: 1.6; color: var(--ink); }
-  .review footer { margin-top: auto; padding-top: 18px; color: var(--muted); font-size: 0.9em; letter-spacing: 0.06em; text-transform: uppercase; }
-  .cta-band { margin-top: clamp(48px, 6vw, 96px); display: grid; grid-template-columns: minmax(0, 1.4fr) auto; gap: 32px; align-items: center; background: var(--ink); color: #d4d4d4; border-radius: var(--radius); padding: clamp(28px, 4vw, 56px); }
-  .cta-band h3 { color: var(--white); font-size: clamp(24px, 1.6vw + 14px, 38px); }
-  .cta-band strong { color: var(--white); }
-  .cta-band .btn { color: var(--white); }
-  .cta-band .btn:hover { background: var(--white); color: var(--ink); }
-  .cta-band .btn-primary { color: var(--ink); }
-  .cta-band .btn-row { margin: 0; flex-direction: column; }
-  @media (max-width: 900px) { .cta-band { grid-template-columns: 1fr; } .cta-band .btn-row { flex-direction: row; } }
+  .s1grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(32px, 6vw, 96px); row-gap: clamp(32px, 4vw, 56px); align-items: start; }
+  .s1grid :global(.main) { grid-column: 1 / -1; grid-row: 1; max-width: 900px; justify-self: center; }
+  .s1grid :global(.main ul) { grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); }
+  .s1grid :global(.gh2) { grid-column: 1; grid-row: 2; align-self: center; padding-top: var(--section-pad); }
+  .s1grid :global(.amber) { grid-column: 2; grid-row: 2; margin-top: var(--section-pad); }
+  .s1grid :global(.grounds) { grid-column: 1 / -1; grid-row: 3; max-width: 900px; }
+  .s1grid :global(.img1) { grid-column: 1; grid-row: 4; }
+  .s1grid :global(.img2) { grid-column: 2; grid-row: 4; }
+  .s1grid :global(.btnB) { grid-column: 1; grid-row: 5; justify-self: end; }
+  .s1grid :global(.btnA) { grid-column: 2; grid-row: 5; justify-self: start; }
+  @media (max-width: 900px) { .s1grid { grid-template-columns: 1fr; } .s1grid > :global(*) { grid-column: 1 !important; grid-row: auto !important; justify-self: stretch !important; }
+    .s1grid :global(.main) { order: 1; } .s1grid :global(.gh2) { order: 2; } .s1grid :global(.amber) { order: 3; } .s1grid :global(.grounds) { order: 4; } .s1grid :global(.img1) { order: 5; } .s1grid :global(.img2) { order: 6; } .s1grid :global(.btnB) { order: 7; } .s1grid :global(.btnA) { order: 8; } .s1grid :global(.gh2) { padding-top: 0; } .s1grid :global(.amber) { margin-top: 0; } }
+  .banner { position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: center; justify-content: center; min-height: clamp(320px, 34vw, 520px); padding: 64px 0; text-align: center; background: var(--ink); }
+  .banner :global(.banner-img) { position: absolute; inset: 0; z-index: -2; border-radius: 0; }
+  .banner :global(.banner-img img) { width: 100%; height: 100%; object-fit: cover; }
+  .banner::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(to top, rgb(0 0 0 / 0.75), rgb(0 0 0 / 0.35)); }
+  .banner :global(h3) { color: var(--white); font-size: clamp(28px, 2.6vw + 14px, 60px); line-height: 1.02; letter-spacing: -0.03em; max-width: 20ch; margin: 0 auto; }
+  .review { display: flex; flex-direction: column; text-align: left; background: var(--white) !important; }
+  .review :global(p:first-child) { color: var(--orange); letter-spacing: 0.2em; }
+  .review :global(p:nth-child(2)) { font-size: var(--fs-lead); line-height: 1.6; color: var(--ink); }
+  .review :global(p:last-child) { margin-top: auto; padding-top: 16px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.9em; }
 </style>

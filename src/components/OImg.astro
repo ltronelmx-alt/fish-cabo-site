@@ -1,0 +1,9 @@
+---
+// Original image (verbatim alt text), self-hosted responsive files.
+import Img from './Img.astro';
+interface Props { block: { path?: string; alt?: string; link?: string | null }; sizes?: string; class?: string; priority?: boolean }
+const { block, sizes = '100vw', class: cls, priority } = Astro.props;
+const img = { src: block.path!, alt: block.alt ?? '' };
+---
+{block.link ? <a href={block.link} class:list={['media', cls]}><Img {...img} sizes={sizes} priority={priority} /></a>
+            : <div class:list={['media', cls]}><Img {...img} sizes={sizes} priority={priority} /></div>}

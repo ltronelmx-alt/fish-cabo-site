@@ -1,0 +1,12 @@
+---
+// Renders an original text block. mode="cards" wraps each <h3> group in a card (markup only).
+import { byH3 } from '../lib/original';
+interface Props { html: string; mode?: 'plain' | 'cards'; class?: string }
+const { html: raw, mode = 'plain', class: cls } = Astro.props;
+// Design hook only: paragraphs made entirely of bold text get class="sub" (styled as sub-headings). Text untouched.
+const html = raw.replace(/<p>(<strong>(?:(?!<\/?strong>)[\s\S])*<\/strong>)<\/p>/g, '<p class="sub">$1</p>');
+const { intro, groups } = byH3(html);
+---
+{mode === 'cards' && groups.length > 1
+  ? <div class:list={['rich', cls]}><Fragment set:html={intro} /><div class="cards-from-h3">{groups.map((g) => <div class="card reveal"><Fragment set:html={g} /></div>)}</div></div>
+  : <div class:list={['rich', cls]} set:html={html} />}

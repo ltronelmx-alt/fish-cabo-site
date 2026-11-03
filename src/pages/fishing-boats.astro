@@ -1,153 +1,77 @@
 ---
+// FISHING BOATS — ORIGINAL content/SEO verbatim (src/data/original/fishing-boats.json); design only here.
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
-import Img from '../components/Img.astro';
-import Faq from '../components/Faq.astro';
-import Facts from '../components/Facts.astro';
-import { BOATS } from '../data/boats';
+import Rich from '../components/Rich.astro';
+import OImg from '../components/OImg.astro';
+import OBtn from '../components/OBtn.astro';
+import { PAGES, type Block } from '../lib/original';
 
-const listLd = {
-  '@context': 'https://schema.org', '@type': 'ItemList', name: 'Private fishing boat options in San José del Cabo',
-  itemListElement: BOATS.map((b, i) => ({ '@type': 'ListItem', position: i + 1, name: b.title, url: `https://fish-cabo.com/fishing-boats/${b.slug}` })),
-};
-const faq: [string, string[]][] = [
-  ['Which fishing boat should I choose in Los Cabos?', ['The best fishing boat depends on your group size, budget, fishing preferences, and desired amenities. Smaller pangas can be a practical choice for couples, while larger center consoles, catamarans, and sportfishing boats provide alternatives for families and groups. Contact our team for help comparing options.']],
-  ['Are all Exotic Fish Cabo fishing charters private?', ['Yes. Exotic Fish Cabo offers private fishing charters. Your selected boat is reserved for your group rather than shared with unrelated guests.']],
-  ['Where do the fishing boats depart?', ['All Exotic Fish Cabo fishing charters depart exclusively from Puerto Los Cabos Marina in San José del Cabo, Mexico. We welcome guests staying in Cabo San Lucas, but our charters do not depart from Cabo San Lucas Marina.']],
-  ['How much does a private fishing charter cost?', ['Selected 6-hour private charters start from $350 USD per boat for 1–2 guests. Selected 8-hour private fishing charters start from $600 USD per boat. Prices vary depending on the boat, group size, trip duration, and availability. Contact us for a confirmed quote.']],
-  ['What is included in a private fishing charter?', ['Every charter includes a local captain and crew, fishing rods, reels, basic tackle, bottled water, and soft drinks. Fishing licenses, live bait, food, and fish-cleaning services may vary by charter.']],
-];
-const faqLd = { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a.join(' ') } })) };
-const why = [
-  ['10 Boat Options', 'Compare different boat sizes and styles, from traditional pangas to larger offshore fishing boats.'],
-  ['100% Private Charters', 'Your trip is reserved for your group, with no unrelated guests sharing your charter.'],
-  ['Experienced Local Crews', 'Every trip includes a local captain and crew familiar with fishing around San José del Cabo.'],
-  ['Flexible Fishing Opportunities', 'Choose between 6-hour and 8-hour trips, with fishing locations adapted to weather and seasonal conditions.'],
-  ['Clear Booking Information', 'We help confirm boat capacity, charter pricing, included services, and available amenities before you book.'],
-];
+const P = PAGES['fishing-boats'];
+const [s0, s1, s2, s3, s4, s5] = P.sections;
+// A boat card = the original blocks that share the same grid column (image, h4, text, button), top to bottom.
+function cards(blocks: Block[]) {
+  const narrow = blocks.filter((b) => b.ga[3] - b.ga[1] <= 12);
+  const cols = [...new Set(narrow.map((b) => b.ga[1]))].sort((a, b) => a - b);
+  return cols.map((c) => narrow.filter((b) => b.ga[1] === c).sort((a, b) => a.ga[0] - b.ga[0]));
+}
+const intro = s1.blocks.filter((b) => b.ga[3] - b.ga[1] > 12);
+const faq = s4.blocks.filter((b) => b.ga[3] - b.ga[1] > 12);
 ---
-<Base
-  title="Cabo Fishing Boats | Private Charters in San Jose del Cabo"
-  description="Compare 10 private fishing boat options in Los Cabos, from pangas to spacious sportfishers. All charters depart from Puerto Los Cabos Marina in San Jose del Cabo."
-  breadcrumb={[{ name: 'Fishing Boats', path: '/fishing-boats' }]}
-  jsonLd={[listLd, faqLd]}
->
-  <Hero position="50% 40%" image={{ src: 'cf0dfaef-0572-4b9f-981e-6170549b4e2d/Fishing+San+Jose+del+Cabo+for+Wahoo2.webp', alt: 'Anglers with a wahoo on a private fishing boat in San José del Cabo' }}>
-    <p class="eyebrow">10 private boats · 1 to 10 guests</p>
-    <h1>Cabo Fishing Boats – Private Charters in San José del Cabo</h1>
-    <div class="btn-row"><a class="btn btn-primary" href="#boats">See the boats <span class="arrow">↓</span></a></div>
-    <Facts />
+<Base original={P}>
+  <Hero position="50% 40%" image={{ src: s0.bg!.path, alt: s0.bg!.alt }}>
+    {s0.blocks.map((b) => <div set:html={b.html} />)}
   </Hero>
 
   <section class="section bg-white">
-    <div class="container split wide-text top">
-      <div class="reveal">
-        <p class="eyebrow">Puerto Los Cabos Marina</p>
-        <h2>Choose Your Fishing Boat in San José del Cabo</h2>
-        <p class="lead">Looking for the right fishing boat for your Cabo adventure? Exotic Fish Cabo offers a selection of 10 private fishing boat options, from compact pangas for couples to larger center consoles, catamarans, and sportfishing boats for groups.</p>
-        <p>All our fishing charters depart exclusively from Puerto Los Cabos Marina in San José del Cabo, Baja California Sur, Mexico. Guests staying in Cabo San Lucas are welcome to join us at this departure location.</p>
-        <p>Choose between private 6-hour fishing trips starting from $350 USD per boat for selected 1–2 guest options and 8-hour charters starting from $600 USD per boat. Final pricing depends on the boat, group size, trip duration, and availability.</p>
-        <p>Every charter includes an experienced local captain and crew, fishing rods, reels, basic tackle, bottled water, and soft drinks. Additional services, including fishing licenses, live bait, food, and fish cleaning, vary by charter and must be confirmed before booking.</p>
-        <p>Explore the boat options below to find a suitable choice for your group. Our team can help you compare passenger capacity, onboard amenities, and charter prices before making a reservation.</p>
-      </div>
-      <div class="card reveal sticky">
-        <h3>Unforgettable Sportfishing in San José del Cabo</h3>
-        <p>Enjoy a private sportfishing experience in San José del Cabo with a local captain and a boat selected for your group size, preferences, and fishing goals.</p>
-        <p>Depending on the season and ocean conditions, fishing trips may target marlin, yellowfin tuna, dorado (mahi-mahi), wahoo, roosterfish, and other species.</p>
-        <p>Fishing grounds such as Gordo Banks and Iman Bank may be considered when conditions allow. Your captain determines suitable fishing locations based on weather, sea conditions, and seasonal fish activity.</p>
-        <p>Whether you're planning your first family fishing trip or an offshore adventure with experienced anglers, Exotic Fish Cabo can help you choose an appropriate private charter.</p>
-      </div>
-    </div>
+    <div class="container">{intro.map((b) => <Rich html={b.html!} class="boats-intro reveal" />)}</div>
   </section>
 
-  <section class="section bg-sand" id="boats">
-    <div class="container">
-      <div class="head reveal">
-        <p class="eyebrow">The fleet</p>
-        <h2>Our Private Fishing Boats</h2>
-        <p class="lead">Explore our fishing boat options below and contact Exotic Fish Cabo to check availability for your preferred date.</p>
-      </div>
-      <ul class="boats" role="list">
-        {BOATS.map((b, i) => (
-          <li class="boat reveal">
-            <a class="boat-link" href={`/fishing-boats/${b.slug}`} data-track={`boat_${b.slug}`}>
-              <div class="boat-media">
-                <Img {...b.image} sizes="(min-width: 1000px) 30vw, (min-width: 640px) 46vw, 92vw" />
-                <span class="badge">Up to {b.capacity} guests</span>
-              </div>
-              <div class="boat-body">
-                <p class="boat-num">{b.label}</p>
-                <h4>{b.title}</h4>
-                <p>{b.blurb}</p>
-                <span class="btn">{b.button} <span class="arrow">→</span></span>
-              </div>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </div>
-  </section>
-
-  <section class="section bg-black dark">
-    <div class="container">
-      <div class="head reveal"><p class="eyebrow">Exotic Fish Cabo</p><h2>Why Fish With Exotic Fish Cabo</h2></div>
-      <div class="grid cols-3 why">
-        {why.map(([t, d], i) => (<article class="card reveal"><span class="num">0{i + 1}</span><h3>{t}</h3><p>{d}</p></article>))}
-        <div class="card reveal why-cta">
-          <h3>Need help choosing?</h3>
-          <p>Our team can help you compare passenger capacity, onboard amenities, and charter prices before making a reservation.</p>
-          <a class="btn btn-primary" href="/contact" data-track="boats_contact">Contact us <span class="arrow">→</span></a>
+  <!-- Boat sections: blocks in ORIGINAL DOM order; each boat card is assembled visually with CSS grid -->
+  {[s1, s2, s3, s4].map((sec, si) => {
+    const cs = cards(sec.blocks);
+    const pos = new Map<Block, string>();
+    cs.forEach((card, ci) => card.forEach((b, ri) => pos.set(b, `grid-column:${ci + 1};grid-row:${ri + 1};--o:${ci * 10 + ri}`)));
+    const ordered = sec.blocks.slice().sort((x, y) => (x as any).dom - (y as any).dom).filter((b) => pos.has(b));
+    return (
+      <section class:list={['section fleet', si % 2 ? 'bg-white' : 'bg-sand', cs.length === 2 && 'two']}>
+        <div class="container boats" style={`--n:${cs.length}`}>
+          {ordered.map((b) =>
+            b.kind === 'img' ? <OImg block={b} class="boat-media" sizes="(min-width: 1000px) 30vw, 92vw" style={pos.get(b)} /> :
+            b.kind === 'button' ? <div class="boat-btn" style={pos.get(b)}><OBtn block={b} track={`boat_${(b.href || '').split('/').pop()}`} /></div> :
+            <div class="boat-text rich" style={pos.get(b)} set:html={b.html} />
+          )}
         </div>
-      </div>
-    </div>
-  </section>
+      </section>
+    );
+  })}
 
   <section class="section bg-white">
-    <div class="container split top">
-      <div class="sticky reveal">
-        <p class="eyebrow">FAQ</p>
-        <h2>Cabo Fishing Boats – Frequently Asked Questions</h2>
-        <div class="btn-row">
-          <a class="btn" href="/fishing-calendar">Go to Fishing Calendar <span class="arrow">→</span></a>
-          <a class="btn" href="/fish-species">Go to Fish Species <span class="arrow">→</span></a>
-        </div>
-      </div>
-      <div class="reveal"><Faq items={faq} /></div>
+    <div class="container">{faq.map((b) => <Rich html={b.html!} class="faq-list reveal" />)}
+      <div class="btn-row">{s5.blocks.map((b) => <OBtn block={b} />)}</div>
     </div>
   </section>
 </Base>
 
 <style>
-  .boats { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(18px, 2vw, 28px); }
-  @media (max-width: 1000px) { .boats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  @media (max-width: 640px) { .boats { grid-template-columns: 1fr; } }
-  .boat-link { display: flex; flex-direction: column; height: 100%; background: var(--white); border-radius: var(--radius); overflow: hidden; text-decoration: none; color: var(--text); transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease); }
-  .boat-link:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
-  .boat-media { position: relative; overflow: hidden; }
-  .boat-media :global(img) { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; transition: transform 0.7s var(--ease); }
-  .boat-link:hover .boat-media :global(img) { transform: scale(1.05); }
-  .badge { position: absolute; left: 14px; top: 14px; padding: 7px 12px; border-radius: 999px; background: rgb(14 14 14 / 0.78); color: var(--white); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-  .boat-body { display: flex; flex-direction: column; flex: 1; padding: 24px 24px 26px; }
-  .boat-num { font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--orange); margin-bottom: 8px !important; }
-  .boat-body h4 { margin-bottom: 0.55em; }
-  .boat-body p:not(.boat-num) { font-size: 0.93em; margin-bottom: 22px; }
-  .boat-body .btn { margin-top: auto; align-self: stretch; }
-  .boat-link:hover .btn { background: var(--ink); color: var(--white); border-color: var(--ink); }
-  .why-cta { display: flex; flex-direction: column; background: var(--orange) !important; border-color: var(--orange) !important; color: var(--ink); }
-  .why-cta h3 { color: var(--ink) !important; }
-  .why-cta .btn-primary { margin-top: auto; align-self: flex-start; background: var(--ink); border-color: var(--ink); color: var(--white); }
-</style>
-<style>
-  /* 10th boat: full-width feature card on desktop so the grid never ends with an orphan */
-  @media (min-width: 1001px) {
-    .boat:last-child { grid-column: 1 / -1; }
-    .boat:last-child .boat-link { flex-direction: row; }
-    .boat:last-child .boat-media { flex: 0 0 calc((100% - 2 * clamp(18px, 2vw, 28px)) / 3 * 2 + clamp(18px, 2vw, 28px)); }
-    .boat:last-child .boat-media :global(img) { height: 100%; aspect-ratio: auto; min-height: 340px; }
-    .boat:last-child .boat-body { justify-content: center; padding: 36px 40px; }
-    .boat:last-child .boat-body .btn { margin-top: 0; align-self: flex-start; }
+  :global(.boats-intro) { max-width: 900px; margin-inline: auto; }
+  .fleet { padding-block: clamp(40px, 5vw, 72px); }
+  .boats { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); column-gap: clamp(18px, 2vw, 28px); row-gap: 0; }
+  .two .boats { max-width: 900px; }
+  .boats > :global(*) { background: var(--white); }
+  .bg-white .boats > :global(*) { background: var(--sand); }
+  .boats :global(.boat-media) { border-radius: var(--radius) var(--radius) 0 0; }
+  .boats :global(.boat-media img) { aspect-ratio: 4 / 3; }
+  .boat-text { padding: 20px 24px 0; }
+  .boat-text :global(h4) { margin: 0; }
+  .boat-text :global(p) { font-size: 0.93em; margin: 0; }
+  .boat-btn { padding: 22px 24px 26px; border-radius: 0 0 var(--radius) var(--radius); display: flex; align-items: flex-end; }
+  .boat-btn :global(.btn) { width: 100%; }
+  @media (max-width: 760px) {
+    .boats { grid-template-columns: 1fr; row-gap: 0; }
+    .boats > :global(*) { grid-column: 1 !important; grid-row: auto !important; order: var(--o); }
+    .boats :global(.boat-media) { margin-top: 28px; }
   }
-  @media (min-width: 641px) and (max-width: 1000px) {
-    .boat:last-child { grid-column: 1 / -1; }
-  }
+  :global(.faq-list h3) { padding-top: 24px; border-top: 1px solid var(--line); margin-top: 24px; }
+  :global(.faq-list) { max-width: 900px; }
 </style>
