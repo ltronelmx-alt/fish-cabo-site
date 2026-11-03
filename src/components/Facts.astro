@@ -1,0 +1,9 @@
+---
+const facts = [
+  ['Departure', 'Puerto Los Cabos'],
+  ['Charters', '100% Private'],
+  ['Trips', '6 or 8 hours'],
+  ['From', '$350 USD'],
+];
+---
+<dl class="facts">{facts.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}</dl>

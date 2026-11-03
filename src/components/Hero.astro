@@ -1,43 +1,40 @@
 ---
 import Img from './Img.astro';
 interface Props {
-  image: { src: string; alt: string; width: number; height: number };
-  variant: 'home' | 'short' | 'tall';
-  align?: 'start' | 'center';
-  tone?: 'white' | 'gray';
-  overlay?: number; // 0–1, darkening for legibility
-  bg?: string;
+  image: { src: string; alt: string; width?: number; height?: number };
+  variant?: 'home' | 'page';
+  position?: string; // object-position of the photo
 }
-const { image, variant, align = 'start', tone = 'white', overlay = 0, bg = '#000' } = Astro.props;
+const { image, variant = 'page', position = 'center' } = Astro.props;
 ---
-<section class:list={['hero', `hero-${variant}`, `align-${align}`, `tone-${tone}`]} style={`--ov:${overlay};background:${bg}`}>
-  <Img {...image} sizes="100vw" priority class="hero-img" />
-  <div class="hero-content"><slot /></div>
+<section class:list={['hero', 'dark', `hero-${variant}`]}>
+  <Img src={image.src} alt={image.alt} sizes="100vw" priority class="hero-img" />
+  <div class="hero-shade" aria-hidden="true"></div>
+  <div class="container hero-inner">
+    <slot />
+  </div>
 </section>
-<style>
-  .hero { position: relative; display: flex; overflow: hidden; isolation: isolate; padding: 74px var(--gutter) 0; }
-  .hero :global(.hero-img) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
-  .hero::after { content: ''; position: absolute; inset: 0; z-index: -1; background: rgb(0 0 0 / var(--ov)); }
-  .hero-content { width: 100%; }
-  .tone-white { color: var(--white); }
-  .tone-gray { color: var(--gray); }
-  .align-center { text-align: center; }
-  .hero :global(h1) { margin: 0; }
-
-  /* Home: tall image hero, headline lower third, intro under it */
-  .hero-home { min-height: max(574px, 76.3vw); align-items: flex-start; padding-top: 25.8vw; padding-bottom: 5vw; }
-  .hero-home .hero-content { padding-inline: 0; }
-  .hero-home :global(p) { font-size: var(--fs-p-lg); margin: 2.85vw 0 0; padding-inline: 1vw; max-width: 92vw; }
-  .hero-home :global(h1) { margin-left: -1vw; }
-
-  /* Fishing Charters: short banner */
-  .hero-short { min-height: max(260px, 21vw); align-items: center; }
-  /* Fishing Boats: medium banner */
-  .hero-tall { min-height: max(380px, 42.4vw); align-items: center; }
-
-  @media (max-width: 767px) {
-    .hero-home { padding-top: 62px; padding-bottom: 28px; min-height: 574px; }
-    .hero-home :global(p) { margin-top: 24px; padding-inline: 10px; }
-    .hero-home :global(h1) { margin-left: -12px; }
+<style define:vars={{ pos: position }}>
+  .hero { position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: flex-end; background: var(--ink); color: #e9e9e9; }
+  .hero :global(.hero-img) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: var(--pos); z-index: -2; transform: scale(1.02); }
+  .hero-shade { position: absolute; inset: 0; z-index: -1; background:
+      linear-gradient(to top, rgb(0 0 0 / 0.82) 0%, rgb(0 0 0 / 0.35) 45%, rgb(0 0 0 / 0.1) 70%, rgb(0 0 0 / 0.35) 100%),
+      linear-gradient(to right, rgb(0 0 0 / 0.45), transparent 60%); }
+  .hero-inner { padding-top: 140px; padding-bottom: clamp(40px, 5vw, 72px); }
+  .hero-home { min-height: min(100svh, 980px); }
+  .hero-page { min-height: clamp(460px, 62svh, 720px); }
+  .hero :global(h1) { color: var(--white); max-width: 15ch; margin-bottom: 0.35em; }
+  .hero-page :global(h1) { max-width: 18ch; font-size: clamp(36px, 3.6vw + 14px, 76px); }
+  .hero :global(.lead) { max-width: 640px; color: #ececec; margin-bottom: 0; }
+  .hero :global(.facts) { margin-top: clamp(40px, 5vw, 72px); }
+  @media (prefers-reduced-motion: no-preference) {
+    .hero :global(.hero-img) { animation: heroZoom 14s var(--ease) both; }
+    .hero-inner > :global(*) { animation: heroIn 0.9s var(--ease) both; }
+    .hero-inner > :global(*:nth-child(2)) { animation-delay: 0.08s; }
+    .hero-inner > :global(*:nth-child(3)) { animation-delay: 0.16s; }
+    .hero-inner > :global(*:nth-child(4)) { animation-delay: 0.24s; }
+    .hero-inner > :global(*:nth-child(5)) { animation-delay: 0.32s; }
+    @keyframes heroZoom { from { transform: scale(1.08); } to { transform: scale(1.02); } }
+    @keyframes heroIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
   }
 </style>

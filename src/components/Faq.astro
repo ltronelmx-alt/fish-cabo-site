@@ -1,0 +1,13 @@
+---
+// Accessible accordion. Answers stay in the HTML (indexable) and match the FAQPage JSON-LD.
+interface Props { items: [string, string[]][]; openFirst?: boolean }
+const { items, openFirst = true } = Astro.props;
+---
+<div class="faq">
+  {items.map(([q, a], i) => (
+    <details open={openFirst && i === 0}>
+      <summary><h3 style="all:inherit;margin:0">{q}</h3></summary>
+      <div class="answer">{a.map((t) => <p>{t}</p>)}</div>
+    </details>
+  ))}
+</div>

@@ -28,17 +28,20 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month:
   /* Adapts to the width of its container (not the viewport) via container queries. */
   .ll-wrap { container-type: inline-size; }
   .ll { display: grid; grid-template-columns: 1fr; gap: 22px; color: var(--offwhite); }
-  .ll-media :global(img) { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
-  .ll-kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 12px; }
-  .ll-title { font-size: 21px; line-height: 1.18; letter-spacing: -0.025em; color: var(--gray); margin: 0 0 12px; }
+  .ll-media { display: block; border-radius: var(--radius); overflow: hidden; }
+  .ll-media :global(img) { width: 100%; aspect-ratio: 1; object-fit: cover; transition: transform 0.6s var(--ease); }
+  .ll:hover .ll-media :global(img) { transform: scale(1.03); }
+  .ll-kicker { display: inline-flex; gap: 10px; align-items: center; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; margin: 0 0 16px; color: var(--ink); }
+  .ll-kicker::before { content: ''; width: 28px; height: 2px; background: currentColor; }
+  .ll-title { font-size: 24px; line-height: 1.08; letter-spacing: -0.025em; color: var(--white); margin: 0 0 14px; }
   .ll-title a { text-decoration: none; }
   .ll-date { font-size: 13px; margin: 0 0 18px; }
   .ll-excerpt { font-size: 17px; line-height: 1.7; margin: 0 0 18px; }
   .ll-link { display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: 0.045em; text-decoration: none; padding-bottom: 6px; border-bottom: 1.5px solid currentColor; }
   .ll-link:hover { opacity: 0.8; }
   @container (min-width: 640px) {
-    .ll { grid-template-columns: minmax(0, 43fr) minmax(0, 57fr); gap: 3%; align-items: center; }
+    .ll { grid-template-columns: minmax(0, 43fr) minmax(0, 57fr); gap: 5%; align-items: center; }
     .ll-media :global(img) { aspect-ratio: 4 / 3; height: 100%; }
-    .ll-title { font-size: clamp(26px, 3.1cqi, 40px); }
+    .ll-title { font-size: clamp(28px, 3.6cqi, 48px); }
   }
 </style>
