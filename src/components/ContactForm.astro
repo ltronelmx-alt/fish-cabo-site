@@ -1,0 +1,68 @@
+---
+// Replaces the Squarespace form block. Same fields, labels, options and button text as the original form.
+// Submits to the Worker (/api/contact): validation + Cloudflare Turnstile. No data is stored.
+import form from '../data/contact-form.json';
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY || '1x00000000000000000000AA'; // Cloudflare's public TEST key (always passes)
+const id = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+---
+<form class="cform card" id="contact-form" method="post" action="/api/contact" novalidate>
+  {form.fields.map((f) => f.type === 'name' ? (
+    <fieldset class="cf-row two">
+      <legend>{f.title}{f.required && <span aria-hidden="true"> *</span>}</legend>
+      <label>First Name<input name="fname" autocomplete="given-name" required={f.required} maxlength="80" /></label>
+      <label>Last Name<input name="lname" autocomplete="family-name" required={f.required} maxlength="80" /></label>
+    </fieldset>
+  ) : f.type === 'select' ? (
+    <label class="cf-row">{f.title}{f.required && <span aria-hidden="true"> *</span>}
+      <select name={id(f.title)} required={f.required}>
+        <option value="">{f.placeholder || 'Select an option'}</option>
+        {(f.options || []).map((o) => <option>{o.trim()}</option>)}
+      </select>
+    </label>
+  ) : f.type === 'textarea' ? (
+    <label class="cf-row">{f.title}{f.required && <span aria-hidden="true"> *</span>}<textarea name="message" rows="6" required={f.required} maxlength="5000"></textarea></label>
+  ) : (
+    <label class="cf-row">{f.title}{f.required && <span aria-hidden="true"> *</span>}
+      <input name={f.type} type={f.type === 'phone' ? 'tel' : f.type} required={f.required} maxlength="120"
+        autocomplete={f.type === 'email' ? 'email' : f.type === 'phone' ? 'tel' : 'off'} />
+    </label>
+  ))}
+  <input type="text" name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true" />
+  <div class="cf-turnstile" data-sitekey={siteKey}></div>
+  <button class="btn btn-primary no-arrow" type="submit">{form.submit}</button>
+  <p class="cf-msg" role="status" aria-live="polite"></p>
+</form>
+<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script>
+  const f = document.getElementById('contact-form') as HTMLFormElement | null;
+  const msg = f?.querySelector('.cf-msg') as HTMLElement | null;
+  f?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!f.checkValidity()) { f.reportValidity(); if (msg) msg.textContent = 'Please complete all required fields.'; return; }
+    const btn = f.querySelector('button[type=submit]') as HTMLButtonElement; btn.disabled = true;
+    if (msg) msg.textContent = 'Sending…';
+    try {
+      const res = await fetch('/api/contact', { method: 'POST', body: new FormData(f) });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok) {
+        f.reset(); (window as any).turnstile?.reset?.();
+        if (msg) msg.textContent = data.test ? 'Thank you! (staging test mode — no email was sent)' : 'Thank you!';
+        navigator.sendBeacon?.('/api/event', new Blob([JSON.stringify({ event: 'contact_sent', page: location.pathname })], { type: 'application/json' }));
+      } else if (msg) msg.textContent = data.error || 'Sorry, the message could not be sent. Please try again or contact us on WhatsApp.';
+    } catch { if (msg) msg.textContent = 'Network error. Please try again or contact us on WhatsApp.'; }
+    btn.disabled = false;
+  });
+</script>
+<style>
+  .cform { display: grid; gap: 18px; background: var(--white) !important; }
+  .cf-row { display: grid; gap: 8px; font-size: 14px; font-weight: 700; color: var(--ink); border: 0; padding: 0; margin: 0; }
+  .cf-row.two { grid-template-columns: 1fr 1fr; column-gap: 14px; }
+  .cf-row.two legend { grid-column: 1 / -1; padding: 0; margin-bottom: 8px; }
+  .cf-row.two label { display: grid; gap: 6px; font-weight: 400; font-size: 13px; }
+  .cform input, .cform select, .cform textarea { font: inherit; font-weight: 400; font-size: 16px; padding: 14px 16px; border: 1.5px solid var(--line); border-radius: var(--radius-sm); background: var(--white); color: var(--ink); width: 100%; }
+  .cform input:focus, .cform select:focus, .cform textarea:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgb(251 119 4 / 0.15); }
+  .cform .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+  .cform button { justify-self: start; min-width: 180px; }
+  .cf-msg { margin: 0; font-weight: 700; color: var(--ink); }
+  @media (max-width: 560px) { .cf-row.two { grid-template-columns: 1fr; } }
+</style>

@@ -11,6 +11,7 @@ export const SITE = {
   directionsUrl:
     'https://www.google.com/maps/dir/?api=1&destination=23.060275%2C-109.670677&travelmode=driving',
   bookUrl: '/fishing-boats',
+  gps: { lat: 23.060275, lng: -109.670677 },
   googleReviews: 'https://g.page/r/CVkU9WoXqp_DEBM',
   googleLeaveReview: 'https://g.page/r/CVkU9WoXqp_DEBM/review',
   logo: 'ed1a80e6-474f-4efc-ad03-6795b1f1754b/logo+low-res+Fishing+San+Jose+del+Cabo.webp',

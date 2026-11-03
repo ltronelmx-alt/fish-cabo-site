@@ -6,17 +6,22 @@ import Img from './Img.astro';
 const logs = (await getCollection('reports', (e) => !e.data.draft && e.data.category === 'San Jose del Cabo Fishing Log'))
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 const latest = logs[0];
+// Same rules as the original fish-cabo.com script: RSS thumbnail image, excerpt cut at 270 characters.
+const strip = (h: string) => h.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
+const ex = latest ? strip(latest.data.excerpt) : '';
+const excerpt = ex.length > 270 ? ex.slice(0, 267).replace(/\s+\S*$/, '') + '...' : ex;
+const img = latest ? (latest.data.thumbnail ?? latest.data.image) : null;
 const fmt = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
 ---
 {latest && (
   <div class="ll-wrap">
     <article class="ll">
-      <div class="ll-media"><Img {...latest.data.image} sizes="(min-width: 900px) 40vw, 92vw" /></div>
+      {img && <div class="ll-media"><Img src={img.src} alt={latest.data.title} sizes="(min-width: 900px) 40vw, 92vw" /></div>}
       <div class="ll-body">
         <p class="ll-kicker">Latest Fishing Log</p>
         <h2 class="ll-title">{latest.data.title}</h2>
         <p class="ll-date">{fmt(latest.data.date)}</p>
-        <p class="ll-excerpt">{latest.data.excerpt}</p>
+        <p class="ll-excerpt">{excerpt}</p>
         <a class="ll-link" href={`https://fish-cabo.com/fishing-reports/${latest.id}`} data-track="latest_log">READ FULL FISHING LOG →</a>
       </div>
     </article>

@@ -1,0 +1,49 @@
+---
+// A Fishing Report / weekly Fishing Log. Imported articles: ORIGINAL head + ORIGINAL HTML body.
+// New CMS articles (Markdown): head built from the SEO fields; same layout.
+import Base from '../../layouts/Base.astro';
+import { render } from 'astro:content';
+import { published, catUrl, tagUrl } from '../../lib/reports';
+import { pictures, media } from '../../lib/media';
+import { SITE } from '../../data/site';
+export async function getStaticPaths() {
+  const all = await published();
+  return all.map((e, i) => ({ params: { slug: e.id }, props: { entry: e, newer: all[i - 1], older: all[i + 1] } }));
+}
+const { entry, newer } = Astro.props;
+const d = entry.data;
+const isHtml = d.format === 'html';
+const { Content } = isHtml ? { Content: null } : await render(entry);
+const url = `${SITE.url}/fishing-reports/${entry.id}`;
+const ogImg = d.image ? new URL(media(d.image.src)?.at(1500) ?? '/', SITE.url).href : undefined;
+const head = d.originalHead ?? [
+  `<title>${d.seoTitle || d.title}</title>`, `<meta name="description" content="${d.description.replace(/"/g, '&quot;')}"/>`, `<link rel="canonical" href="${url}"/>`,
+  `<meta property="og:title" content="${(d.seoTitle || d.title).replace(/"/g, '&quot;')}"/>`, `<meta property="og:type" content="article"/>`, `<meta property="og:url" content="${url}"/>`,
+  ...(ogImg ? [`<meta property="og:image" content="${ogImg}"/>`] : []),
+  `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@type': 'Article', headline: d.title, datePublished: d.date.toISOString(), author: { '@type': 'Person', name: d.author }, ...(ogImg ? { image: ogImg } : {}) })}</script>`,
+];
+const mdy = d.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+---
+<Base original={{ lang: 'en-US', head, bodyLd: [] }} solidHeader>
+  <section class="section bg-white o-first">
+    <div class="container o-flow">
+      {isHtml
+        ? <div class="rich o-html article" set:html={pictures(entry.body || '', '(min-width: 1240px) 1100px, 92vw')} />
+        : <div class="rich o-html article"><article>
+            <h1>{d.title}</h1>
+            {d.category && <a href={catUrl(d.category)}>{d.category}</a>}
+            <time datetime={d.date.toISOString().slice(0, 10)}>{mdy}</time> Written by <a href="/fishing-reports">{d.author}</a>
+            {d.image && <Fragment set:html={pictures(`<img alt="${d.image.alt}" data-path="${d.image.src}"/>`, '(min-width: 1240px) 1100px, 92vw')} />}
+            <Content />
+            {d.tags.map((t) => <a href={tagUrl(t)} rel="tag">{t}</a>)}
+          </article>
+          {newer && <section><a href={`/fishing-reports/${newer.id}`}>Next <h2>{newer.data.title}</h2></a></section>}
+        </div>}
+    </div>
+  </section>
+</Base>
+<style is:global>
+  .article > article > h1 { font-size: clamp(34px, 3vw + 14px, 72px); max-width: 26ch; }
+  .article > article > a[href*='/category/'] { display: inline-block; margin: 8px 12px 18px 0; padding: 6px 14px; border-radius: 999px; background: var(--orange); color: var(--white); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; }
+  .article > article > picture img { width: 100%; max-height: 70vh; object-fit: cover; }
+</style>

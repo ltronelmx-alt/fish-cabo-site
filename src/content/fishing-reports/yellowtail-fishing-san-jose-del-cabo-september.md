@@ -1,0 +1,87 @@
+---
+title: "Josh's First Yellowtail Fishing Adventure in San José del Cabo"
+seoTitle: "Yellowtail Fishing in San José del Cabo | Josh's First Catch"
+description: "Josh catches his first yellowtail after an unforgettable battle off San José del Cabo. Discover his private fishing adventure with Exotic Fish Cabo."
+date: 2026-09-10
+category: "Fishing Report"
+tags: ["Grouper fishing", "Bottom fishing", "jigging", "Tournament fishing", "Yellowtail fishing"]
+author: "EXOTIC FISH-CABO"
+image: null
+thumbnail: {"src": "1789090667880-DHQ6OYFO6AXQAE04C6NL/Yellowtail.webp", "alt": ""}
+thumbnailSource: "listing"
+listingRank: 8
+excerpt: "Josh experienced an unforgettable morning fishing off San José del Cabo, battling a powerful yellowtail and celebrating the excitement of his very first catch of this species."
+excerptSource: "listing-or-rss"
+format: "html"
+draft: false
+originalHead: ["<title>Yellowtail Fishing in San José del Cabo | Josh's First Catch</title>", "<link href=\"https://fish-cabo.com/fishing-reports/yellowtail-fishing-san-jose-del-cabo-september\" rel=\"canonical\"/>", "<meta content=\"EXOTIC FISH CABO\" property=\"og:site_name\"/>", "<meta content=\"Yellowtail Fishing in San José del Cabo | Josh's First Catch\" property=\"og:title\"/>", "<meta content=\"40.7207559\" property=\"og:latitude\"/>", "<meta content=\"-74.00076130000002\" property=\"og:longitude\"/>", "<meta content=\"San José del Cabo\" property=\"og:locality\"/>", "<meta content=\"BCS\" property=\"og:region\"/>", "<meta content=\"Mexico\" property=\"og:country-name\"/>", "<meta content=\"https://fish-cabo.com/fishing-reports/yellowtail-fishing-san-jose-del-cabo-september\" property=\"og:url\"/>", "<meta content=\"article\" property=\"og:type\"/>", "<meta content=\"Josh catches his first yellowtail after an unforgettable battle off San José del Cabo. Discover his private fishing adventure with Exotic Fish Cabo.\" property=\"og:description\"/>", "<meta content=\"http://static1.squarespace.com/static/6911316472567617bebc28b5/t/6aa35beaa60b5f2044682a48/1789090794357/Yellowtail.webp?format=1500w\" property=\"og:image\"/>", "<meta content=\"1086\" property=\"og:image:width\"/>", "<meta content=\"774\" property=\"og:image:height\"/>", "<meta content=\"Yellowtail Fishing in San José del Cabo | Josh's First Catch\" itemprop=\"name\"/>", "<meta content=\"https://fish-cabo.com/fishing-reports/yellowtail-fishing-san-jose-del-cabo-september\" itemprop=\"url\"/>", "<meta content=\"Josh catches his first yellowtail after an unforgettable battle off San José del Cabo. Discover his private fishing adventure with Exotic Fish Cabo.\" itemprop=\"description\"/>", "<meta content=\"http://static1.squarespace.com/static/6911316472567617bebc28b5/t/6aa35beaa60b5f2044682a48/1789090794357/Yellowtail.webp?format=1500w\" itemprop=\"thumbnailUrl\"/>", "<meta content=\"http://static1.squarespace.com/static/6911316472567617bebc28b5/t/6aa35beaa60b5f2044682a48/1789090794357/Yellowtail.webp?format=1500w\" itemprop=\"image\"/>", "<meta content=\"EXOTIC FISH-CABO\" itemprop=\"author\"/>", "<meta content=\"2026-09-10T18:42:09-0700\" itemprop=\"datePublished\"/>", "<meta content=\"2026-10-23T09:35:42-0700\" itemprop=\"dateModified\"/>", "<meta content=\"Josh's First Yellowtail Fishing Adventure in San José del Cabo\" itemprop=\"headline\"/>", "<meta content=\"EXOTIC FISH CABO\" itemprop=\"publisher\"/>", "<meta content=\"Yellowtail Fishing in San José del Cabo | Josh's First Catch\" name=\"twitter:title\"/>", "<meta content=\"http://static1.squarespace.com/static/6911316472567617bebc28b5/t/6aa35beaa60b5f2044682a48/1789090794357/Yellowtail.webp?format=1500w\" name=\"twitter:image\"/>", "<meta content=\"https://fish-cabo.com/fishing-reports/yellowtail-fishing-san-jose-del-cabo-september\" name=\"twitter:url\"/>", "<meta content=\"summary\" name=\"twitter:card\"/>", "<meta content=\"Josh catches his first yellowtail after an unforgettable battle off San José del Cabo. Discover his private fishing adventure with Exotic Fish Cabo.\" name=\"twitter:description\"/>", "<meta content=\"Josh catches his first yellowtail after an unforgettable battle off San José del Cabo. Discover his private fishing adventure with Exotic Fish Cabo.\" name=\"description\"/>", "<script type=\"application/ld+json\">{\"url\":\"https://fish-cabo.com\",\"name\":\"EXOTIC FISH CABO\",\"description\":\"\",\"image\":\"//images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/ed1a80e6-474f-4efc-ad03-6795b1f1754b/logo+low-res+Fishing+San+Jose+del+Cabo.webp\",\"@context\":\"http://schema.org\",\"@type\":\"WebSite\"}</script>", "<script type=\"application/ld+json\">{\"name\":\"Yellowtail Fishing in San Jos\\u00E9 del Cabo | Josh's First Catch\",\"url\":\"https://fish-cabo.com/fishing-reports/yellowtail-fishing-san-jose-del-cabo-september\",\"datePublished\":\"2026-09-10T18:42:09-0700\",\"dateModified\":\"2026-10-23T09:35:42-0700\",\"headline\":\"Josh's First Yellowtail Fishing Adventure in San Jos\\u00E9 del Cabo\",\"author\":\"EXOTIC FISH-CABO\",\"publisher\":{\"name\":\"EXOTIC FISH CABO\",\"logo\":{\"@type\":\"ImageObject\",\"url\":\"https://static1.squarespace.com/static/6911316472567617bebc28b5/t/69153b5b52d922227788c6b9/1792969125197/\"},\"@context\":\"http://schema.org\",\"@type\":\"Organization\"},\"image\":\"http://static1.squarespace.com/static/6911316472567617bebc28b5/t/6aa35beaa60b5f2044682a48/1789090794357/Yellowtail.webp?format=1500w\",\"@context\":\"http://schema.org\",\"@type\":\"Article\"}</script>", "<script type=\"application/ld+json\">\n{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"LocalBusiness\",\n  \"@id\": \"https://fish-cabo.com/#business\",\n  \"name\": \"Exotic Fish Cabo\",\n  \"alternateName\": [\"Fish Cabo\", \"Fish-Cabo\"],\n  \"url\": \"https://fish-cabo.com/\",\n  \"description\": \"Private sportfishing charters departing from Puerto Los Cabos Marina in San José del Cabo, Mexico: marlin, tuna, dorado, wahoo and roosterfish. Family friendly.\",\n  \"telephone\": \"+52-624-122-3506\",\n  \"email\": \"contact@fish-cabo.com\",\n  \"image\": \"https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/1762994227375-8V5FEBCX5CV3KU2EBTP4/Marylou+Fishing+San+Jose+del+Cabo.webp\",\n  \"logo\": \"https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/ed1a80e6-474f-4efc-ad03-6795b1f1754b/logo+low-res+Fishing+San+Jose+del+Cabo.webp\",\n  \"priceRange\": \"$350-$600+\",\n  \"address\": {\n    \"@type\": \"PostalAddress\",\n    \"streetAddress\": \"Bd Tiburón, La Playa\",\n    \"addressLocality\": \"San José del Cabo\",\n    \"addressRegion\": \"Baja California Sur\",\n    \"postalCode\": \"23403\",\n    \"addressCountry\": \"MX\"\n  },\n  \"geo\": { \"@type\": \"GeoCoordinates\", \"latitude\": 23.0600625, \"longitude\": -109.6706875 },\n  \"hasMap\": \"https://maps.app.goo.gl/d3TAakiLjgiS9kNM7\",\n  \"areaServed\": [\n    { \"@type\": \"City\", \"name\": \"San José del Cabo\" },\n    { \"@type\": \"City\", \"name\": \"Cabo San Lucas\" }\n  ],\n  \"sameAs\": [\n    \"https://www.instagram.com/exoticfishcabo/\",\n    \"https://www.youtube.com/@Exoticpechemexiquechannel\",\n    \"https://www.facebook.com/pechemexique/\",\n    \"https://www.tripadvisor.com/Attraction_Review-g152516-d9569970-Reviews-Exotic_Fish_Cabo_Sportfishing_Charter-San_Jose_del_Cabo_Los_Cabos_Baja_California.html\",\n    \"https://x.com/pechemexique/\",\n    \"https://www.yelp.com/biz/exotic-fish-cabo-san-jos%C3%A9-del-cabo-3\",\n    \"https://www.threads.com/@exoticfishcabo\"\n  ]\n}\n</script>"]
+---
+<article>
+
+
+
+<h1>Josh's First Yellowtail Fishing Adventure in San José del Cabo</h1>
+
+
+
+<a href="/fishing-reports/category/Fishing%20Report">Fishing Report</a>
+
+
+<time datetime="2026-09-10">
+Sep 10
+</time>
+Written by <a href="/fishing-reports?author=69113037595a20384a76acde">EXOTIC FISH-CABO</a>
+
+
+
+
+
+<h2>A First Yellowtail Catch to Remember</h2><p>Some fishing experiences stay with you long after the boat returns to the marina. For Josh, a beautiful morning off San José del Cabo became one of those unforgettable adventures.</p><p>Joining Exotic Fish Cabo for a private fishing charter departing from <strong>Puerto Los Cabos Marina</strong>, Josh headed out to enjoy the ocean and discover what the day might bring.</p><p>The sea conditions were beautiful, and the excitement was already building as the fishing adventure began.</p><p>But nothing could have prepared Josh for the challenge ahead.</p><h3>The Moment Josh Hooked His First Yellowtail</h3><p>The highlight of the morning came when Josh hooked into his <strong>very first yellowtail</strong>.</p><p>It was an impressive fish, and from the moment it took the bait, the battle began.</p><p>Yellowtail are known for their strength, speed, and determination. Unlike some game fish that leap out of the water, yellowtail often use powerful runs and sustained pressure to challenge anglers.</p><p>Josh quickly discovered just how demanding these fish can be.</p><p>The yellowtail pulled hard, testing his strength and patience as he worked to maintain control of the fishing line.</p><p>Each run presented another challenge.</p><p>There were moments when the fish seemed to have the advantage, but Josh remained focused and determined.</p><h3>Patience, Strength, and an Unforgettable Finish</h3><p>As the battle continued, Josh carefully worked the fish closer to the boat.</p><p>With encouragement and assistance from the crew, he stayed concentrated on the fight, recovering line whenever the opportunity appeared.</p><p>Finally, after a long and exciting struggle, <strong>Josh brought his first yellowtail alongside the boat</strong>.</p><p>Seeing the impressive fish up close made the effort worthwhile.</p><p>It was a memorable achievement, made even more special by the fact that this was Josh's first encounter with the species.</p><p>The excitement and satisfaction of that moment perfectly captured what makes sportfishing in Los Cabos such a rewarding experience.</p><p>Sometimes, an unforgettable fishing trip isn't about catching the most fish or chasing the biggest marlin. It's about achieving a personal milestone, overcoming a challenge, and creating a story worth remembering.</p><p>For Josh, this was certainly one of those moments.</p><p><strong>Trip Highlights</strong></p><ul><li><p><strong>Departure:</strong> Puerto Los Cabos Marina, San José del Cabo</p></li><li><p><strong>Angler:</strong> Josh</p></li><li><p><strong>Species caught:</strong> Yellowtail</p></li><li><p><strong>Catch highlight:</strong> Josh's first yellowtail</p></li><li><p><strong>Fishing conditions:</strong> Beautiful weather and sea conditions</p></li><li><p><strong>Main challenge:</strong> A long, demanding battle with a powerful fish</p></li><li><p><strong>Experience:</strong> Private fishing charter</p></li></ul><h3>Why Yellowtail Fishing Is Such an Exciting Challenge</h3><p>Yellowtail are highly regarded among sportfishing enthusiasts for their strength, powerful runs, and determined fighting ability.</p><p>Their activity around Baja California Sur can be influenced by water temperature, currents, available baitfish, and seasonal conditions.</p><p>Successfully bringing a yellowtail close to the boat requires patience, proper line management, and steady pressure throughout the fight.</p><p>Josh's experience was a wonderful example of the excitement and satisfaction that come with catching a new species for the first time.</p><p>Every fishing trip is different. Weather, currents, water temperature, and seasonal fish activity all influence the opportunities available on any given day.</p><p>Catches are never guaranteed.</p><h4>Plan Your Own Fishing Adventure in San José del Cabo</h4><p>Dreaming of catching your first yellowtail or challenging yourself against other exciting game fish in Los Cabos?</p><p>Explore our <a href="https://fish-cabo.com/fishing-calendar"><strong>Fishing Calendar</strong></a> to discover typical seasonal fishing patterns, or browse our <a href="https://fish-cabo.com/fishing-charters"><strong>Private Fishing Charters</strong></a> to compare 6-hour and 8-hour trips.</p><p>All Exotic Fish Cabo charters depart exclusively from Puerto Los Cabos Marina in San José del Cabo. Guests staying in Cabo San Lucas are also welcome to book.</p>
+
+
+
+
+
+
+<a href="/fishing-reports/tag/Grouper%20fishing" rel="tag">Grouper fishing</a><a href="/fishing-reports/tag/Bottom%20fishing" rel="tag">Bottom fishing</a><a href="/fishing-reports/tag/jigging" rel="tag">jigging</a><a href="/fishing-reports/tag/Tournament%20fishing" rel="tag">Tournament fishing</a><a href="/fishing-reports/tag/Yellowtail%20fishing" rel="tag">Yellowtail fishing</a>
+
+
+<a href="/fishing-reports?author=69113037595a20384a76acde">
+
+<img alt="" data-ext="https://images.squarespace-cdn.com/content/v2/namespaces/memberAccountAvatars/libraries/69113037595a20384a76acde/7369365e-53a6-4827-a5f7-e9ab40202a55/thirdPartyMemberAvatar-69113037595a20384a76acde-05d37562-5925-4737-a06c-ad6b5d6b9050?format=300w"/>
+
+EXOTIC FISH-CABO
+</a>
+
+
+<section>
+
+
+
+
+</section>
+
+</article>
+
+<section>
+<a href="/fishing-reports/san-jose-del-cabo-fishing-log-september-7-13-2026">
+
+
+
+
+Previous
+Previous
+<h2>San Jose del Cabo Fishing Log — September 7–13, 2026</h2>
+
+</a>
+<a href="/fishing-reports/san-jose-del-cabo-fishing-log-august-31-september-6-2026">
+
+Next
+Next
+<h2>San Jose del Cabo Fishing Log — August 31–September 6, 2026</h2>
+
+
+
+
+</a>
+</section>

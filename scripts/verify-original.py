@@ -1,13 +1,17 @@
 # Verifies the new pages keep the ORIGINAL text, headings, links, alt texts, head tags and JSON-LD.
 import re, sys
 from bs4 import BeautifulSoup
-PAIRS = [('index', 'index'), ('fishing-charters', 'fishing-charters'), ('fishing-boats', 'fishing-boats')]
+import glob, os
+EXP = '/home/claude/export/site/pages/'
+PAIRS = [(f[len(EXP):-5], f[len(EXP):-5]) for f in sorted(glob.glob(EXP + '**/*.html', recursive=True))]
+QUIET = '-q' in sys.argv
 norm = lambda s: re.sub(r'\s+', ' ', s).strip()
 ok = True
 for o, n in PAIRS:
     A = BeautifulSoup(open(f'/home/claude/export/site/pages/{o}.html').read(), 'lxml')
-    B = BeautifulSoup(open(f'dist/{n}.html').read(), 'lxml')
-    a = A.select_one('article#page-regions'); b = B.select_one('main')
+    B = BeautifulSoup(open(f'dist/{n}.html').read(), 'lxml') if os.path.exists(f'dist/{n}.html') else None
+    if not os.path.exists(f'dist/{n}.html'): ok = False; print(f'MISSING ROUTE {o}'); continue
+    a = A.select_one('article#page-regions') or A.select_one('main'); b = B.select_one('main')
     for el in a.select('script,style,noscript'): el.decompose()
     for el in b.select('script,style,noscript'): el.decompose()
     # Latest-log block is rendered by JS on the old site ("Loading..." in static HTML): skip it on both sides
@@ -21,7 +25,8 @@ for o, n in PAIRS:
     D = lambda r: [(e.name, norm(e.get_text()) if e.name!='img' else e.get('alt','')) for e in r.find_all(['h1','h2','h3','h4','p','li','img','a']) if (e.name=='img' or norm(e.get_text()))]
     checks = {'DOM order of all content': (D(a), D(b)), 'headings (order+level)': (H(a), H(b)), 'links': (L(a), L(b)), 'image alts': (I(a), I(b)), 'text blocks': (T(a), T(b)), 'head tags + JSON-LD': (head(A), head(B)), 'lang': (A.html.get('lang'), B.html.get('lang'))}
     for k, (x, y) in checks.items():
-        if x == y: print(f'OK   {o:18} {k}')
+        if x == y:
+            if not QUIET: print(f'OK   {o:18} {k}')
         else:
             ok = False; print(f'DIFF {o:18} {k}')
             if isinstance(x, list):

@@ -1,0 +1,83 @@
+{
+ "fields": [
+  {
+   "type": "name",
+   "title": "Name",
+   "required": true,
+   "placeholder": null
+  },
+  {
+   "type": "email",
+   "title": "Email",
+   "required": true,
+   "placeholder": ""
+  },
+  {
+   "type": "phone",
+   "title": "Phone",
+   "required": true,
+   "placeholder": null
+  },
+  {
+   "type": "date",
+   "title": "Date",
+   "required": true,
+   "placeholder": null
+  },
+  {
+   "type": "select",
+   "title": "People aboard (10 Max)",
+   "required": true,
+   "placeholder": "Select an option",
+   "options": [
+    "1 people",
+    " 2 people",
+    " 3 people",
+    "4 people",
+    " 5 people",
+    "6 people",
+    "7 people",
+    "8 people",
+    " 9 people",
+    "10 people"
+   ]
+  },
+  {
+   "type": "select",
+   "title": "Duration",
+   "required": true,
+   "placeholder": "Select an option",
+   "options": [
+    "3/4 day (6 Hour)",
+    "Full day (8 hour)"
+   ]
+  },
+  {
+   "type": "select",
+   "title": "Boats",
+   "required": true,
+   "placeholder": "Select an option",
+   "options": [
+    "Boat # 1   (23 Ft Panga)",
+    "Boat # 2   (26 Ft Super Panga)",
+    "Boat # 3  (27 Ft Premium Cent. Cons)",
+    "Boat # 4  (30 Ft Cuddy cabin)",
+    "Boat # 5  (38 Ft Flybridge)",
+    "Boat # 6  (31 Ft Premium Cent. Cons)",
+    "Boat # 7  (29 Ft Premium Catamaran)",
+    "Boat # 8  (35 Ft Premium Cuddy Cabin)",
+    "Boat # 9 (44 Ft Premium Flybridge)",
+    "Boat #10 (37FT Ultimate Fishing Machine)"
+   ]
+  },
+  {
+   "type": "textarea",
+   "title": "Message",
+   "required": true,
+   "placeholder": ""
+  }
+ ],
+ "submit": "Send",
+ "success": "Thank you!",
+ "successRedirect": "https://fish-cabo.com/confirmation"
+}

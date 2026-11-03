@@ -1,0 +1,87 @@
+---
+title: "Mahi-Mahi Fishing Report – San José del Cabo, August 2026"
+seoTitle: "Mahi-Mahi Fishing Report | San José del Cabo, August 2026"
+description: "Brooke landed a mahi-mahi on an August 2, 2026 private charter from Puerto Los Cabos Marina. Discover the fishing story and offshore trolling tips."
+date: 2026-08-02
+category: "Fishing Report"
+tags: ["Marlin fishing", "Tuna Fishing", "Mahi-Mahi fishing", "Rosterfish fishing", "Wahoo fishing", "Grouper fishing", "Sail Fish fishing", "Swordfish fishing", "Bottom fishing", "jigging", "Tournament fishing"]
+author: "EXOTIC FISH-CABO"
+image: null
+thumbnail: {"src": "1785695107183-33EZA7W7CKE8Z15JSGJX/Brooke.webp", "alt": ""}
+thumbnailSource: "listing"
+listingRank: 16
+excerpt: "On August 2, 2026, Brooke and Matt enjoyed a private offshore fishing charter from Puerto Los Cabos Marina in San José del Cabo. A trolling strike led to a memorable mahi-mahi catch and a lesson in patience, technique, and teamwork."
+excerptSource: "listing-or-rss"
+format: "html"
+draft: false
+originalHead: ["<title>Mahi-Mahi Fishing Report | San José del Cabo, August 2026</title>", "<link href=\"https://fish-cabo.com/fishing-reports/mahi-mahi-fishing-san-jose-del-cabo-august-2026\" rel=\"canonical\"/>", "<meta content=\"EXOTIC FISH CABO\" property=\"og:site_name\"/>", "<meta content=\"Mahi-Mahi Fishing Report | San José del Cabo, August 2026\" property=\"og:title\"/>", "<meta content=\"40.7207559\" property=\"og:latitude\"/>", "<meta content=\"-74.00076130000002\" property=\"og:longitude\"/>", "<meta content=\"San José del Cabo\" property=\"og:locality\"/>", "<meta content=\"BCS\" property=\"og:region\"/>", "<meta content=\"Mexico\" property=\"og:country-name\"/>", "<meta content=\"https://fish-cabo.com/fishing-reports/mahi-mahi-fishing-san-jose-del-cabo-august-2026\" property=\"og:url\"/>", "<meta content=\"article\" property=\"og:type\"/>", "<meta content=\"Brooke landed a mahi-mahi on an August 2, 2026 private charter from Puerto Los Cabos Marina. Discover the fishing story and offshore trolling tips.\" property=\"og:description\"/>", "<meta content=\"http://static1.squarespace.com/static/6911316472567617bebc28b5/691151fb652db2259d96541d/6a6f8b2c1192ff2a85832e8e/1792770506454/Brooke.webp?format=1500w\" property=\"og:image\"/>", "<meta content=\"1500\" property=\"og:image:width\"/>", "<meta content=\"1000\" property=\"og:image:height\"/>", "<meta content=\"Mahi-Mahi Fishing Report | San José del Cabo, August 2026\" itemprop=\"name\"/>", "<meta content=\"https://fish-cabo.com/fishing-reports/mahi-mahi-fishing-san-jose-del-cabo-august-2026\" itemprop=\"url\"/>", "<meta content=\"Brooke landed a mahi-mahi on an August 2, 2026 private charter from Puerto Los Cabos Marina. Discover the fishing story and offshore trolling tips.\" itemprop=\"description\"/>", "<meta content=\"http://static1.squarespace.com/static/6911316472567617bebc28b5/691151fb652db2259d96541d/6a6f8b2c1192ff2a85832e8e/1792770506454/Brooke.webp?format=1500w\" itemprop=\"thumbnailUrl\"/>", "<meta content=\"http://static1.squarespace.com/static/6911316472567617bebc28b5/691151fb652db2259d96541d/6a6f8b2c1192ff2a85832e8e/1792770506454/Brooke.webp?format=1500w\" itemprop=\"image\"/>", "<meta content=\"EXOTIC FISH-CABO\" itemprop=\"author\"/>", "<meta content=\"2026-08-02T11:26:57-0700\" itemprop=\"datePublished\"/>", "<meta content=\"2026-10-23T08:48:26-0700\" itemprop=\"dateModified\"/>", "<meta content=\"Mahi-Mahi Fishing Report – San José del Cabo, August 2026\" itemprop=\"headline\"/>", "<meta content=\"EXOTIC FISH CABO\" itemprop=\"publisher\"/>", "<meta content=\"Mahi-Mahi Fishing Report | San José del Cabo, August 2026\" name=\"twitter:title\"/>", "<meta content=\"http://static1.squarespace.com/static/6911316472567617bebc28b5/691151fb652db2259d96541d/6a6f8b2c1192ff2a85832e8e/1792770506454/Brooke.webp?format=1500w\" name=\"twitter:image\"/>", "<meta content=\"https://fish-cabo.com/fishing-reports/mahi-mahi-fishing-san-jose-del-cabo-august-2026\" name=\"twitter:url\"/>", "<meta content=\"summary\" name=\"twitter:card\"/>", "<meta content=\"Brooke landed a mahi-mahi on an August 2, 2026 private charter from Puerto Los Cabos Marina. Discover the fishing story and offshore trolling tips.\" name=\"twitter:description\"/>", "<meta content=\"Brooke landed a mahi-mahi on an August 2, 2026 private charter from Puerto Los Cabos Marina. Discover the fishing story and offshore trolling tips.\" name=\"description\"/>", "<script type=\"application/ld+json\">{\"url\":\"https://fish-cabo.com\",\"name\":\"EXOTIC FISH CABO\",\"description\":\"\",\"image\":\"//images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/ed1a80e6-474f-4efc-ad03-6795b1f1754b/logo+low-res+Fishing+San+Jose+del+Cabo.webp\",\"@context\":\"http://schema.org\",\"@type\":\"WebSite\"}</script>", "<script type=\"application/ld+json\">{\"name\":\"Mahi-Mahi Fishing Report | San Jos\\u00E9 del Cabo, August 2026\",\"url\":\"https://fish-cabo.com/fishing-reports/mahi-mahi-fishing-san-jose-del-cabo-august-2026\",\"datePublished\":\"2026-08-02T11:26:57-0700\",\"dateModified\":\"2026-10-23T08:48:26-0700\",\"headline\":\"Mahi-Mahi Fishing Report \\u2013 San Jos\\u00E9 del Cabo, August 2026\",\"author\":\"EXOTIC FISH-CABO\",\"publisher\":{\"name\":\"EXOTIC FISH CABO\",\"logo\":{\"@type\":\"ImageObject\",\"url\":\"https://static1.squarespace.com/static/6911316472567617bebc28b5/t/69153b5b52d922227788c6b9/1792969125197/\"},\"@context\":\"http://schema.org\",\"@type\":\"Organization\"},\"image\":\"http://static1.squarespace.com/static/6911316472567617bebc28b5/691151fb652db2259d96541d/6a6f8b2c1192ff2a85832e8e/1792770506454/Brooke.webp?format=1500w\",\"@context\":\"http://schema.org\",\"@type\":\"Article\"}</script>", "<script type=\"application/ld+json\">\n{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"LocalBusiness\",\n  \"@id\": \"https://fish-cabo.com/#business\",\n  \"name\": \"Exotic Fish Cabo\",\n  \"alternateName\": [\"Fish Cabo\", \"Fish-Cabo\"],\n  \"url\": \"https://fish-cabo.com/\",\n  \"description\": \"Private sportfishing charters departing from Puerto Los Cabos Marina in San José del Cabo, Mexico: marlin, tuna, dorado, wahoo and roosterfish. Family friendly.\",\n  \"telephone\": \"+52-624-122-3506\",\n  \"email\": \"contact@fish-cabo.com\",\n  \"image\": \"https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/1762994227375-8V5FEBCX5CV3KU2EBTP4/Marylou+Fishing+San+Jose+del+Cabo.webp\",\n  \"logo\": \"https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/ed1a80e6-474f-4efc-ad03-6795b1f1754b/logo+low-res+Fishing+San+Jose+del+Cabo.webp\",\n  \"priceRange\": \"$350-$600+\",\n  \"address\": {\n    \"@type\": \"PostalAddress\",\n    \"streetAddress\": \"Bd Tiburón, La Playa\",\n    \"addressLocality\": \"San José del Cabo\",\n    \"addressRegion\": \"Baja California Sur\",\n    \"postalCode\": \"23403\",\n    \"addressCountry\": \"MX\"\n  },\n  \"geo\": { \"@type\": \"GeoCoordinates\", \"latitude\": 23.0600625, \"longitude\": -109.6706875 },\n  \"hasMap\": \"https://maps.app.goo.gl/d3TAakiLjgiS9kNM7\",\n  \"areaServed\": [\n    { \"@type\": \"City\", \"name\": \"San José del Cabo\" },\n    { \"@type\": \"City\", \"name\": \"Cabo San Lucas\" }\n  ],\n  \"sameAs\": [\n    \"https://www.instagram.com/exoticfishcabo/\",\n    \"https://www.youtube.com/@Exoticpechemexiquechannel\",\n    \"https://www.facebook.com/pechemexique/\",\n    \"https://www.tripadvisor.com/Attraction_Review-g152516-d9569970-Reviews-Exotic_Fish_Cabo_Sportfishing_Charter-San_Jose_del_Cabo_Los_Cabos_Baja_California.html\",\n    \"https://x.com/pechemexique/\",\n    \"https://www.yelp.com/biz/exotic-fish-cabo-san-jos%C3%A9-del-cabo-3\",\n    \"https://www.threads.com/@exoticfishcabo\"\n  ]\n}\n</script>"]
+---
+<article>
+
+
+
+<h1>Mahi-Mahi Fishing Report – San José del Cabo, August 2026</h1>
+
+
+
+<a href="/fishing-reports/category/Fishing%20Report">Fishing Report</a>
+
+
+<time datetime="2026-08-02">
+Aug 2
+</time>
+Written by <a href="/fishing-reports?author=69113037595a20384a76acde">EXOTIC FISH-CABO</a>
+
+
+
+
+
+<h2>Brooke's Mahi-Mahi Catch – An Offshore Fishing Experience</h2><p>On August 2, 2026, Brooke and her husband Matt joined Exotic Fish Cabo for a private offshore fishing charter departing from Puerto Los Cabos Marina in San José del Cabo.</p><p>Their morning turned into a memorable fishing experience when Brooke hooked a beautiful mahi-mahi, also known as dorado, while trolling in offshore waters.</p><p>After the strike, the fish made several powerful runs. Brooke worked to maintain steady pressure while Matt encouraged her throughout the fight.</p><p>With assistance from the crew, she successfully brought the mahi-mahi aboard. Its distinctive blue, green, and golden colors made the moment even more memorable.</p><p>For Brooke and Matt, the highlight was not simply catching a fish. It was sharing an exciting experience together on the waters of Los Cabos.</p><h2>Offshore Trolling for Mahi-Mahi in San José del Cabo</h2><p>Trolling is a common technique for targeting mahi-mahi in the offshore waters around San José del Cabo.</p><p>By moving fishing lines through productive areas, anglers can cover water while searching for actively feeding fish.</p><p>Mahi-mahi are known for their speed, striking colors, and energetic fights. They often respond aggressively when feeding, but successfully landing one still requires patience and proper rod control.</p><p>Brooke's catch illustrates an important part of offshore fishing: an initial strike is only the beginning. Maintaining consistent line pressure and responding carefully to a fish's changes in direction can make a significant difference during the fight.</p><h2>What Anglers Should Know About August Mahi-Mahi Fishing</h2><p>August is part of the warm-water fishing season in Los Cabos, when mahi-mahi may be encountered in offshore waters.</p><p>Their location and activity can change with water temperature, currents, floating debris, and the availability of baitfish.</p><p>For anglers planning a summer fishing charter, three practical considerations are especially useful:</p><ul><li><p><strong>Fishing conditions:</strong> Offshore water clarity, currents, and bait activity can influence where fish are found.</p></li><li><p><strong>Fishing technique:</strong> Trolling is one option for covering offshore water and searching for active mahi-mahi.</p></li><li><p><strong>Realistic expectations:</strong> A successful catch on one charter does not predict what will happen on another day.</p></li></ul><p>Every fishing trip is different, and catches are never guaranteed.</p><h2>Trip Highlights</h2><ul><li><p><strong>Date:</strong> August 2, 2026</p></li><li><p><strong>Departure:</strong> Puerto Los Cabos Marina, San José del Cabo</p></li><li><p><strong>Guests:</strong> Brooke and Matt</p></li><li><p><strong>Angler:</strong> Brooke</p></li><li><p><strong>Species caught:</strong> Mahi-mahi (dorado)</p></li><li><p><strong>Fishing technique:</strong> Offshore trolling</p></li><li><p><strong>Fishing area:</strong> Offshore waters near San José del Cabo</p></li><li><p><strong>Highlight:</strong> Brooke successfully landed a colorful mahi-mahi after several strong runs</p></li><li><p><strong>Experience:</strong> Private offshore fishing charter</p></li></ul><h2>Plan Your Own Fishing Adventure in San José del Cabo</h2><p>Interested in experiencing mahi-mahi fishing in Los Cabos?</p><p>Explore our <a href="https://fish-cabo.com/fishing-calendar">Fishing Calendar</a> to understand typical seasonal fishing opportunities, or discover our <a href="https://fish-cabo.com/fishing-charters">Private Fishing Charters</a> to compare our available 6-hour and 8-hour trips.</p><p>All Exotic Fish Cabo fishing charters depart exclusively from Puerto Los Cabos Marina in San José del Cabo.</p><p>Whether you're a first-time angler or an experienced fisherman, choosing the right trip and understanding seasonal conditions can help you plan your offshore fishing experience.</p>
+
+
+
+
+
+
+<a href="/fishing-reports/tag/Marlin%20fishing" rel="tag">Marlin fishing</a><a href="/fishing-reports/tag/Tuna%20Fishing" rel="tag">Tuna Fishing</a><a href="/fishing-reports/tag/Mahi-Mahi%20fishing" rel="tag">Mahi-Mahi fishing</a><a href="/fishing-reports/tag/Rosterfish%20fishing" rel="tag">Rosterfish fishing</a><a href="/fishing-reports/tag/Wahoo%20fishing" rel="tag">Wahoo fishing</a><a href="/fishing-reports/tag/Grouper%20fishing" rel="tag">Grouper fishing</a><a href="/fishing-reports/tag/Sail%20Fish%20fishing" rel="tag">Sail Fish fishing</a><a href="/fishing-reports/tag/Swordfish%20fishing" rel="tag">Swordfish fishing</a><a href="/fishing-reports/tag/Bottom%20fishing" rel="tag">Bottom fishing</a><a href="/fishing-reports/tag/jigging" rel="tag">jigging</a><a href="/fishing-reports/tag/Tournament%20fishing" rel="tag">Tournament fishing</a>
+
+
+<a href="/fishing-reports?author=69113037595a20384a76acde">
+
+<img alt="" data-ext="https://images.squarespace-cdn.com/content/v2/namespaces/memberAccountAvatars/libraries/69113037595a20384a76acde/7369365e-53a6-4827-a5f7-e9ab40202a55/thirdPartyMemberAvatar-69113037595a20384a76acde-05d37562-5925-4737-a06c-ad6b5d6b9050?format=300w"/>
+
+EXOTIC FISH-CABO
+</a>
+
+
+<section>
+
+
+
+
+</section>
+
+</article>
+
+<section>
+<a href="/fishing-reports/san-jose-del-cabo-fishing-log-july-27-august-2-2026">
+
+
+
+
+Previous
+Previous
+<h2>San Jose del Cabo Fishing Log — July 27–August 2, 2026</h2>
+
+</a>
+<a href="/fishing-reports/sansan-jose-del-cabo-fishing-log-july-20-26-2026">
+
+Next
+Next
+<h2>San Jose del Cabo Fishing Log — July 20–26, 2026</h2>
+
+
+
+
+</a>
+</section>

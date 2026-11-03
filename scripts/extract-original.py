@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup, NavigableString, Comment
 SRC = '/home/claude/export/site/pages/'
 OUT = '/home/claude/fish-cabo/src/data/original/'
 CDN = 'https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/'
-KEEP = {'a': ['href', 'target', 'rel'], 'img': ['alt', 'data-path'], 'iframe': ['src', 'title', 'allow', 'allowfullscreen'], 'time': ['datetime'], 'source': [], 'video': [], 'td': ['colspan', 'rowspan'], 'th': ['colspan', 'rowspan']}
+KEEP = {'a': ['href', 'target', 'rel'], 'img': ['alt', 'data-path', 'data-ext'], 'iframe': ['src', 'title', 'allow', 'allowfullscreen'], 'time': ['datetime'], 'source': [], 'video': [], 'td': ['colspan', 'rowspan'], 'th': ['colspan', 'rowspan']}
 UNWRAP = {'span', 'div', 'font'}
 
 def clean(node):
@@ -17,6 +17,7 @@ def clean(node):
     for im in node.find_all('img'):
         pth = path_of(im.get('data-src') or im.get('data-image') or im.get('src'))
         if pth: im['data-path'] = pth
+        elif im.get('src') or im.get('data-src'): im['data-ext'] = (im.get('data-src') or im.get('src'))
     for ifr in node.find_all('iframe'):
         if ifr.get('data-src') and not ifr.get('src'): ifr['src'] = ifr['data-src']
     for el in node.find_all(True):
@@ -28,7 +29,7 @@ def clean(node):
 
 def path_of(url):
     url = (url or '').split('?')[0]
-    return url.split('/6911316472567617bebc28b5/', 1)[1] if '/6911316472567617bebc28b5/' in url else None
+    return url.split('/6911316472567617bebc28b5/', 1)[1].rstrip('/') if '/6911316472567617bebc28b5/' in url else None
 
 def grid_areas(soup):
     areas = {}
@@ -78,7 +79,9 @@ def page(name, slug):
                 blocks.append({'kind': kind, 'html': clean(content), 'ga': [0, 0, 0, 0], 'dom': 0})
         blocks.sort(key=lambda b: (b['ga'][0], b['ga'][1], b['dom']))
         sections.append({'theme': sec.get('data-section-theme', ''), 'bg': {'path': path_of(bg.get('data-src') or bg.get('src')), 'alt': bg.get('alt', '')} if bg else None, 'blocks': blocks})
-    out = {'lang': soup.html.get('lang', 'en-US'), 'head': head_tags, 'bodyLd': body_ld, 'sections': sections}
+    raw = open(SRC + name).read()
+    vids = list(dict.fromkeys(re.findall(r'https?:(?:\\/|/)(?:\\/|/)www\.youtube\.com(?:\\/|/)embed(?:\\/|/)([\w-]{6,})', raw)))
+    out = {'lang': soup.html.get('lang', 'en-US'), 'head': head_tags, 'bodyLd': body_ld, 'sections': sections, 'videos': vids}
     json.dump(out, open(OUT + slug + '.json', 'w'), ensure_ascii=False, indent=1)
     print(slug, len(sections), 'sections', sum(len(s['blocks']) for s in sections), 'blocks', len(head_tags), 'head tags', len(body_ld), 'body ld', 'no-area', sum(1 for s in sections for b in s['blocks'] if b['ga'][0] == 999))
 

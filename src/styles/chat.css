@@ -1,0 +1,274 @@
+
+#efc-chat-bubble {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+  border-radius: 50%;
+  box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
+  cursor: pointer;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: efc-pulse 2s infinite;
+}
+#efc-chat-bubble:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 30px rgba(37, 211, 102, 0.6);
+}
+@keyframes efc-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+  70% { box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+}
+#efc-chat-bubble svg {
+  width: 32px;
+  height: 32px;
+  fill: white;
+}
+
+#efc-chat-window {
+  position: fixed;
+  bottom: 100px;
+  right: 24px;
+  width: 380px;
+  max-width: calc(100vw - 48px);
+  height: 540px;
+  max-height: calc(100vh - 140px);
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  z-index: 99998;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  border: 1px solid #e0e0e0;
+}
+#efc-chat-window.active { display: flex; }
+
+#efc-header {
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+  color: white;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+#efc-header img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.3);
+  object-fit: cover;
+}
+#efc-header-text h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+#efc-header-text p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  opacity: 0.9;
+}
+#efc-lang-selector {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+#efc-lang-selector button {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 600;
+}
+#efc-lang-selector button:hover, #efc-lang-selector button.active {
+  background: white;
+  color: #128C7E;
+}
+#efc-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+  margin-left: 6px;
+}
+#efc-close:hover { background: rgba(255,255,255,0.2); }
+
+#efc-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background: #f0f2f5;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.efc-msg {
+  max-width: 88%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.45;
+  word-wrap: break-word;
+  animation: efc-fade-in 0.3s ease;
+}
+@keyframes efc-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.efc-bot {
+  background: white;
+  color: #111;
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.efc-user {
+  background: #25D366;
+  color: white;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+.efc-time {
+  font-size: 10px;
+  color: #999;
+  margin-top: 4px;
+  text-align: right;
+}
+.efc-bot .efc-time { color: #aaa; text-align: left; }
+
+.efc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.efc-btn {
+  background: #fff;
+  border: 1px solid #25D366;
+  color: #128C7E;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-block;
+}
+.efc-btn:hover {
+  background: #25D366;
+  color: white;
+}
+.efc-btn-primary {
+  background: #25D366;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  font-size: 13px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  margin-top: 8px;
+  cursor: pointer;
+}
+.efc-btn-primary:hover { background: #128C7E; }
+
+#efc-input-area {
+  padding: 12px 16px;
+  background: white;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+#efc-input {
+  flex: 1;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  padding: 10px 16px;
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+}
+#efc-input:focus { border-color: #25D366; }
+#efc-send {
+  width: 40px;
+  height: 40px;
+  background: #25D366;
+  border: none;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+#efc-send:hover { background: #128C7E; }
+#efc-send svg { width: 20px; height: 20px; fill: white; }
+
+.efc-typing {
+  display: flex;
+  gap: 4px;
+  padding: 12px 14px;
+  background: white;
+  border-radius: 18px;
+  border-bottom-left-radius: 4px;
+  align-self: flex-start;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.efc-typing span {
+  width: 8px;
+  height: 8px;
+  background: #999;
+  border-radius: 50%;
+  animation: efc-bounce 1.4s infinite ease-in-out both;
+}
+.efc-typing span:nth-child(1) { animation-delay: -0.32s; }
+.efc-typing span:nth-child(2) { animation-delay: -0.16s; }
+@keyframes efc-bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+#efc-messages::-webkit-scrollbar { width: 6px; }
+#efc-messages::-webkit-scrollbar-track { background: transparent; }
+#efc-messages::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
+@media (max-width: 480px) {
+  #efc-chat-window {
+    width: 100%;
+    max-width: 100%;
+    right: 0;
+    bottom: 0;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+  #efc-chat-bubble { bottom: 16px; right: 16px; }
+}
+
+/* Cloudflare version: keep the bubble above the mobile BOOK NOW bar */
+@media (max-width: 800px) { #efc-chat-bubble { bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important; right: 14px !important; width: 54px; height: 54px; } }

@@ -2,9 +2,94 @@
 title: "San Jose del Cabo Fishing Log — October 12–18, 2026"
 seoTitle: "Fishing Charters San Jose del Cabo | Oct 12–18, 2026"
 description: "Fishing charters San Jose del Cabo update, Oct 12–18, 2026: tuna at Vinorama, snapper and grouper near San Luis, winds, currents and limited bait."
-date: 2026-10-18
+date: 2026-10-19
 category: "San Jose del Cabo Fishing Log"
-image: { src: "1792368523318-BWMJG78P4VUPDDURU2LP/Weekly+Fishing+Log+Data+Banner.webp", alt: "San Jose del Cabo Fishing Log — October 12–18, 2026", width: 1507, height: 1044 }
+tags: ["bottom fishing", "snapper fishing", "yellowfin tuna fishing", "Grouper fishing", "Marlin fishing", "Swordfish fishing", "Mahi-Mahi fishing", "Wahoo fishing"]
+author: "EXOTIC FISH-CABO"
+image: {"src": "1792370269004-2IYWHB1TV9VQO3C9V0RP/Weekly+Fishing+Log+Data+Banner.webp", "alt": "Weekly Fishing Log Data Banner.webp"}
+thumbnail: {"src": "1792368523318-BWMJG78P4VUPDDURU2LP/Weekly+Fishing+Log+Data+Banner.webp", "alt": ""}
+thumbnailSource: "listing"
+listingRank: 1
 excerpt: "Yellowfin tuna remained active around Vinorama early in the week, while snapper and grouper offered alternatives around San Luis, Iman Bank and nearby rocky grounds. Strong winds, challenging currents and declining live sardine supplies made fishing increasingly difficult toward the weekend."
-imported: false
+excerptSource: "listing-or-rss"
+format: "html"
+draft: false
+originalHead: ["<title>Fishing Charters San Jose del Cabo | Oct 12–18, 2026</title>", "<link href=\"https://fish-cabo.com/fishing-reports/san-jose-del-cabo-fishing-log-october-12-18-2026\" rel=\"canonical\"/>", "<meta content=\"EXOTIC FISH CABO\" property=\"og:site_name\"/>", "<meta content=\"Fishing Charters San Jose del Cabo | Oct 12–18, 2026\" property=\"og:title\"/>", "<meta content=\"40.7207559\" property=\"og:latitude\"/>", "<meta content=\"-74.0007613\" property=\"og:longitude\"/>", "<meta content=\"\" property=\"og:locality\"/>", "<meta content=\"https://fish-cabo.com/fishing-reports/san-jose-del-cabo-fishing-log-october-12-18-2026\" property=\"og:url\"/>", "<meta content=\"article\" property=\"og:type\"/>", "<meta content=\"Fishing charters San Jose del Cabo update, Oct 12–18, 2026: tuna at Vinorama, snapper and grouper near San Luis, winds, currents and limited bait.\" property=\"og:description\"/>", "<meta content=\"http://static1.squarespace.com/static/6911316472567617bebc28b5/691151fb652db2259d96541d/6ae2909606582469ab9fff8b/1793234777234/Weekly+Fishing+Log+Data+Banner.webp?format=1500w\" property=\"og:image\"/>", "<meta content=\"1500\" property=\"og:image:width\"/>", "<meta content=\"1039\" property=\"og:image:height\"/>", "<meta content=\"Fishing Charters San Jose del Cabo | Oct 12–18, 2026\" itemprop=\"name\"/>", "<meta content=\"https://fish-cabo.com/fishing-reports/san-jose-del-cabo-fishing-log-october-12-18-2026\" itemprop=\"url\"/>", "<meta content=\"Fishing charters San Jose del Cabo update, Oct 12–18, 2026: tuna at Vinorama, snapper and grouper near San Luis, winds, currents and limited bait.\" itemprop=\"description\"/>", "<meta content=\"http://static1.squarespace.com/static/6911316472567617bebc28b5/691151fb652db2259d96541d/6ae2909606582469ab9fff8b/1793234777234/Weekly+Fishing+Log+Data+Banner.webp?format=1500w\" itemprop=\"thumbnailUrl\"/>", "<meta content=\"http://static1.squarespace.com/static/6911316472567617bebc28b5/691151fb652db2259d96541d/6ae2909606582469ab9fff8b/1793234777234/Weekly+Fishing+Log+Data+Banner.webp?format=1500w\" itemprop=\"image\"/>", "<meta content=\"EXOTIC FISH-CABO\" itemprop=\"author\"/>", "<meta content=\"2026-10-19T17:26:32-0700\" itemprop=\"datePublished\"/>", "<meta content=\"2026-10-28T17:46:17-0700\" itemprop=\"dateModified\"/>", "<meta content=\"San Jose del Cabo Fishing Log — October 12–18, 2026\" itemprop=\"headline\"/>", "<meta content=\"EXOTIC FISH CABO\" itemprop=\"publisher\"/>", "<meta content=\"Fishing Charters San Jose del Cabo | Oct 12–18, 2026\" name=\"twitter:title\"/>", "<meta content=\"http://static1.squarespace.com/static/6911316472567617bebc28b5/691151fb652db2259d96541d/6ae2909606582469ab9fff8b/1793234777234/Weekly+Fishing+Log+Data+Banner.webp?format=1500w\" name=\"twitter:image\"/>", "<meta content=\"https://fish-cabo.com/fishing-reports/san-jose-del-cabo-fishing-log-october-12-18-2026\" name=\"twitter:url\"/>", "<meta content=\"summary\" name=\"twitter:card\"/>", "<meta content=\"Fishing charters San Jose del Cabo update, Oct 12–18, 2026: tuna at Vinorama, snapper and grouper near San Luis, winds, currents and limited bait.\" name=\"twitter:description\"/>", "<meta content=\"Fishing charters San Jose del Cabo update, Oct 12–18, 2026: tuna at Vinorama, snapper and grouper near San Luis, winds, currents and limited bait.\" name=\"description\"/>", "<script type=\"application/ld+json\">{\"url\":\"https://fish-cabo.com\",\"name\":\"EXOTIC FISH CABO\",\"description\":\"\",\"image\":\"//images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/ed1a80e6-474f-4efc-ad03-6795b1f1754b/logo+low-res+Fishing+San+Jose+del+Cabo.webp\",\"@context\":\"http://schema.org\",\"@type\":\"WebSite\"}</script>", "<script type=\"application/ld+json\">{\"name\":\"Fishing Charters San Jose del Cabo | Oct 12\\u201318, 2026\",\"url\":\"https://fish-cabo.com/fishing-reports/san-jose-del-cabo-fishing-log-october-12-18-2026\",\"datePublished\":\"2026-10-19T17:26:32-0700\",\"dateModified\":\"2026-10-28T17:46:17-0700\",\"headline\":\"San Jose del Cabo Fishing Log \\u2014 October 12\\u201318, 2026\",\"author\":\"EXOTIC FISH-CABO\",\"publisher\":{\"name\":\"EXOTIC FISH CABO\",\"logo\":{\"@type\":\"ImageObject\",\"url\":\"https://static1.squarespace.com/static/6911316472567617bebc28b5/t/69153b5b52d922227788c6b9/1792969125197/\"},\"@context\":\"http://schema.org\",\"@type\":\"Organization\"},\"image\":\"http://static1.squarespace.com/static/6911316472567617bebc28b5/691151fb652db2259d96541d/6ae2909606582469ab9fff8b/1793234777234/Weekly+Fishing+Log+Data+Banner.webp?format=1500w\",\"@context\":\"http://schema.org\",\"@type\":\"Article\"}</script>", "<script type=\"application/ld+json\">\n{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"LocalBusiness\",\n  \"@id\": \"https://fish-cabo.com/#business\",\n  \"name\": \"Exotic Fish Cabo\",\n  \"alternateName\": [\"Fish Cabo\", \"Fish-Cabo\"],\n  \"url\": \"https://fish-cabo.com/\",\n  \"description\": \"Private sportfishing charters departing from Puerto Los Cabos Marina in San José del Cabo, Mexico: marlin, tuna, dorado, wahoo and roosterfish. Family friendly.\",\n  \"telephone\": \"+52-624-122-3506\",\n  \"email\": \"contact@fish-cabo.com\",\n  \"image\": \"https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/1762994227375-8V5FEBCX5CV3KU2EBTP4/Marylou+Fishing+San+Jose+del+Cabo.webp\",\n  \"logo\": \"https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/ed1a80e6-474f-4efc-ad03-6795b1f1754b/logo+low-res+Fishing+San+Jose+del+Cabo.webp\",\n  \"priceRange\": \"$350-$600+\",\n  \"address\": {\n    \"@type\": \"PostalAddress\",\n    \"streetAddress\": \"Bd Tiburón, La Playa\",\n    \"addressLocality\": \"San José del Cabo\",\n    \"addressRegion\": \"Baja California Sur\",\n    \"postalCode\": \"23403\",\n    \"addressCountry\": \"MX\"\n  },\n  \"geo\": { \"@type\": \"GeoCoordinates\", \"latitude\": 23.0600625, \"longitude\": -109.6706875 },\n  \"hasMap\": \"https://maps.app.goo.gl/d3TAakiLjgiS9kNM7\",\n  \"areaServed\": [\n    { \"@type\": \"City\", \"name\": \"San José del Cabo\" },\n    { \"@type\": \"City\", \"name\": \"Cabo San Lucas\" }\n  ],\n  \"sameAs\": [\n    \"https://www.instagram.com/exoticfishcabo/\",\n    \"https://www.youtube.com/@Exoticpechemexiquechannel\",\n    \"https://www.facebook.com/pechemexique/\",\n    \"https://www.tripadvisor.com/Attraction_Review-g152516-d9569970-Reviews-Exotic_Fish_Cabo_Sportfishing_Charter-San_Jose_del_Cabo_Los_Cabos_Baja_California.html\",\n    \"https://x.com/pechemexique/\",\n    \"https://www.yelp.com/biz/exotic-fish-cabo-san-jos%C3%A9-del-cabo-3\",\n    \"https://www.threads.com/@exoticfishcabo\"\n  ]\n}\n</script>"]
 ---
+<article>
+
+
+
+<h1>San Jose del Cabo Fishing Log — October 12–18, 2026</h1>
+
+
+
+<a href="/fishing-reports/category/San%20Jose%20del%20Cabo%20Fishing%20Log">San Jose del Cabo Fishing Log</a>
+
+
+<time datetime="2026-10-19">
+Oct 19
+</time>
+Written by <a href="/fishing-reports?author=69113037595a20384a76acde">EXOTIC FISH-CABO</a>
+
+
+
+
+
+
+
+
+<img alt="Weekly Fishing Log Data Banner.webp" data-path="1792370269004-2IYWHB1TV9VQO3C9V0RP/Weekly+Fishing+Log+Data+Banner.webp"/>
+
+
+
+
+<h2><strong> Yellowfin Tuna at Vinorama and Bottom Fishing Opportunities as Wind and Bait Shortages Affect San Jose del Cabo</strong></h2><p>Fishing conditions around San José del Cabo were mixed during October 12–18, 2026. Yellowfin tuna remained active at Vinorama during the first part of the week, while rocky fishing grounds around San Luis, Iman Bank, El 25 and La Fortuna produced snapper and grouper.</p><p>However, stronger winds, difficult currents and declining live bait availability created increasingly challenging conditions toward the weekend.</p><p>Offshore tournament activity also influenced the week's regional fishing patterns, with exceptional tuna catches demonstrating the presence of large fish around the Gordo Banks.</p><h2>Weather and Ocean Conditions</h2><p>Weather conditions became more challenging as the week progressed.</p><p>Strong winds affected fishing grounds on Thursday and Friday, October 15–16, with significant rainfall reported on Friday. Strong currents also complicated bottom fishing around deeper rocky structures.</p><p><strong>Water temperatures averaged approximately 89–90°F (32°C)</strong> early in the week, before declining to around <strong>87–88°F (31°C)</strong> in some areas following the windy conditions.</p><p>Live sardines became increasingly difficult to obtain toward the weekend. Dead sardines and squid provided alternative bait options.</p><p>These changes coincided with a slowdown in yellowfin tuna activity, although the available observations do not establish a single cause for the reduced catches.</p><h2>Yellowfin Tuna — Vinorama</h2><p>Vinorama produced some of the week's more consistent yellowfin tuna opportunities during the first several days.</p><p>Most reported fish weighed approximately <strong>30–50 pounds</strong>, with both live and dead sardines producing results.</p><p>Activity became less consistent later in the week as winds increased and live bait supplies declined.</p><p>By the weekend, regional reports described a substantial reduction in tuna catches.</p><p>For anglers interested in yellowfin tuna, this period illustrated how quickly fishing opportunities can change when bait availability, currents and weather conditions become less favorable.</p><h2>Gordo Banks — Larger Yellowfin Tuna</h2><p>The Inner and Outer Gordo Banks attracted considerable attention during the week's offshore tournament activity.</p><p>Several exceptionally large yellowfin tuna were recorded at tournament weigh-ins, including a fish weighing approximately <strong>260 pounds</strong>.</p><p>Other notable tournament tuna weighed well over 170 pounds.</p><p>Reports suggested that some of these fish came from the Inner and Outer Gordo Banks, although their precise capture locations were not independently confirmed.</p><p>These tournament results demonstrated the presence of large yellowfin tuna in the broader San José del Cabo fishing area.</p><p>However, such catches should not be interpreted as typical results for recreational fishing charters.</p><h2>San Luis — Snapper and Grouper</h2><p>Rocky fishing grounds around San Luis provided an alternative when offshore tuna fishing became less predictable.</p><p>Snapper and grouper were among the main species reported.</p><p>One particularly productive morning outing produced <strong>four grouper and two snapper using jigs</strong>, with additional hooked fish lost around the rocks.</p><p>This was an individual result, not an indication of average catches.</p><p>The strong currents reported during the week made fishing these structures more difficult, particularly when attempting to keep bait or jigs close to the bottom.</p><h2>Iman Bank, El 25 and La Fortuna — Bottom Fishing</h2><p>Additional bottom-fishing opportunities were documented around Iman Bank, El 25 and La Fortuna.</p><p>Reported catches included several snapper varieties:</p><ul><li><p>Dogtooth snapper</p></li><li><p>Mullet snapper</p></li><li><p>Barred snapper</p></li><li><p>Yellow snapper</p></li><li><p>Leopard grouper</p></li></ul><p>These rocky areas provided variety during a week when tuna fishing became increasingly inconsistent.</p><p>Successful bottom fishing depended on currents, fishing depth and the ability to present bait or jigs effectively around the structure.</p><h2>Marlin, Sailfish, Dorado and Wahoo</h2><p>A limited number of striped marlin and sailfish were reported caught while trolling rigged ballyhoo.</p><p>The offshore tournament also produced a blue marlin weighing approximately <strong>350 pounds</strong>.</p><p>Dorado and wahoo activity remained limited.</p><p>Some fishing efforts focused on trolling ballyhoo and diving lures, but the regional report did not document any landed dorado or wahoo during the week.</p><p>A wahoo strike was reported around San Luis on October 18, although the fish was not landed.</p><p>These observations suggested that anglers targeting dorado or wahoo had fewer confirmed opportunities than those fishing for tuna, snapper or grouper.</p><h2>Fishing Conditions Summary</h2><p>Fishing Ground Species Reported Activity Vinorama Yellowfin tuna Moderate early-week activity, followed by a slowdown Inner Gordo Banks Yellowfin tuna Larger fish associated with tournament reports; exact locations uncertain Outer Gordo Banks Yellowfin tuna Tournament-related activity reported; precise catch locations unconfirmed San Luis Grouper, snapper Productive jig fishing reported on one morning outing Iman Bank Snapper, leopard grouper Mixed bottom-fishing opportunities El 25 Snapper, leopard grouper Bottom-fishing activity around rocky structures La Fortuna Snapper, leopard grouper5Mixed bottom-fishing opportunities</p><h2>Fishing Outlook</h2><p>The October 12–18 observations highlighted the importance of adapting fishing plans to daily conditions.</p><p>Vinorama remained a potential yellowfin tuna destination, but the late-week slowdown demonstrated that productive fishing grounds can become less consistent within a few days.</p><p>San Luis, Iman Bank, El 25 and La Fortuna offered alternatives for anglers interested in snapper and grouper.</p><p>Several factors were particularly important:</p><ul><li><p>Changing wind and sea conditions</p></li><li><p>Strong currents around rocky structures</p></li><li><p>Reduced availability of live sardines</p></li><li><p>Opportunities to use dead sardines, squid or jigs</p></li><li><p>Increased offshore fishing pressure during tournament periods</p></li></ul><p>Fishing activity can change quickly, and historical observations do not guarantee future results.</p><h2>Plan Your Private Fishing Charter</h2><p>Exotic Fish Cabo offers <strong>100% private fishing charters departing from Puerto Los Cabos Marina in San José del Cabo</strong>.</p><p>Our private 6-hour and 8-hour fishing trips allow guests to explore the rich fishing waters of the Sea of Cortez, with target species and fishing grounds selected according to conditions and individual preferences.</p><p>Whether you're interested in yellowfin tuna, snapper, grouper or seasonal offshore species, planning a private fishing experience offers flexibility.</p><p>Explore our <a href="https://fish-cabo.com/fishing-charters">fishing charters in San Jose del Cabo</a> or <a href="https://fish-cabo.com/contact">contact Exotic Fish Cabo</a> to discuss your preferred dates and fishing interests.</p><p><em>This fishing log summarizes documented conditions and reported fishing activity for October 12–18, 2026. Not all reported catches are attributable to Exotic Fish Cabo. Fishing results are never guaranteed.</em></p>
+
+
+
+
+
+
+<a href="/fishing-reports/tag/bottom%20fishing" rel="tag">bottom fishing</a><a href="/fishing-reports/tag/snapper%20fishing" rel="tag">snapper fishing</a><a href="/fishing-reports/tag/yellowfin%20tuna%20fishing" rel="tag">yellowfin tuna fishing</a><a href="/fishing-reports/tag/Grouper%20fishing" rel="tag">Grouper fishing</a><a href="/fishing-reports/tag/Marlin%20fishing" rel="tag">Marlin fishing</a><a href="/fishing-reports/tag/Swordfish%20fishing" rel="tag">Swordfish fishing</a><a href="/fishing-reports/tag/Mahi-Mahi%20fishing" rel="tag">Mahi-Mahi fishing</a><a href="/fishing-reports/tag/Wahoo%20fishing" rel="tag">Wahoo fishing</a>
+
+
+<a href="/fishing-reports?author=69113037595a20384a76acde">
+
+<img alt="" data-ext="https://images.squarespace-cdn.com/content/v2/namespaces/memberAccountAvatars/libraries/69113037595a20384a76acde/7369365e-53a6-4827-a5f7-e9ab40202a55/thirdPartyMemberAvatar-69113037595a20384a76acde-05d37562-5925-4737-a06c-ad6b5d6b9050?format=300w"/>
+
+EXOTIC FISH-CABO
+</a>
+
+
+<section>
+
+
+
+
+</section>
+
+</article>
+
+<section>
+<a href="/fishing-reports/san-jose-del-cabo-fishing-log-october-19-25-2026">
+
+
+
+
+Previous
+Previous
+<h2>San Jose del Cabo Fishing Log — October 19–25, 2026</h2>
+
+</a>
+<a href="/fishing-reports/san-jose-del-cabo-fishing-log-october-5-11-2026">
+
+Next
+Next
+<h2>San Jose del Cabo Fishing Log — October 5–11, 2026</h2>
+
+
+
+
+</a>
+</section>

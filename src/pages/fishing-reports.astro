@@ -1,0 +1,20 @@
+---
+// Fishing Reports listing: ORIGINAL head + intro text; post list generated (same markup as Squarespace) from the collection.
+import Base from '../layouts/Base.astro';
+import OriginalPage from '../components/OriginalPage.astro';
+import { PAGES } from '../lib/original';
+import { published, itemHtml, PER_PAGE } from '../lib/reports';
+import P from '../data/original/fishing-reports.json';
+const all = await published();
+const page1 = all.slice(0, PER_PAGE);
+const older = all.length > PER_PAGE;
+// keep Squarespace's original pagination URL while the first page lists the same posts
+const origHref = (P.sections[2].blocks[0].html.match(/href="(\/fishing-reports\?offset=\d+)"/) || [])[1];
+const sameFirstPage = origHref && P.sections[2].blocks[0].html.includes(`/fishing-reports/${page1[page1.length - 1].id}"`);
+const olderHref = sameFirstPage ? origHref : `/fishing-reports?offset=${page1[page1.length - 1]?.data.date.getTime()}`;
+const list = page1.map(itemHtml).join('') + (older ? `<nav><a href="${olderHref}" rel="next">Older Posts</a></nav>` : '');
+const page = { ...(P as any), sections: [P.sections[0], P.sections[1], { ...P.sections[2], blocks: [{ kind: 'html', html: list, ga: [0, 0, 0, 0], dom: 0 }] }] };
+---
+<Base original={page} solidHeader>
+  <OriginalPage page={page} slug="fishing-reports" />
+</Base>

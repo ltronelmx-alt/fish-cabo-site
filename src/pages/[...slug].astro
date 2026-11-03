@@ -1,0 +1,21 @@
+---
+// Every other original page (guides, species, grounds, boats, videos, legal, contact, FAQ…):
+// same URL, same content and SEO tags as fish-cabo.com — rendered with the new design.
+import Base from '../layouts/Base.astro';
+import OriginalPage from '../components/OriginalPage.astro';
+import type { Page } from '../lib/original';
+
+export function getStaticPaths() {
+  const files = import.meta.glob<{ default: Page }>('../data/original/**/*.json', { eager: true });
+  const CUSTOM = new Set(['home', 'fishing-charters', 'fishing-boats', 'fishing-reports']);
+  return Object.entries(files)
+    .map(([p, m]) => [p.replace('../data/original/', '').replace(/\.json$/, ''), m.default] as const)
+    .filter(([slug]) => !CUSTOM.has(slug) && !slug.startsWith('fishing-reports/'))
+    .map(([slug, page]) => ({ params: { slug }, props: { page, slug } }));
+}
+const { page, slug } = Astro.props;
+const heroFirst = !!page.sections[0] && (!!page.sections[0].bg || page.sections[0].blocks.some((b) => b.kind === 'img')) && page.sections[0].blocks.some((b) => /<h1[\s>]/.test(b.html || ''));
+---
+<Base original={page} solidHeader={!heroFirst}>
+  <OriginalPage page={page} slug={slug} />
+</Base>

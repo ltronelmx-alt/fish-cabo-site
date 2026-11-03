@@ -1,4 +1,106 @@
 {
+ "0002d7d6-a986-4141-8f6c-7e3301a0d951/spacious-decl-with-fighting-chair-on-a-30ft-cuddy-cabin-to-fish-san-jose-del-cabo": {
+  "width": 1200,
+  "height": 797,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1200
+  ]
+ },
+ "00765673-6042-4d8f-80ff-858cedb72afb/tuna-yellowfin-fishing-san-jose-del-cabo": {
+  "width": 275,
+  "height": 160,
+  "widths": [
+   275
+  ]
+ },
+ "0109b493-9700-4fc8-8848-ace8dd7069f8/fishing-san-jose-del-cabo-31ft": {
+  "width": 2382,
+  "height": 1550,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1500,
+   2000,
+   2382
+  ]
+ },
+ "018efeca-95a1-4544-81aa-116696e72863/38ft-2-fishing-san-jose-del-cabo": {
+  "width": 552,
+  "height": 832,
+  "widths": [
+   300,
+   500,
+   552
+  ]
+ },
+ "029e60f9-fcd6-499c-aefc-c3a18075ebe3/logo-cck-200-fishing-san-jose-del-cabo": {
+  "width": 1000,
+  "height": 1000,
+  "widths": [
+   300,
+   500,
+   750,
+   1000
+  ]
+ },
+ "0313d00f-e3a2-4e95-ade1-0f907ad0df5f/marlin-blue-fishing-san-jose-del-cabo": {
+  "width": 275,
+  "height": 160,
+  "widths": [
+   275
+  ]
+ },
+ "06c0e1a0-6d87-4563-9ec6-3af90acfbac9/tuna-skipjack-fishing-san-jose-del-cabo": {
+  "width": 275,
+  "height": 160,
+  "widths": [
+   275
+  ]
+ },
+ "079bdb5a-7a0a-446a-93b2-a07fd1330692/fishing-san-jose-del-cabo-for-rooster-fish": {
+  "width": 275,
+  "height": 160,
+  "widths": [
+   275
+  ]
+ },
+ "0ab97240-a3e8-454a-96d3-6871b25ab610/44ft-premium-flybridge-yacht-to-fish-san-jose-del-cabo": {
+  "width": 1200,
+  "height": 795,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1200
+  ]
+ },
+ "0d19c22e-4eaf-4d9b-9d66-065b8b2cacf9/english": {
+  "width": 1023,
+  "height": 1537,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1023
+  ]
+ },
+ "153a1739-42b7-4fa9-85ef-0c722f983b5d/29-ft-catamaran-center-console-seats": {
+  "width": 693,
+  "height": 926,
+  "widths": [
+   300,
+   500,
+   693
+  ]
+ },
  "158e4e69-b84b-4de9-a0c2-424e7466f23e/amberjack-fishing-san-jose-del-cabo": {
   "width": 1400,
   "height": 890,
@@ -10,6 +112,39 @@
    1400
   ]
  },
+ "1762993561565-K6QCF3O2GO3W8I3B83QF/30ft-cuddy-cabin-fishing-san-jose-del-cabo": {
+  "width": 1200,
+  "height": 796,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1200
+  ]
+ },
+ "1762993775191-A7GF6ATBWY0U3JW2IEU1/23-ft-fishing-san-jose-del-cabo": {
+  "width": 1092,
+  "height": 667,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1092
+  ]
+ },
+ "1762993859797-JMC2UCS93TEWURVBR40Y/26ft-super-panga-fishing-san-jose-del-cabo": {
+  "width": 1200,
+  "height": 796,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1200
+  ]
+ },
  "1762994227375-8V5FEBCX5CV3KU2EBTP4/marylou-fishing-san-jose-del-cabo": {
   "width": 631,
   "height": 894,
@@ -17,6 +152,16 @@
    300,
    500,
    631
+  ]
+ },
+ "1762994291111-Q396QS1RKMPCCA04ZS0C/alana-fishing-san-jose-del-cabo": {
+  "width": 1000,
+  "height": 627,
+  "widths": [
+   300,
+   500,
+   750,
+   1000
   ]
  },
  "1762994991264-D2BNOZJMHWYN2OIPCUCX/fishing-gordo-banks-on-a-panga-for-marlin": {
@@ -27,6 +172,182 @@
    500,
    750,
    1000
+  ]
+ },
+ "1762995467181-6RB84HBN9SLF2LSXWXP1/fishing-gordo-bank-on-panga-for-mahi-mahi": {
+  "width": 1000,
+  "height": 657,
+  "widths": [
+   300,
+   500,
+   750,
+   1000
+  ]
+ },
+ "1762995523859-85S1JKI0D6ACVFJ6YGEA/fishing-san-jose-del-cabo-for-striped-marlin": {
+  "width": 1136,
+  "height": 640,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1136
+  ]
+ },
+ "1762995762950-518K5X7NK9ADDTOV6H61/fishing-gordo-banks-on-a-panga-for-striped-marlin": {
+  "width": 1000,
+  "height": 563,
+  "widths": [
+   300,
+   500,
+   750,
+   1000
+  ]
+ },
+ "1762996377999-C240Y55P8O4LB9FQX186/fishing-san-jose-del-cabo-giants-rooster-fish": {
+  "width": 1000,
+  "height": 664,
+  "widths": [
+   300,
+   500,
+   750,
+   1000
+  ]
+ },
+ "1762997120210-6OM6DTL5Z1B6POBWNWY6/colored-mahi-fishing-san-jose-del-cabo": {
+  "width": 750,
+  "height": 493,
+  "widths": [
+   300,
+   500,
+   750
+  ]
+ },
+ "1763489282403-95O86PC1DB4UEN33W1BW/josh-monica": {
+  "width": 1170,
+  "height": 708,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1170
+  ]
+ },
+ "1764890364424-FMXFY9IZAOVZZQI2KUA7/wahoo": {
+  "width": 2500,
+  "height": 1694,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1500,
+   2000,
+   2400
+  ]
+ },
+ "1767136065492-V9MG20QYGDA8KHHK4XYO/howard-yft": {
+  "width": 2272,
+  "height": 1432,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1500,
+   2000,
+   2272
+  ]
+ },
+ "1784666111376-WNKOLWXJMDPPXLX064J7/tuna": {
+  "width": 642,
+  "height": 448,
+  "widths": [
+   300,
+   500,
+   642
+  ]
+ },
+ "1785695035132-PKDAJDWCVU0MJ3ZGNRIS/brooke": {
+  "width": 1536,
+  "height": 1024,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1500,
+   1536
+  ]
+ },
+ "1786637947899-F1WBFUUACMDU7ON4B8ZX/big-wahoo": {
+  "width": 582,
+  "height": 776,
+  "widths": [
+   300,
+   500,
+   582
+  ]
+ },
+ "1787613425289-ENGVG72EGX0WF5017YH4/unsplash-image-86gwjv3rd-m": {
+  "width": 2500,
+  "height": 1406,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1500,
+   2000,
+   2400
+  ]
+ },
+ "1789090667880-DHQ6OYFO6AXQAE04C6NL/yellowtail": {
+  "width": 1086,
+  "height": 774,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1086
+  ]
+ },
+ "1791489320828-58EL11RVF2MMJQ444Q7Y/captura-de-pantalla-2026-10-08-122024": {
+  "width": 643,
+  "height": 861,
+  "widths": [
+   300,
+   500,
+   643
+  ]
+ },
+ "1792188297412-SOF2TH7AMEZLPV8XE4LY/unsplash-image-l25nk2bugs0": {
+  "width": 2500,
+  "height": 1660,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1500,
+   2000,
+   2400
+  ]
+ },
+ "1792188357408-UOBHX5L6K3KZ665VN6X1/unsplash-image-vr70ikbhekc": {
+  "width": 2500,
+  "height": 1875,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1500,
+   2000,
+   2400
   ]
  },
  "1792368523318-BWMJG78P4VUPDDURU2LP/weekly-fishing-log-data-banner": {
@@ -41,6 +362,171 @@
    1507
   ]
  },
+ "1792370269004-2IYWHB1TV9VQO3C9V0RP/weekly-fishing-log-data-banner": {
+  "width": 1507,
+  "height": 1044,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1500,
+   1507
+  ]
+ },
+ "1792969664358-CSW9QUR3OKOOEA3NIVWT/unsplash-image-uivgzidhvyw": {
+  "width": 2500,
+  "height": 1666,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1500,
+   2000,
+   2400
+  ]
+ },
+ "2049b5ed-5bed-4640-821f-53b0bdd40f4b/freeman-cruise2": {
+  "width": 901,
+  "height": 542,
+  "widths": [
+   300,
+   500,
+   750,
+   901
+  ]
+ },
+ "20dad811-194c-4279-9538-4ba7c2429d67/fishing-san-jose-del-cabo-on-a-27ft-premium-boat": {
+  "width": 375,
+  "height": 500,
+  "widths": [
+   300,
+   375
+  ]
+ },
+ "28539793-e90c-4280-bd23-08c8df9860da/african-pompano-jack-fishing-san-jose-del-cabo": {
+  "width": 275,
+  "height": 160,
+  "widths": [
+   275
+  ]
+ },
+ "288599f9-c9fb-4292-a11a-13af2e6e7291/fishing-san-jose-del-cabo-family": {
+  "width": 740,
+  "height": 491,
+  "widths": [
+   300,
+   500,
+   740
+  ]
+ },
+ "28dbf35f-83c3-4e8a-b340-150967a7060f/jack-crevalle-fishing-san-jose-del-cabo": {
+  "width": 275,
+  "height": 160,
+  "widths": [
+   275
+  ]
+ },
+ "33ed2906-0e7a-4296-8770-9227b2b6bb06/fishing-san-jose-del-cabo-on-a-27ft-premiun-cent-console": {
+  "width": 1000,
+  "height": 703,
+  "widths": [
+   300,
+   500,
+   750,
+   1000
+  ]
+ },
+ "37d67d1b-f9e3-48ce-a2d5-cbc8638cb922/lana-et-shana-fishing-san-jose-del-cabo": {
+  "width": 1200,
+  "height": 1683,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1200
+  ]
+ },
+ "390c57d0-0412-4766-84e3-5d6aca916b6d/yellowtail-amberjack-fishing-san-jose-del-cabo": {
+  "width": 275,
+  "height": 160,
+  "widths": [
+   275
+  ]
+ },
+ "39e527e3-e43d-4146-bf74-40656da7703c/fishing-san-jose-del-cabo-for-sailfish": {
+  "width": 275,
+  "height": 160,
+  "widths": [
+   275
+  ]
+ },
+ "3b66bd00-c9c7-4641-9ff9-80bd8168f813/tuna": {
+  "width": 642,
+  "height": 448,
+  "widths": [
+   300,
+   500,
+   642
+  ]
+ },
+ "3e1d8204-6ba4-4e18-bb98-308776153c26/bonito-fishing-san-jose-del-cabo": {
+  "width": 258,
+  "height": 160,
+  "widths": [
+   258
+  ]
+ },
+ "3e7bdd7b-18b1-4b5c-a24d-81f0702227f3/bathroom-on-a-31ft-premium-center-consloe-to-fish-san-jose-del-cabo": {
+  "width": 375,
+  "height": 500,
+  "widths": [
+   300,
+   375
+  ]
+ },
+ "3fc66027-7aba-48f9-beb1-4234ac63cd17/44ft-premium-flybridge-yacht-huge-wide-bow-and-dinghy-boat": {
+  "width": 1200,
+  "height": 790,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1200
+  ]
+ },
+ "4110a63b-fd47-4331-ab8c-b12bd33ec23f/38ft-3-fishing-san-jose-del-cabo": {
+  "width": 559,
+  "height": 752,
+  "widths": [
+   300,
+   500,
+   559
+  ]
+ },
+ "422c274e-5d77-4d54-bfb9-6edca0534af2/35ft-premium-cuddy-cabin-wide-bow-and-fighting-chair-to-fish-san-jose-del-cabo": {
+  "width": 624,
+  "height": 832,
+  "widths": [
+   300,
+   500,
+   624
+  ]
+ },
+ "505fc072-1705-4425-aa79-71de7ea28485/23-ft-fishing-san-jose-del-cabo": {
+  "width": 1092,
+  "height": 667,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1092
+  ]
+ },
  "505fc072-1705-4425-aa79-71de7ea28485/23-ft-panga": {
   "width": 1092,
   "height": 667,
@@ -50,6 +536,16 @@
    750,
    1000,
    1092
+  ]
+ },
+ "5165816e-3588-4190-8e51-a55f6c0212ee/bathroom-in-our-boat-to-fish-san-jose-del-cabo": {
+  "width": 848,
+  "height": 1096,
+  "widths": [
+   300,
+   500,
+   750,
+   848
   ]
  },
  "529f2243-d23b-4633-a5ef-75f62bca6a4f/fishing-san-jose-del-cabo-27ft": {
@@ -84,6 +580,65 @@
    1402
   ]
  },
+ "6f8842b2-0df4-4e25-8510-f7a41c5d7277/wahoo-fishing-san-jose-del-cabo": {
+  "width": 275,
+  "height": 160,
+  "widths": [
+   275
+  ]
+ },
+ "78d1c76d-7ddb-4734-8094-c3521acb15a2/freeman-fishing-deck": {
+  "width": 593,
+  "height": 840,
+  "widths": [
+   300,
+   500,
+   593
+  ]
+ },
+ "78d32865-8446-4e34-b090-e52c7d6a542b/freeman-cruise": {
+  "width": 785,
+  "height": 497,
+  "widths": [
+   300,
+   500,
+   750,
+   785
+  ]
+ },
+ "7c6301a2-a45c-4187-821a-79e1ed66f028/freeman-back-and-engines": {
+  "width": 1046,
+  "height": 693,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1046
+  ]
+ },
+ "7cf5591e-8c50-49b5-b15b-75b5250e9947/35ft-cuddy-cabin-to-fish-san-jose-del-cabo": {
+  "width": 1224,
+  "height": 768,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1224
+  ]
+ },
+ "8728f1b2-b392-48e2-83c7-3dbe872d4c5a/fishing-san-jose-del-cabo-on-a-premium-27ft-center-console": {
+  "width": 1200,
+  "height": 698,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1200
+  ]
+ },
  "8d45feed-30fd-40cc-b61c-efc171be3a11/38ft-flybridge-fishing-san-jose-del-cabo": {
   "width": 1200,
   "height": 832,
@@ -106,6 +661,26 @@
    1200
   ]
  },
+ "8f525560-b7fa-4a18-ae81-7972025b85e4/spacious-stern-and-twin-outboard-on-a-31ft-center-console-to-fish-san-jose-del-cabo": {
+  "width": 1000,
+  "height": 665,
+  "widths": [
+   300,
+   500,
+   750,
+   1000
+  ]
+ },
+ "916f13e1-072e-484f-9b11-e8216aae2f58/freeman-right": {
+  "width": 852,
+  "height": 530,
+  "widths": [
+   300,
+   500,
+   750,
+   852
+  ]
+ },
  "9240e701-3192-43e5-994e-4e8fa814baf8/fishing-san-jose-del-cabo-31ft": {
   "width": 2382,
   "height": 1550,
@@ -119,6 +694,26 @@
    2382
   ]
  },
+ "9367a11f-cb2a-453f-a16b-f6cbe3a627a0/chloeturner-fishing-san-jose-del-cabo": {
+  "width": 1000,
+  "height": 611,
+  "widths": [
+   300,
+   500,
+   750,
+   1000
+  ]
+ },
+ "94d80e51-5dbd-43e7-aae8-eabdde32b7d6/fishing-san-jose-del-cabo-on-a-superpanga-26ft": {
+  "width": 844,
+  "height": 1200,
+  "widths": [
+   300,
+   500,
+   750,
+   844
+  ]
+ },
  "992bcb39-36a7-4ff5-bdd3-f419dc254fcb/wahoo-fishing-san-jose-del-cabo2": {
   "width": 1000,
   "height": 624,
@@ -127,6 +722,38 @@
    500,
    750,
    1000
+  ]
+ },
+ "996b3383-1bf2-4bdb-b086-4650a86ae7f5/marlin-black-fishing-san-jose-del-cabo": {
+  "width": 275,
+  "height": 160,
+  "widths": [
+   275
+  ]
+ },
+ "9e13e2b1-9424-4776-8424-2afd9ff59fc7/snook-fishing-san-jose-del-cabo": {
+  "width": 275,
+  "height": 160,
+  "widths": [
+   275
+  ]
+ },
+ "9ee35e17-6f28-4a0a-adc5-7110a9a0f987/45ft-premium-center-console-fishing-san-jose-del-cabo": {
+  "width": 1106,
+  "height": 647,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1106
+  ]
+ },
+ "a0609033-8a4d-4334-9bad-78c99f002a39/snapper-fishing-san-jose-del-cabo": {
+  "width": 275,
+  "height": 160,
+  "widths": [
+   275
   ]
  },
  "a16585da-05fe-4c07-a5ce-b1932f6a3b30/reports": {
@@ -140,6 +767,33 @@
    1203
   ]
  },
+ "a2bbbacc-b8c4-4a81-802e-8fe102218a74/44ft-premium-flybridge-yacht-fishing-san-jose-del-cabo": {
+  "width": 1200,
+  "height": 780,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1200
+  ]
+ },
+ "a571fdc9-088d-4511-bb03-f497ef9f8311/29-ft-catamaran-center-console-back": {
+  "width": 633,
+  "height": 356,
+  "widths": [
+   300,
+   500,
+   633
+  ]
+ },
+ "a8ba43a5-29f5-44ad-a43d-f258718df01d/fishing-san-jose-del-cabo-for-spanish-mackerel": {
+  "width": 275,
+  "height": 160,
+  "widths": [
+   275
+  ]
+ },
  "ad2a6356-f668-4895-baed-dfe9e63b4516/29-ft-catamaran-center-console": {
   "width": 1200,
   "height": 873,
@@ -149,6 +803,13 @@
    750,
    1000,
    1200
+  ]
+ },
+ "ad8da031-ac7d-4b33-a4c8-140ae3698acb/california-sheephead-fishing-san-jose-del-cabo": {
+  "width": 275,
+  "height": 160,
+  "widths": [
+   275
   ]
  },
  "ae474e4c-80fd-4491-91c5-fdabc0d00cb7/26ft-super-panga-fishing-san-jose-del-cabo": {
@@ -173,6 +834,45 @@
    1200
   ]
  },
+ "b20007a0-8e66-4bbe-8709-4ca636214bf1/44ft-premium-flybridge-yacht-basthroom-fishing-san-jose-del-cabo": {
+  "width": 2024,
+  "height": 1338,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1500,
+   2000,
+   2024
+  ]
+ },
+ "b2381c7c-6f91-47f9-8193-774b8ca9fe14/payments-method": {
+  "width": 351,
+  "height": 25,
+  "widths": [
+   300,
+   351
+  ]
+ },
+ "b7b86b30-9a82-4af4-9d4c-730f8358bb27/31ft-wide-bow-to-fish-san-jose-del-cabo": {
+  "width": 1000,
+  "height": 668,
+  "widths": [
+   300,
+   500,
+   750,
+   1000
+  ]
+ },
+ "be52175a-04d0-49e2-af83-305f8d587dfc/captura-de-pantalla-2026-08-24-173631": {
+  "width": 371,
+  "height": 438,
+  "widths": [
+   300,
+   371
+  ]
+ },
  "bf61a461-3116-4334-b90e-d51d3447171b/fishing-san-jose-del-cabo-for-giant-rooster": {
   "width": 1400,
   "height": 969,
@@ -182,6 +882,70 @@
    750,
    1000,
    1400
+  ]
+ },
+ "bfa36c54-6b1b-40f4-9ca7-221eb9bba4e4/44ft-premium-flybridge-yacht-extra-wide-bow-and-fighting-chair-for-fishing-in-san-jose-del-cabo": {
+  "width": 1470,
+  "height": 956,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1470
+  ]
+ },
+ "bfb6ada7-f430-4574-a46f-ce83a0efc340/marlin-striped-fishing-san-jose-del-cabo": {
+  "width": 275,
+  "height": 160,
+  "widths": [
+   275
+  ]
+ },
+ "c0cc63b9-1276-4c73-80d6-305282a6e482/29-cc-console": {
+  "width": 663,
+  "height": 926,
+  "widths": [
+   300,
+   500,
+   663
+  ]
+ },
+ "c9e1cd77-6f97-4d43-90a4-5bccc9878876/freeman-left": {
+  "width": 932,
+  "height": 568,
+  "widths": [
+   300,
+   500,
+   750,
+   932
+  ]
+ },
+ "ca3afc33-9721-4674-966c-c2ae972ed309/35-ft-premium-cuddy-cabin-bathroom-to-fish-san-jose-del-cabo": {
+  "width": 650,
+  "height": 749,
+  "widths": [
+   300,
+   500,
+   650
+  ]
+ },
+ "cb1509fd-2695-4cc3-a147-47a3a3a209a4/freeman-seats": {
+  "width": 1048,
+  "height": 617,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1048
+  ]
+ },
+ "cd3a157a-7233-49ee-afd6-a29a498fdd43/fishing-san-jose-del-cabo-for-amberjack": {
+  "width": 275,
+  "height": 160,
+  "widths": [
+   275
   ]
  },
  "cf0dfaef-0572-4b9f-981e-6170549b4e2d/fishing-san-jose-del-cabo-for-wahoo2": {
@@ -205,6 +969,44 @@
    1224
   ]
  },
+ "d4cbc48a-451b-4ac4-b222-0e79ee2d487d/swordfish-fishing-san-jose-del-cabo": {
+  "width": 275,
+  "height": 160,
+  "widths": [
+   275
+  ]
+ },
+ "da10c994-5e62-46c9-aa2a-5f1c5eff32c7/38ft-5-fishing-san-jose-del-cabo": {
+  "width": 848,
+  "height": 1096,
+  "widths": [
+   300,
+   500,
+   750,
+   848
+  ]
+ },
+ "e2fcdcfc-21e7-4c49-b13d-85232796448a/freeman-front": {
+  "width": 775,
+  "height": 497,
+  "widths": [
+   300,
+   500,
+   750,
+   775
+  ]
+ },
+ "ea9f412c-1149-4d31-8168-7aaeacad83ba/38ft-4-fishing-san-jose-del-cabo-fishing-san-jose-del-cabo": {
+  "width": 1211,
+  "height": 866,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1211
+  ]
+ },
  "eb6022d1-7d00-4be5-8275-2982c83ab83e/marlin-fishing-san-jode-del-cabo": {
   "width": 740,
   "height": 517,
@@ -219,6 +1021,62 @@
   "height": 175,
   "widths": [
    216
+  ]
+ },
+ "edbb9a29-5512-4c27-b789-584d89454d80/31ft-center-console-fishing-station-fishing-san-jose-del-cabo": {
+  "width": 1000,
+  "height": 664,
+  "widths": [
+   300,
+   500,
+   750,
+   1000
+  ]
+ },
+ "ee33a293-de59-42e7-886e-a07de4fd3bf2/fishing-san-jose-del-cabo-tournaments": {
+  "width": 1000,
+  "height": 452,
+  "widths": [
+   300,
+   500,
+   750,
+   1000
+  ]
+ },
+ "f134ee40-1b4d-443c-a742-c2244d8dac2d/44ft-premium-flybridge-yacht-pilot-station-to-fish-san-jose-del-cabo": {
+  "width": 2026,
+  "height": 1346,
+  "widths": [
+   300,
+   500,
+   750,
+   1000,
+   1500,
+   2000,
+   2026
+  ]
+ },
+ "f4478532-f101-488a-844b-3442d78494f1/29-ft-catamaran-center-console-engines": {
+  "width": 659,
+  "height": 933,
+  "widths": [
+   300,
+   500,
+   659
+  ]
+ },
+ "faf33ea9-16be-4041-a082-0a12bde63659/grouper-fishing-san-jose-del-cabo": {
+  "width": 275,
+  "height": 160,
+  "widths": [
+   275
+  ]
+ },
+ "fc4c7b74-b4e8-44f8-9f36-b104e1c05100/dolphin-mahi-mahi-fishing-san-jose-del-cabo": {
+  "width": 275,
+  "height": 160,
+  "widths": [
+   275
   ]
  }
 }

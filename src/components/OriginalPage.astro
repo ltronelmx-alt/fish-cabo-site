@@ -1,0 +1,143 @@
+---
+// Generic renderer for ANY original Squarespace page.
+// Content (text, headings, links, alts, order) comes verbatim from the export; this file only adds layout + design.
+import Rich from './Rich.astro';
+import OImg from './OImg.astro';
+import OBtn from './OBtn.astro';
+import LatestLog from './LatestLog.astro';
+import ContactForm from './ContactForm.astro';
+import { byH2, type Page, type Block } from '../lib/original';
+import { pictures } from '../lib/media';
+import { SITE } from '../data/site';
+
+interface Props { page: Page & { videos?: string[] }; slug: string }
+const { page, slug } = Astro.props;
+// keep the ORIGINAL DOM order of blocks (not the visual grid order)
+const S = page.sections.map((s) => ({ ...s, blocks: s.blocks.slice().sort((a: any, b: any) => (a.dom ?? 0) - (b.dom ?? 0)) }));
+
+const THEME: Record<string, string> = {
+  white: 'bg-sand', light: 'bg-white', bright: 'bg-white', '': 'bg-white',
+  'light-bold': 'bg-sand', 'dark-bold': 'bg-orange dark', black: 'bg-black dark', 'bright-inverse': 'bg-black dark', dark: 'bg-black dark',
+};
+const hasH1 = (s: (typeof S)[number]) => s.blocks.some((b) => /<h1[\s>]/.test(b.html || ''));
+const first = S[0];
+const heroImgBlock = first && !first.bg ? first.blocks.find((b) => b.kind === 'img') : undefined;
+const isHero = !!first && hasH1(first) && (!!first.bg || !!heroImgBlock);
+let codeIdx = 0;
+
+// Group consecutive blocks of the same kind (images → gallery row, buttons → button row). Order is preserved.
+function groups(blocks: Block[]) {
+  const out: { kind: string; items: Block[] }[] = [];
+  for (const b of blocks) {
+    const k = b.kind === 'img' ? 'img' : b.kind === 'button' ? 'button' : 'one';
+    const last = out[out.length - 1];
+    if (last && last.kind === k && k !== 'one') last.items.push(b);
+    else out.push({ kind: k, items: [b] });
+  }
+  return out;
+}
+const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><strong>[^<]*(Book via|Stripe|Paypal|Wise)[^<]*<\/strong><\/p>$/i.test((b.html || '').trim());
+---
+{S.map((sec, si) => {
+  const theme = THEME[sec.theme] ?? 'bg-white';
+  // ---------- First section = hero ----------
+  if (si === 0 && isHero) {
+    return (
+      <section class="hero dark hero-page o-hero">
+        {sec.bg && <OImg block={{ path: sec.bg.path, alt: sec.bg.alt }} class="o-hero-bg" sizes="100vw" priority />}
+        <div class="hero-shade" aria-hidden="true"></div>
+        <div class="container hero-inner">
+          {sec.blocks.map((b) => b.kind === 'img'
+            ? <OImg block={b} class="o-hero-bg" sizes="100vw" priority />
+            : b.kind === 'button' ? <div class="btn-row"><OBtn block={b} primary /></div>
+            : <div class="hero-text" set:html={pictures(b.html || '')} />)}
+        </div>
+      </section>
+    );
+  }
+  return (
+    <section class:list={['section o-sec', theme, si === 0 && 'o-first']}>
+      <div class="container o-flow">
+        {groups(sec.blocks).map((g, gi, arr) => {
+          if (g.kind === 'img') return (
+            <div class:list={['o-gallery', `n${Math.min(g.items.length, 4)}`]}>
+              {g.items.map((b) => <OImg block={b} class="reveal" sizes={g.items.length > 1 ? '(min-width: 900px) 33vw, 92vw' : '(min-width: 1240px) 1200px, 92vw'} />)}
+            </div>
+          );
+          if (g.kind === 'button') return (
+            <div class="btn-row o-btns">{g.items.map((b) => <OBtn block={b} primary={/stripe|wise|book/i.test((b.href || '') + (b.text || ''))} track={/stripe|wise|paypal/i.test(b.href || b.text || '') ? `pay_${(b.text || '').toLowerCase()}_${slug.split('/').pop()}` : undefined} />)}</div>
+          );
+          const b = g.items[0];
+          if (b.kind === 'text') {
+            const chunks = byH2(b.html || '');
+            const pay = isPayLabel(b);
+            return chunks.length > 1
+              ? <div class="o-text">{chunks.map((c) => <Rich html={pictures(c)} mode="cards" class="reveal o-chunk" />)}</div>
+              : <Rich html={pictures(b.html || '')} mode="cards" class:list={['reveal', pay && 'o-paylabel']} />;
+          }
+          if (b.kind === 'code') {
+            const html = b.html || '';
+            if (/Loading latest fishing log/i.test(html)) return <LatestLog />;
+            if (slug === 'contact') {
+              const i = codeIdx++;
+              if (i === 0) return <ContactForm />;
+              return (
+                <div class="o-map media">
+                  <iframe title="Map: Puerto Los Cabos Marina" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+                    src={`https://www.google.com/maps?q=${SITE.gps.lat},${SITE.gps.lng}&z=16&output=embed`}></iframe>
+                </div>
+              );
+            }
+            return <div class="rich" set:html={pictures(html)} />;
+          }
+          // gallery / item lists / collection items (articles, videos, listings)
+          return <div class:list={['rich o-html', b.kind === 'gallery' && 'o-gallery-html']} set:html={pictures(b.html || '', '(min-width: 900px) 33vw, 92vw')} />;
+        })}
+        {si === 0 && page.videos && page.videos.length > 0 && page.videos.map((id) => (
+          <div class="o-video media"><iframe src={`https://www.youtube.com/embed/${id}?feature=oembed`} title="YouTube video" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
+        ))}
+      </div>
+    </section>
+  );
+})}
+
+<style is:global>
+  .o-hero { min-height: clamp(460px, 62svh, 760px); }
+  .o-hero .o-hero-bg { position: absolute; inset: 0; z-index: -2; border-radius: 0; box-shadow: none; }
+  .o-hero .o-hero-bg img { width: 100%; height: 100%; object-fit: cover; }
+  .o-hero .hero-text h1 { color: var(--white); font-size: clamp(36px, 3.6vw + 14px, 80px); max-width: 24ch; }
+  .o-hero .hero-text p { font-size: var(--fs-lead); color: #ededed; max-width: 900px; }
+  .o-hero .hero-text strong { color: #fff; }
+  .o-first { padding-top: calc(var(--section-pad) + 84px); }
+  .o-flow > * + * { margin-top: clamp(28px, 3vw, 56px); }
+  .o-gallery { display: grid; gap: clamp(14px, 1.6vw, 28px); }
+  .o-gallery.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .o-gallery.n3, .o-gallery.n4 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .o-gallery.n1 .media { max-width: 1200px; }
+  .o-gallery .media img { width: 100%; height: auto; }
+  .o-gallery.n2 .media img, .o-gallery.n3 .media img, .o-gallery.n4 .media img { aspect-ratio: 4 / 3; object-fit: cover; }
+  @media (max-width: 760px) { .o-gallery.n2, .o-gallery.n3, .o-gallery.n4 { grid-template-columns: 1fr; } }
+  .o-html img { border-radius: var(--radius); }
+  .o-html picture { display: block; margin: 24px 0; }
+  .o-gallery-html { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: clamp(14px, 1.6vw, 28px); }
+  .o-gallery-html picture, .o-gallery-html > img { margin: 0; }
+  .o-gallery-html img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+  .o-video iframe, .o-map iframe { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; }
+  .o-map iframe { aspect-ratio: 21 / 9; min-height: 320px; }
+  .o-paylabel { margin-bottom: -12px; }
+  .o-paylabel p.sub { margin-top: 0.6em; font-size: clamp(15px, 0.4vw + 13px, 18px); }
+  .dark .rich h2, .dark .rich h3, .dark .rich h4 { color: var(--white); }
+  .bg-orange .rich h2::before, .bg-orange .rich > h2::before { color: var(--ink); border-color: var(--ink); }
+  .rich table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 0.95em; display: block; overflow-x: auto; }
+  .rich th, .rich td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .rich th { font-family: var(--font-head); text-transform: uppercase; font-size: 0.85em; color: var(--ink); background: var(--sand); }
+  .rich pre { white-space: pre-wrap; background: var(--sand); padding: 16px; border-radius: var(--radius-sm); overflow-x: auto; }
+  .rich iframe { max-width: 100%; }
+  /* Collection markup (blog items, listings, video items) */
+  .o-html article { display: block; }
+  .o-html time { color: var(--muted); font-size: 0.9em; letter-spacing: 0.04em; }
+  .o-html a[rel='tag'] { display: inline-block; margin: 4px 8px 4px 0; padding: 6px 12px; border-radius: 999px; background: var(--sand); font-size: 12px; text-decoration: none; }
+  .o-html nav a, .o-html section > a:has(h2) { display: inline-flex; flex-direction: column; gap: 4px; margin-top: 24px; padding: 18px 22px; border: 1.5px solid var(--line); border-radius: var(--radius-sm); text-decoration: none; }
+  .o-html section > a:has(h2) h2 { font-size: var(--fs-h3); margin: 0; }
+  .o-html section > a:has(h2) h2::before { display: none; }
+</style>

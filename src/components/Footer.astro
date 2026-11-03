@@ -1,7 +1,7 @@
 ---
 import { FOOTER_NAV, SITE } from '../data/site';
 import { media } from '../lib/media';
-const logo = media(SITE.logo);
+const logo = media(SITE.logo)!;
 const year = new Date().getFullYear();
 ---
 <footer class="ftr">

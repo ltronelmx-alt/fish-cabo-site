@@ -1,7 +1,7 @@
 // Runs after `astro build`. Writes _headers, robots.txt and sitemap.xml.
 // Staging (default): everything is noindex and robots.txt blocks all crawlers.
 // Production: only when PUBLIC_SITE_ENV=production is set explicitly.
-import { readdirSync, statSync, writeFileSync } from 'node:fs';
+import { readdirSync, statSync, writeFileSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const DIST = 'dist';
@@ -10,12 +10,12 @@ const isProd = process.env.PUBLIC_SITE_ENV === 'production';
 
 const csp = [
   "default-src 'self'",
-  "img-src 'self' data:",
+  "img-src 'self' data: https://images.squarespace-cdn.com https://static1.squarespace.com https://i.ytimg.com",
   "script-src 'self' https://static.cloudflareinsights.com https://challenges.cloudflare.com",
   "connect-src 'self' https://cloudflareinsights.com",
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self'",
-  "frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com https://www.youtube.com",
+  "frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com https://www.google.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -30,6 +30,12 @@ const headers = `/*
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   X-Frame-Options: DENY
 ${isProd ? '' : '  X-Robots-Tag: noindex, nofollow\n'}
+/admin/*
+  ! Content-Security-Policy
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-eval' https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https://api.github.com https://github.com https://unpkg.com https://*.githubusercontent.com; frame-src 'self' blob:; font-src 'self' data: https://unpkg.com; frame-ancestors 'none'
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
+
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
 
@@ -44,25 +50,20 @@ ${isProd ? '' : '  X-Robots-Tag: noindex, nofollow\n'}
 `;
 writeFileSync(join(DIST, '_headers'), headers);
 
-// Sitemap from the generated HTML files (404 excluded).
-const pages = [];
-const walk = (dir) => {
-  for (const f of readdirSync(dir)) {
-    const p = join(dir, f);
-    if (statSync(p).isDirectory()) { if (f !== '_astro') walk(p); continue; }
-    if (!f.endsWith('.html') || f === '404.html') continue;
-    let path = '/' + relative(DIST, p).replace(/\\/g, '/').replace(/\.html$/, '');
-    path = path === '/index' ? '/' : path.replace(/\/index$/, '');
-    pages.push({ path, mtime: statSync(p).mtime });
+// Sitemap: the ORIGINAL Squarespace sitemap (same URLs, same lastmod), plus Fishing Reports created later in the CMS.
+const orig = readFileSync('src/data/original-sitemap.xml', 'utf8');
+const known = new Set([...orig.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].replace(SITE, '') || '/'));
+const extra = [];
+try {
+  for (const f of readdirSync(join(DIST, 'fishing-reports'))) {
+    if (!f.endsWith('.html')) continue;
+    const path = '/fishing-reports/' + f.replace(/\.html$/, '');
+    if (path === '/fishing-reports/older' || known.has(path)) continue;
+    extra.push(`<url><loc>${SITE}${path}</loc><lastmod>${statSync(join(DIST, 'fishing-reports', f)).mtime.toISOString().slice(0, 10)}</lastmod></url>`);
   }
-};
-walk(DIST);
-pages.sort((a, b) => (a.path === '/' ? -1 : a.path.localeCompare(b.path)));
-const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${pages.map((p) => `  <url><loc>${SITE}${p.path === '/' ? '/' : p.path}</loc><lastmod>${p.mtime.toISOString().slice(0, 10)}</lastmod></url>`).join('\n')}
-</urlset>
-`;
+} catch {}
+const sitemap = extra.length ? orig.replace('</urlset>', extra.join('') + '</urlset>') : orig;
+const pages = [...known];
 writeFileSync(join(DIST, 'sitemap.xml'), sitemap);
 
 writeFileSync(

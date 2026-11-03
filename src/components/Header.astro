@@ -2,7 +2,7 @@
 import { NAV, SITE } from '../data/site';
 import { media } from '../lib/media';
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
-const logo = media(SITE.logo);
+const logo = media(SITE.logo)!;
 ---
 <a class="skip-link" href="#main">Skip to Content</a>
 <header class="hdr" id="header">
@@ -73,8 +73,8 @@ const logo = media(SITE.logo);
     transition: background 0.35s ease, height 0.35s ease, box-shadow 0.35s ease, backdrop-filter 0.35s;
   }
   .hdr::before { content: ''; position: absolute; inset: 0 0 -40px 0; z-index: -1; pointer-events: none; background: linear-gradient(rgb(0 0 0 / 0.45), transparent); transition: opacity 0.35s; }
-  :global(html.scrolled) .hdr { height: 68px; background: rgb(14 14 14 / 0.82); -webkit-backdrop-filter: saturate(160%) blur(14px); backdrop-filter: saturate(160%) blur(14px); box-shadow: 0 1px 0 rgb(255 255 255 / 0.06); }
-  :global(html.scrolled) .hdr::before { opacity: 0; }
+  :global(html.scrolled) .hdr, :global(html.solid-header) .hdr { height: 68px; background: rgb(14 14 14 / 0.82); -webkit-backdrop-filter: saturate(160%) blur(14px); backdrop-filter: saturate(160%) blur(14px); box-shadow: 0 1px 0 rgb(255 255 255 / 0.06); }
+  :global(html.scrolled) .hdr::before, :global(html.solid-header) .hdr::before { opacity: 0; }
   :global(html.scrolled) .hdr-logo img { height: 52px; }
   .hdr-logo { flex: none; display: block; }
   .hdr-logo img { width: auto; height: 66px; transition: height 0.35s ease; }
@@ -120,7 +120,7 @@ const logo = media(SITE.logo);
 
   .burger { display: none; }
   .mbar { display: none; }
-  .mmenu { position: fixed; inset: 0; z-index: 60; background: var(--ink); color: var(--white); overflow-y: auto; padding: 96px var(--gutter) 120px; }
+  .mmenu { position: fixed; inset: 0; z-index: 49; background: var(--ink); color: var(--white); overflow-y: auto; padding: 96px var(--gutter) 120px; }
   .mmenu nav { display: flex; flex-direction: column; gap: 6px; }
   .mmenu a, .mmenu summary {
     display: block; padding: 12px 0; font-family: var(--font-ui); font-size: 26px; font-weight: 600;

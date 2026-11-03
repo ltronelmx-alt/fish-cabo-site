@@ -11,14 +11,15 @@ interface Props {
   original?: { lang: string; head: string[]; bodyLd: string[] };
   title?: string;
   description?: string;
+  solidHeader?: boolean; // page without a photo hero: header is solid from the start
 }
-const { original, title, description } = Astro.props;
+const { original, title, description, solidHeader = false } = Astro.props;
 // Safety: every build is "staging" (noindex) unless SITE_ENV=production is set explicitly.
 const isProd = import.meta.env.PUBLIC_SITE_ENV === 'production';
 const beacon = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
 ---
 <!doctype html>
-<html lang={original?.lang ?? 'en-US'}>
+<html lang={original?.lang ?? 'en-US'} class:list={[solidHeader && 'solid-header']}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

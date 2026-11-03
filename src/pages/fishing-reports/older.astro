@@ -1,0 +1,14 @@
+---
+// Older posts page, served by the Worker for /fishing-reports?offset=… (Squarespace pagination URL).
+import Base from '../../layouts/Base.astro';
+import OriginalPage from '../../components/OriginalPage.astro';
+import { published, itemHtml, PER_PAGE } from '../../lib/reports';
+import P from '../../data/original/fishing-reports.json';
+const all = await published();
+const rest = all.slice(PER_PAGE);
+const list = rest.map(itemHtml).join('') + `<nav><a href="/fishing-reports" rel="prev">Newer Posts</a></nav>`;
+const page = { ...(P as any), sections: [P.sections[0], P.sections[1], { ...P.sections[2], blocks: [{ kind: 'html', html: list, ga: [0, 0, 0, 0], dom: 0 }] }] };
+---
+<Base original={page} solidHeader>
+  <OriginalPage page={page} slug="fishing-reports" />
+</Base>

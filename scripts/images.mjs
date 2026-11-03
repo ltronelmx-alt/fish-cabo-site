@@ -12,7 +12,7 @@ export const slug = (s) => s.normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCa
 
 const manifest = {};
 const walk = (d) => readdirSync(d).flatMap((f) => (statSync(join(d, f)).isDirectory() ? walk(join(d, f)) : [join(d, f)]));
-for (const file of walk(SRC)) {
+for (const file of walk(SRC).filter((f) => /\.(jpe?g|png|webp|gif|avif|tiff?)$/i.test(f))) {
   const rel = file.slice(SRC.length + 1).replace(/\\/g, '/');
   const key = `${dirname(rel)}/${slug(basename(rel, extname(rel)))}`;
   const meta = await sharp(file).metadata();

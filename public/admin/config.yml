@@ -1,0 +1,129 @@
+# Exotic Fish Cabo — CMS configuration (Sveltia CMS)
+# Sign in: "Sign in with GitHub Token" (fine-grained token limited to the fish-cabo-site repository, Contents: Read and write).
+backend:
+  name: github
+  repo: ltronelmx-alt/fish-cabo-site
+  branch: main
+  commit_messages:
+    create: 'CMS: create {{collection}} "{{slug}}"'
+    update: 'CMS: update {{collection}} "{{slug}}"'
+    delete: 'CMS: delete {{collection}} "{{slug}}"'
+
+media_folder: media-src/cms
+public_folder: cms
+
+site_url: https://fish-cabo.com
+display_url: https://fish-cabo.com
+locale: en
+
+collections:
+  - name: fishing-reports
+    label: Fishing Logs & Reports
+    label_singular: Fishing Log
+    folder: src/content/fishing-reports
+    extension: md
+    format: frontmatter
+    create: true
+    slug: '{{slug}}'
+    identifier_field: title
+    summary: '{{date | date(''YYYY-MM-DD'')}} — {{title}}{{draft | ternary('' (DRAFT)'', '''')}}'
+    sortable_fields: [date, title]
+    view_filters:
+      - { label: Drafts, field: draft, pattern: true }
+      - { label: Weekly Fishing Logs, field: category, pattern: San Jose del Cabo Fishing Log }
+    fields:
+      - { name: draft, label: 'Draft (not published while checked)', widget: boolean, default: true }
+      - { name: title, label: Title (H1), widget: string }
+      - { name: seoTitle, label: SEO title, widget: string, required: false, hint: 'Shown in Google. Leave empty to use the title.' }
+      - { name: description, label: SEO meta description, widget: text, required: false }
+      - { name: date, label: Publication date, widget: datetime, date_format: YYYY-MM-DD, time_format: false, format: YYYY-MM-DD }
+      - { name: category, label: Category, widget: select, options: ['San Jose del Cabo Fishing Log', 'Fishing Report'], default: 'San Jose del Cabo Fishing Log' }
+      - { name: tags, label: Tags, widget: list, required: false }
+      - { name: author, label: Author, widget: string, default: EXOTIC FISH-CABO }
+      - name: image
+        label: Main image
+        widget: object
+        required: false
+        fields:
+          - { name: src, label: Image, widget: image }
+          - { name: alt, label: Image description (alt text), widget: string, required: false }
+      - name: thumbnail
+        label: Listing thumbnail (optional — main image is used when empty)
+        widget: object
+        required: false
+        fields:
+          - { name: src, label: Image, widget: image }
+          - { name: alt, label: Alt text, widget: string, required: false }
+      - { name: excerpt, label: Excerpt (listing + homepage), widget: text }
+      - { name: format, label: Body format, widget: hidden, default: markdown }
+      - { name: body, label: Article (paste the approved text here), widget: markdown, hint: 'Imported articles are stored as HTML — edit carefully.' }
+
+  - name: pages
+    label: Pages (advanced — original content & SEO)
+    label_singular: Page
+    folder: src/data/original
+    extension: json
+    format: json
+    create: false
+    delete: false
+    summary: '{{slug}}'
+    fields:
+      - { name: lang, label: Language, widget: hidden }
+      - { name: bodyLd, label: Body JSON-LD, widget: hidden }
+      - { name: videos, label: Videos, widget: hidden }
+      - { name: head, label: 'SEO head tags (title, description, canonical, Open Graph, JSON-LD) — edit with care', widget: list, field: { name: tag, label: Tag, widget: code, default_language: html, output_code_only: true } }
+      - name: sections
+        label: Sections
+        widget: list
+        fields:
+          - { name: theme, label: Theme, widget: string, required: false }
+          - { name: bg, label: Background image, widget: hidden }
+          - name: blocks
+            label: Blocks
+            widget: list
+            fields:
+              - { name: kind, label: Type, widget: select, options: [text, img, button, code, html, gallery] }
+              - { name: html, label: HTML content, widget: code, default_language: html, output_code_only: true, required: false }
+              - { name: text, label: Button text, widget: string, required: false }
+              - { name: href, label: Button link, widget: string, required: false }
+              - { name: alt, label: Image alt text, widget: string, required: false }
+              - { name: path, label: Image path, widget: string, required: false }
+              - { name: link, label: Image link, widget: hidden }
+              - { name: ga, label: Layout position, widget: hidden }
+              - { name: dom, label: Original order, widget: hidden }
+              - { name: btype, label: Block type, widget: hidden }
+
+  - name: boat-pages
+    label: Boat pages (advanced)
+    label_singular: Boat page
+    folder: src/data/original/fishing-boats
+    extension: json
+    format: json
+    create: false
+    delete: false
+    summary: '{{slug}}'
+    fields:
+      - { name: lang, label: Language, widget: hidden }
+      - { name: bodyLd, label: Body JSON-LD, widget: hidden }
+      - { name: videos, label: Videos, widget: hidden }
+      - { name: head, label: SEO head tags, widget: list, field: { name: tag, label: Tag, widget: code, default_language: html, output_code_only: true } }
+      - name: sections
+        label: Sections
+        widget: list
+        fields:
+          - { name: theme, label: Theme, widget: string, required: false }
+          - { name: bg, label: Background image, widget: hidden }
+          - name: blocks
+            label: Blocks
+            widget: list
+            fields:
+              - { name: kind, label: Type, widget: select, options: [text, img, button, code, html, gallery] }
+              - { name: html, label: HTML content, widget: code, default_language: html, output_code_only: true, required: false }
+              - { name: text, label: Button text, widget: string, required: false }
+              - { name: href, label: Button link (Stripe / Wise / PayPal…), widget: string, required: false }
+              - { name: alt, label: Image alt text, widget: string, required: false }
+              - { name: path, label: Image path, widget: string, required: false }
+              - { name: link, label: Image link, widget: hidden }
+              - { name: ga, label: Layout position, widget: hidden }
+              - { name: dom, label: Original order, widget: hidden }
+              - { name: btype, label: Block type, widget: hidden }

@@ -1,0 +1,884 @@
+{
+ "base": "http://127.0.0.1:8787",
+ "date": "2026-11-03T05:03:18.922Z",
+ "total": 146,
+ "failed": 2,
+ "results": [
+  {
+   "area": "Routes",
+   "test": "GET /cabo-fishing-faq",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /cabo-fishing-tournaments",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /cabo-fishing-videos/v/can-tv-fishing-show-1",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /cabo-fishing-videos/v/can-tv-fishing-show-2",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /cabo-fishing-videos/v/chloe-turner-instagram-fishing",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /cabo-fishing-videos/v/light-tackle-fishing-in-san-jose-del-cabo",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /cabo-fishing-videos/v/thrilling-rooster-fish-catch-on-canadian-tv-fishing-show",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /cabo-fishing-videos/v/tuna-jackpot-fishing-tournament",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /cabo-fishing-videos",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /cabo-fishing",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /cabo-san-lucas-fishing-charters",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /contact",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /deep-sea-fishing-cabo",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /deep-sea-fishing-charters",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /dorado-fishing-cabo",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /el-25-fishing-san-jose-del-cabo",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /family-fishing-charters-san-jose-del-cabo",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fish-species",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-boats/23ft-panga",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-boats/26ft-super-panga",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-boats/27ft-premium-center-console",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-boats/29-ft-catamaran-center-console",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-boats/30ft-cuddy-cabin",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-boats/31ft-premium-center-console",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-boats/35ft-premium-cuddy-cabin",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-boats/37ft-ultimate-fishing-machine",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-boats/38ft-flybridge",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-boats/44ft-premium-flybridge",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-boats",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-calendar",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-charters",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-guide-for-newbies",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/category/Fishing Report",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/category/San Jose del Cabo Fishing Log",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/grander-marlin-fishing-san-jose-del-cabo",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/mahi-fishing-san-jose-del-cabo-2mfar-ajlnf",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/mahi-fishing-san-jose-del-cabo-sphxp",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/mahi-mahi-fishing-san-jose-del-cabo-august-2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/mahi-mahi-fishing-san-jose-del-cabo-feb2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/older",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/redsnapper-fishing-san-jose-del-cabo-october",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/roosterfish-fishing-san-jose-del-cabo-july2026-8zk48",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/roosterfish-fishing-san-jose-del-cabo-june2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/roosterfish-san-jose-del-cabo-2mfar-ajlnf-px5gd",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/san-jose-del-cabo-fishing-log-august-10-16-2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/san-jose-del-cabo-fishing-log-august-17-23-2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/san-jose-del-cabo-fishing-log-august-24-30-2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/san-jose-del-cabo-fishing-log-august-3-9-2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/san-jose-del-cabo-fishing-log-august-31-september-6-2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/san-jose-del-cabo-fishing-log-july-13-19-2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/san-jose-del-cabo-fishing-log-july-27-august-2-2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/san-jose-del-cabo-fishing-log-october-12-18-2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/san-jose-del-cabo-fishing-log-october-19-25-2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/san-jose-del-cabo-fishing-log-october-5-11-2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/san-jose-del-cabo-fishing-log-september-14-20-2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/san-jose-del-cabo-fishing-log-september-21-27-2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/san-jose-del-cabo-fishing-log-september-28-october-4-2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/san-jose-del-cabo-fishing-log-september-7-13-2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/sansan-jose-del-cabo-fishing-log-july-20-26-2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/shaun-fishing-san-jose-del-cabo",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/super-charlie-fishing-san-jose-del-cabo",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/tag/Bottom fishing",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/tag/Grouper fishing",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/tag/Mahi-Mahi fishing",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/tag/Marlin fishing",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/tag/Rosterfish fishing",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/tag/Sail Fish fishing",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/tag/Swordfish fishing",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/tag/Tournament fishing",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/tag/Tuna Fishing",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/tag/Wahoo fishing",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/tag/Yellowtail fishing",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/tag/bottom fishing",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/tag/jigging",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/tag/snapper fishing",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/tag/yellowfin tuna fishing",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/tournament-season-is-running",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/tuna-fishing-san-jose-del-cabo-feb2026-6hzga-zr7h7",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/tuna-fishing-san-jose-del-cabo-feb2026-6hzga",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/tuna-fishing-san-jose-del-cabo-feb2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/tuna-fishing-san-jose-del-cabo-mid-july-2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/wahoo-fishing-san-jose-del-cabo-august-2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/wahoo-fishing-san-jose-del-cabo-sphxp-n9dzc",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/yellow-fins-tuna-fishing-san-jose-del-cabo",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/yellowfin-tuna-fishing-san-jose-del-cabo-2mfar",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/yellowtail-fishing-san-jose-del-cabo-september",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /gordo-banks-fishing",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /iman-bank-fishing-san-jose-del-cabo",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /la-fortuna-fishing-san-jose-del-cabo",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /marlin-fishing-cabo",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /privacy-policy",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /puerto-los-cabos-fishing",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /roosterfish-fishing-cabo",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /san-luis-fishing-san-jose-del-cabo",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /terms-conditions",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /tuna-fishing-cabo",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /vinorama-fishing-san-jose-del-cabo",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /wahoo-fishing-cabo",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /what-to-bring-fishing-cabo",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Links",
+   "test": "/wahoo-fishing-san-jose-del-cabo-august-2026 (from /iman-bank-fishing-san-jose-del-cabo)",
+   "ok": false,
+   "detail": "404"
+  },
+  {
+   "area": "Links",
+   "test": "all 946 internal links and images resolve",
+   "ok": false,
+   "detail": "1 broken"
+  },
+  {
+   "area": "Routing",
+   "test": "404 page for unknown URL",
+   "ok": true,
+   "detail": "404"
+  },
+  {
+   "area": "Routing",
+   "test": "Squarespace pagination ?offset= serves older posts",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routing",
+   "test": "trailing slash redirects to canonical URL",
+   "ok": true,
+   "detail": "307"
+  },
+  {
+   "area": "Security headers",
+   "test": "content-security-policy",
+   "ok": true,
+   "detail": "default-src 'self'; img-src 'self' data: https://images.squarespace-cdn.com http"
+  },
+  {
+   "area": "Security headers",
+   "test": "x-content-type-options",
+   "ok": true,
+   "detail": "nosniff"
+  },
+  {
+   "area": "Security headers",
+   "test": "referrer-policy",
+   "ok": true,
+   "detail": "strict-origin-when-cross-origin"
+  },
+  {
+   "area": "Security headers",
+   "test": "strict-transport-security",
+   "ok": true,
+   "detail": "max-age=31536000; includeSubDomains"
+  },
+  {
+   "area": "Security headers",
+   "test": "x-frame-options",
+   "ok": true,
+   "detail": "DENY"
+  },
+  {
+   "area": "Security headers",
+   "test": "x-robots-tag",
+   "ok": true,
+   "detail": "noindex, nofollow"
+  },
+  {
+   "area": "Staging protection",
+   "test": "X-Robots-Tag noindex on pages",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Staging protection",
+   "test": "robots.txt blocks all crawlers",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "SEO",
+   "test": "sitemap.xml identical to original Squarespace sitemap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Worker",
+   "test": "/api/event accepts click beacons",
+   "ok": true,
+   "detail": "204"
+  },
+  {
+   "area": "Contact form",
+   "test": "server rejects incomplete submission",
+   "ok": true,
+   "detail": "{\"ok\":false,\"error\":\"Please complete all required fields.\"}"
+  },
+  {
+   "area": "Contact form",
+   "test": "honeypot silently drops bots",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Layout",
+   "test": "no horizontal scrolling on 101 pages (mobile 375px)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Navigation",
+   "test": "mobile menu opens (mobile)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Navigation",
+   "test": "mobile \"Explore Fishing\" submenu expands (mobile)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Navigation",
+   "test": "mobile menu closes (mobile)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Booking",
+   "test": "mobile bottom bar BOOK NOW visible (mobile)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Chatbot",
+   "test": "EN answers a price question (mobile)",
+   "ok": true,
+   "detail": "💰 Our Private Packages🕕 3/4 Day (6 hours) — From 350 USDMixed inshore/offshore, perfect for families🕗 Full Day (8 hou"
+  },
+  {
+   "area": "Chatbot",
+   "test": "ES answers a price question (mobile)",
+   "ok": true,
+   "detail": "💰 Nuestros paquetes privados🕕 3/4 Día (6 horas) — Desde 350 USDPesca mixta inshore/offshore, perfecto para familias🕗 "
+  },
+  {
+   "area": "Chatbot",
+   "test": "FR answers a price question (mobile)",
+   "ok": true,
+   "detail": "💰 Nos forfaits privés🕕 3/4 Journée (6h) — À partir de 350 USDPêche mixte inshore/offshore, idéal pour familles🕗 Journ"
+  },
+  {
+   "area": "Contact form",
+   "test": "empty submit is blocked with a message (mobile)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Layout",
+   "test": "no horizontal scrolling on 101 pages (tablet 768px)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Navigation",
+   "test": "mobile menu opens (tablet)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Navigation",
+   "test": "mobile \"Explore Fishing\" submenu expands (tablet)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Navigation",
+   "test": "mobile menu closes (tablet)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Booking",
+   "test": "mobile bottom bar BOOK NOW visible (tablet)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Contact form",
+   "test": "empty submit is blocked with a message (tablet)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Layout",
+   "test": "no horizontal scrolling on 101 pages (desktop 1440px)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Navigation",
+   "test": "dropdown opens on hover (desktop)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Navigation",
+   "test": "dropdown opens on click (desktop)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Accessibility",
+   "test": "Escape closes dropdown (desktop)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Booking",
+   "test": "header BOOK NOW → /fishing-boats",
+   "ok": true,
+   "detail": "/fishing-boats"
+  },
+  {
+   "area": "Directions",
+   "test": "MARINA GPS → 23.060275,-109.670677",
+   "ok": true,
+   "detail": "https://www.google.com/maps/dir/?api=1&destination=23.060275%2C-109.670677&travelmode=driving"
+  },
+  {
+   "area": "Chatbot",
+   "test": "EN answers a price question (desktop)",
+   "ok": true,
+   "detail": "💰 Our Private Packages🕕 3/4 Day (6 hours) — From 350 USDMixed inshore/offshore, perfect for families🕗 Full Day (8 hou"
+  },
+  {
+   "area": "Chatbot",
+   "test": "WhatsApp handoff link → +526241223506",
+   "ok": true,
+   "detail": "https://wa.me/526241223506?text=Hello%20Exotic%20Fish%20Cabo!%20I%20have%20a%20question%20from%20your%20website%3A%20General%20inquiry"
+  },
+  {
+   "area": "Chatbot",
+   "test": "ES answers a price question (desktop)",
+   "ok": true,
+   "detail": "💰 Nuestros paquetes privados🕕 3/4 Día (6 horas) — Desde 350 USDPesca mixta inshore/offshore, perfecto para familias🕗 "
+  },
+  {
+   "area": "Chatbot",
+   "test": "FR answers a price question (desktop)",
+   "ok": true,
+   "detail": "💰 Nos forfaits privés🕕 3/4 Journée (6h) — À partir de 350 USDPêche mixte inshore/offshore, idéal pour familles🕗 Journ"
+  },
+  {
+   "area": "Contact form",
+   "test": "empty submit is blocked with a message (desktop)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Runtime",
+   "test": "no JavaScript errors in the browser",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "area": "Fishing Logs",
+   "test": "homepage shows the newest published Fishing Log",
+   "ok": true,
+   "detail": "San Jose del Cabo Fishing Log — October 19–25, 2026 / expected San Jose del Cabo Fishing Log — October 19–25, 2026"
+  }
+ ]
+}

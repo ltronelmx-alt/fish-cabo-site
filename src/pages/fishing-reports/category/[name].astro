@@ -1,0 +1,13 @@
+---
+import Base from '../../../layouts/Base.astro';
+import OriginalPage from '../../../components/OriginalPage.astro';
+import { published, itemHtml } from '../../../lib/reports';
+export async function getStaticPaths() {
+  const all = await published();
+  return [...new Set(all.map((e) => e.data.category).filter(Boolean))].map((name) => ({ params: { name }, props: { name, items: all.filter((e) => e.data.category === name) } }));
+}
+const { name, items } = Astro.props;
+const page = { lang: 'en-US', head: [`<title>${name} — Cabo Fishing Reports | Exotic Fish Cabo</title>`, `<link rel="canonical" href="https://fish-cabo.com/fishing-reports/category/${encodeURIComponent(name)}"/>`], bodyLd: [],
+  sections: [{ theme: 'light', bg: null, blocks: [{ kind: 'text', html: `<h1>${name}</h1>`, ga: [0, 0, 0, 0] }] }, { theme: 'white', bg: null, blocks: [{ kind: 'html', html: items.map(itemHtml).join(''), ga: [0, 0, 0, 0] }] }] };
+---
+<Base original={page as any} solidHeader><OriginalPage page={page as any} slug="fishing-reports" /></Base>

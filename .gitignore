@@ -4,4 +4,3 @@ dist/
 .wrangler/
 .dev.vars
 .env*
-public/media/

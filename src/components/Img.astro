@@ -13,9 +13,10 @@ interface Props {
 }
 const { src, alt, sizes = '100vw', priority = false, class: cls } = Astro.props;
 const m = media(src);
+const cdn = `https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/${src}`;
 ---
-<picture>
-  <source type="image/avif" srcset={m.avif} sizes={sizes} />
+{m ? <picture>
+  <source type="image/avif" srcset={m!.avif} sizes={sizes} />
   <img
     src={m.at(1000)}
     srcset={m.webp}
@@ -28,4 +29,4 @@ const m = media(src);
     fetchpriority={priority ? 'high' : undefined}
     class={cls}
   />
-</picture>
+</picture> : <img src={cdn} alt={alt} loading={priority ? 'eager' : 'lazy'} class={cls} />}

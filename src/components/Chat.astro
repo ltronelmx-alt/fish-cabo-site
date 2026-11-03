@@ -1,22 +1,30 @@
 ---
-// Floating WhatsApp button. Prototype: opens WhatsApp directly with a prefilled
-// message. The existing multilingual chat assistant (EN/ES/FR knowledge base that
-// hands off to WhatsApp) will be ported here unchanged in the full migration.
-import { SITE } from '../data/site';
-const msg = encodeURIComponent('Hello Exotic Fish Cabo! I would like information about a private fishing charter.');
-const href = `https://wa.me/${SITE.whatsapp.replace(/\D/g, '')}?text=${msg}`;
+// Original multilingual chat assistant (EN/ES/FR + WhatsApp handoff), ported verbatim from fish-cabo.com.
+import '../styles/chat.css';
 ---
-<a class="wa" href={href} target="_blank" rel="noopener" aria-label="Chat with Exotic Fish Cabo on WhatsApp" data-track="whatsapp">
-  <svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><path fill="#fff" d="M16 3C8.8 3 3 8.7 3 15.8c0 2.5.7 4.8 2 6.8L3 29l6.6-1.9c1.9 1 4.1 1.6 6.4 1.6 7.2 0 13-5.7 13-12.8S23.2 3 16 3Zm0 23.4c-2.1 0-4-.6-5.7-1.6l-.4-.2-3.9 1.1 1.1-3.8-.3-.4a10.4 10.4 0 0 1-1.7-5.7C5.1 10 10 5.3 16 5.3S26.9 10 26.9 15.8 22 26.4 16 26.4Zm6-7.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.6-1.6-1-.9-1.6-1.9-1.8-2.2-.2-.3 0-.5.1-.7l.5-.6c.2-.2.2-.4.3-.6.1-.2 0-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.1-1.2 2.8s1.2 3.2 1.4 3.5c.2.2 2.4 3.6 5.8 5 .8.4 1.4.6 1.9.7.8.3 1.6.2 2.2.1.7-.1 1.9-.8 2.2-1.5.3-.8.3-1.4.2-1.5-.1-.2-.3-.3-.6-.4Z"/></svg>
-</a>
-<style>
-  .wa {
-    position: fixed; right: 24px; bottom: 24px; z-index: 58; width: 60px; height: 60px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
-    box-shadow: 0 4px 20px rgb(37 211 102 / 0.4); transition: transform 0.3s ease;
-  }
-  .wa:hover { transform: scale(1.08); }
-  /* Fix from the audit: on mobile the bubble covered the BOOK NOW button. */
-  @media (max-width: 800px) { .wa { right: 14px; bottom: calc(72px + env(safe-area-inset-bottom, 0px)); width: 54px; height: 54px; } }
-</style>
+<div aria-label="Open chat" id="efc-chat-bubble">
+<svg viewbox="0 0 24 24"><path d="M20.52 3.48A11.83 11.83 0 0 0 12 0C5.37 0 0 5.37 0 12c0 2.11.55 4.1 1.52 5.83L0 24l6.4-1.68A11.94 11.94 0 0 0 12 24c6.63 0 12-5.37 12-12 0-3.2-1.25-6.21-3.48-8.52zM12 21.8a9.77 9.77 0 0 1-4.98-1.36l-.36-.22-3.82 1 1.02-3.72-.24-.38A9.79 9.79 0 0 1 2.2 12 9.8 9.8 0 0 1 12 2.2 9.8 9.8 0 0 1 21.8 12a9.79 9.79 0 0 1-9.8 9.8zm5.4-7.38c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.34.22-.64.07-.3-.15-1.26-.46-2.4-1.47a8.9 8.9 0 0 1-1.65-2.02c-.17-.3 0-.46.13-.6.13-.13.3-.34.44-.5.15-.17.2-.28.3-.47.1-.2.05-.36-.02-.5-.08-.15-.67-1.6-.92-2.2-.24-.57-.48-.5-.67-.5l-.57-.01c-.2 0-.5.07-.77.36-.27.3-1.03 1.01-1.03 2.46s1.06 2.86 1.2 3.05c.15.2 2.1 3.2 5.08 4.48.7.3 1.25.48 1.68.62.7.22 1.34.19 1.84.12.56-.08 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.18-.57-.33z"></path></svg>
+</div>
+<div id="efc-chat-window">
+<div id="efc-header">
+<img alt="Exotic Fish Cabo" src="/favicon.ico"/>
+<div id="efc-header-text">
+<h3>Exotic Fish Cabo</h3>
+<p id="efc-status">🎣 Fishing Assistant • Online</p>
+</div>
+<div id="efc-lang-selector">
+<button id="btn-en">EN</button>
+<button id="btn-es">ES</button>
+<button id="btn-fr">FR</button>
+</div>
+<button id="efc-close">×</button>
+</div>
+<div id="efc-messages"></div>
+<div id="efc-input-area">
+<input id="efc-input" placeholder="Ask your question..." type="text"/>
+<button id="efc-send">
+<svg viewbox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+</button>
+</div>
+</div>
+<script is:inline src="/js/efc-chat.js" defer></script>

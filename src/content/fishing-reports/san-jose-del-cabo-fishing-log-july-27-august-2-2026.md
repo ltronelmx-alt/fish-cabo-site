@@ -1,0 +1,84 @@
+---
+title: "San Jose del Cabo Fishing Log — July 27–August 2, 2026"
+seoTitle: "Fishing Log | San Jose del Cabo July 27-August 2, 2026"
+description: "San Jose del Cabo fishing log for July 27-August 2, 2026: yellowfin tuna at Vinorama and Outer Gordo, black marlin and post-storm fishing conditions."
+date: 2026-08-02
+category: "San Jose del Cabo Fishing Log"
+tags: []
+author: "EXOTIC FISH-CABO"
+image: null
+thumbnail: {"src": "1792368523318-BWMJG78P4VUPDDURU2LP/Weekly+Fishing+Log+Data+Banner.webp", "alt": ""}
+thumbnailSource: "listing"
+listingRank: 15
+excerpt: "Fishing improved around San Jose del Cabo after the port reopened following Hurricane Genevieve. Strong yellowfin tuna activity at Vinorama and Outer Gordo, black marlin and occasional dorado highlighted the week."
+excerptSource: "listing-or-rss"
+format: "html"
+draft: false
+originalHead: ["<title>Fishing Log | San Jose del Cabo July 27-August 2, 2026</title>", "<link href=\"https://fish-cabo.com/fishing-reports/san-jose-del-cabo-fishing-log-july-27-august-2-2026\" rel=\"canonical\"/>", "<meta content=\"EXOTIC FISH CABO\" property=\"og:site_name\"/>", "<meta content=\"Fishing Log | San Jose del Cabo July 27-August 2, 2026\" property=\"og:title\"/>", "<meta content=\"40.7207559\" property=\"og:latitude\"/>", "<meta content=\"-74.0007613\" property=\"og:longitude\"/>", "<meta content=\"\" property=\"og:locality\"/>", "<meta content=\"https://fish-cabo.com/fishing-reports/san-jose-del-cabo-fishing-log-july-27-august-2-2026\" property=\"og:url\"/>", "<meta content=\"article\" property=\"og:type\"/>", "<meta content=\"San Jose del Cabo fishing log for July 27-August 2, 2026: yellowfin tuna at Vinorama and Outer Gordo, black marlin and post-storm fishing conditions.\" property=\"og:description\"/>", "<meta content=\"http://static1.squarespace.com/static/6911316472567617bebc28b5/691151fb652db2259d96541d/6ad53bfd5c34411e2ff4f460/1792775080311/Weekly+Fishing+Log+Data+Banner.webp?format=1500w\" property=\"og:image\"/>", "<meta content=\"1500\" property=\"og:image:width\"/>", "<meta content=\"1039\" property=\"og:image:height\"/>", "<meta content=\"Fishing Log | San Jose del Cabo July 27-August 2, 2026\" itemprop=\"name\"/>", "<meta content=\"https://fish-cabo.com/fishing-reports/san-jose-del-cabo-fishing-log-july-27-august-2-2026\" itemprop=\"url\"/>", "<meta content=\"San Jose del Cabo fishing log for July 27-August 2, 2026: yellowfin tuna at Vinorama and Outer Gordo, black marlin and post-storm fishing conditions.\" itemprop=\"description\"/>", "<meta content=\"http://static1.squarespace.com/static/6911316472567617bebc28b5/691151fb652db2259d96541d/6ad53bfd5c34411e2ff4f460/1792775080311/Weekly+Fishing+Log+Data+Banner.webp?format=1500w\" itemprop=\"thumbnailUrl\"/>", "<meta content=\"http://static1.squarespace.com/static/6911316472567617bebc28b5/691151fb652db2259d96541d/6ad53bfd5c34411e2ff4f460/1792775080311/Weekly+Fishing+Log+Data+Banner.webp?format=1500w\" itemprop=\"image\"/>", "<meta content=\"EXOTIC FISH-CABO\" itemprop=\"author\"/>", "<meta content=\"2026-08-02T14:37:01-0700\" itemprop=\"datePublished\"/>", "<meta content=\"2026-10-23T10:04:40-0700\" itemprop=\"dateModified\"/>", "<meta content=\"San Jose del Cabo Fishing Log — July 27–August 2, 2026\" itemprop=\"headline\"/>", "<meta content=\"EXOTIC FISH CABO\" itemprop=\"publisher\"/>", "<meta content=\"Fishing Log | San Jose del Cabo July 27-August 2, 2026\" name=\"twitter:title\"/>", "<meta content=\"http://static1.squarespace.com/static/6911316472567617bebc28b5/691151fb652db2259d96541d/6ad53bfd5c34411e2ff4f460/1792775080311/Weekly+Fishing+Log+Data+Banner.webp?format=1500w\" name=\"twitter:image\"/>", "<meta content=\"https://fish-cabo.com/fishing-reports/san-jose-del-cabo-fishing-log-july-27-august-2-2026\" name=\"twitter:url\"/>", "<meta content=\"summary\" name=\"twitter:card\"/>", "<meta content=\"San Jose del Cabo fishing log for July 27-August 2, 2026: yellowfin tuna at Vinorama and Outer Gordo, black marlin and post-storm fishing conditions.\" name=\"twitter:description\"/>", "<meta content=\"San Jose del Cabo fishing log for July 27-August 2, 2026: yellowfin tuna at Vinorama and Outer Gordo, black marlin and post-storm fishing conditions.\" name=\"description\"/>", "<script type=\"application/ld+json\">{\"url\":\"https://fish-cabo.com\",\"name\":\"EXOTIC FISH CABO\",\"description\":\"\",\"image\":\"//images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/ed1a80e6-474f-4efc-ad03-6795b1f1754b/logo+low-res+Fishing+San+Jose+del+Cabo.webp\",\"@context\":\"http://schema.org\",\"@type\":\"WebSite\"}</script>", "<script type=\"application/ld+json\">{\"name\":\"Fishing Log | San Jose del Cabo July 27-August 2, 2026\",\"url\":\"https://fish-cabo.com/fishing-reports/san-jose-del-cabo-fishing-log-july-27-august-2-2026\",\"datePublished\":\"2026-08-02T14:37:01-0700\",\"dateModified\":\"2026-10-23T10:04:40-0700\",\"headline\":\"San Jose del Cabo Fishing Log \\u2014 July 27\\u2013August 2, 2026\",\"author\":\"EXOTIC FISH-CABO\",\"publisher\":{\"name\":\"EXOTIC FISH CABO\",\"logo\":{\"@type\":\"ImageObject\",\"url\":\"https://static1.squarespace.com/static/6911316472567617bebc28b5/t/69153b5b52d922227788c6b9/1792969125197/\"},\"@context\":\"http://schema.org\",\"@type\":\"Organization\"},\"image\":\"http://static1.squarespace.com/static/6911316472567617bebc28b5/691151fb652db2259d96541d/6ad53bfd5c34411e2ff4f460/1792775080311/Weekly+Fishing+Log+Data+Banner.webp?format=1500w\",\"@context\":\"http://schema.org\",\"@type\":\"Article\"}</script>", "<script type=\"application/ld+json\">\n{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"LocalBusiness\",\n  \"@id\": \"https://fish-cabo.com/#business\",\n  \"name\": \"Exotic Fish Cabo\",\n  \"alternateName\": [\"Fish Cabo\", \"Fish-Cabo\"],\n  \"url\": \"https://fish-cabo.com/\",\n  \"description\": \"Private sportfishing charters departing from Puerto Los Cabos Marina in San José del Cabo, Mexico: marlin, tuna, dorado, wahoo and roosterfish. Family friendly.\",\n  \"telephone\": \"+52-624-122-3506\",\n  \"email\": \"contact@fish-cabo.com\",\n  \"image\": \"https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/1762994227375-8V5FEBCX5CV3KU2EBTP4/Marylou+Fishing+San+Jose+del+Cabo.webp\",\n  \"logo\": \"https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/ed1a80e6-474f-4efc-ad03-6795b1f1754b/logo+low-res+Fishing+San+Jose+del+Cabo.webp\",\n  \"priceRange\": \"$350-$600+\",\n  \"address\": {\n    \"@type\": \"PostalAddress\",\n    \"streetAddress\": \"Bd Tiburón, La Playa\",\n    \"addressLocality\": \"San José del Cabo\",\n    \"addressRegion\": \"Baja California Sur\",\n    \"postalCode\": \"23403\",\n    \"addressCountry\": \"MX\"\n  },\n  \"geo\": { \"@type\": \"GeoCoordinates\", \"latitude\": 23.0600625, \"longitude\": -109.6706875 },\n  \"hasMap\": \"https://maps.app.goo.gl/d3TAakiLjgiS9kNM7\",\n  \"areaServed\": [\n    { \"@type\": \"City\", \"name\": \"San José del Cabo\" },\n    { \"@type\": \"City\", \"name\": \"Cabo San Lucas\" }\n  ],\n  \"sameAs\": [\n    \"https://www.instagram.com/exoticfishcabo/\",\n    \"https://www.youtube.com/@Exoticpechemexiquechannel\",\n    \"https://www.facebook.com/pechemexique/\",\n    \"https://www.tripadvisor.com/Attraction_Review-g152516-d9569970-Reviews-Exotic_Fish_Cabo_Sportfishing_Charter-San_Jose_del_Cabo_Los_Cabos_Baja_California.html\",\n    \"https://x.com/pechemexique/\",\n    \"https://www.yelp.com/biz/exotic-fish-cabo-san-jos%C3%A9-del-cabo-3\",\n    \"https://www.threads.com/@exoticfishcabo\"\n  ]\n}\n</script>"]
+---
+<article>
+
+
+
+<h1>San Jose del Cabo Fishing Log — July 27–August 2, 2026</h1>
+
+
+
+<a href="/fishing-reports/category/San%20Jose%20del%20Cabo%20Fishing%20Log">San Jose del Cabo Fishing Log</a>
+
+
+<time datetime="2026-08-02">
+Aug 2
+</time>
+Written by <a href="/fishing-reports?author=69113037595a20384a76acde">EXOTIC FISH-CABO</a>
+
+
+
+
+
+<p><strong>Strong Yellowfin Tuna Action Returns After Hurricane Genevieve, with Big Fish at Outer Gordo</strong></p><p>Fishing around San Jose del Cabo improved significantly during the week of July 27–August 2, 2026, following the passing of Hurricane Genevieve.</p><p>After several days of difficult marine conditions, the reopening of the port allowed fishing activity to resume. Yellowfin tuna became the main attraction, with productive fishing at Vinorama and several impressive catches reported from Outer Gordo.</p><p>Black marlin, dorado and dogtooth snapper also contributed to an eventful week across the region.</p><h2>Weather and Ocean Conditions</h2><p>The week began with the effects of Hurricane Genevieve still influencing fishing conditions around Los Cabos.</p><p>According to local reports, Puerto Los Cabos reopened on Tuesday morning, July 28, following the storm's passage.</p><p>Light rain showers were experienced, mainly offshore, accompanied by relatively limited winds. However, residual swell and waves continued to affect the fishing grounds, leaving choppy conditions during the first day of resumed activity.</p><p>As the week progressed, more boats returned to the water and fishing opportunities improved considerably.</p><p>Despite the recent tropical weather, offshore and midshore fishing produced strong results.</p><h2>Yellowfin Tuna — Excellent Action at Vinorama</h2><p>Vinorama was one of the most productive fishing locations during the week.</p><p>Many boats concentrated their efforts in this area rather than searching farther offshore for porpoise schools.</p><p>Yellowfin tuna responded well to live sardines, producing an impressive bite in the days following the storm.</p><p>Most of the tuna reported from Vinorama weighed approximately 25–80 pounds, providing opportunities for anglers targeting medium-sized and larger yellowfin.</p><p>Shark activity remained a problem, particularly early in the week. However, reports indicated that encounters with sharks became less frequent as the week progressed.</p><p>A limited number of dorado were also caught while fishing with live sardines.</p><h2>Big Yellowfin Tuna — Outer Gordo Banks</h2><p>The most impressive yellowfin tuna catches of the week were reported at Outer Gordo.</p><p>During the weekend of August 1–2, seven large yellowfin tuna were reported from this fishing area.</p><p>All seven were caught using live bulito or skipjack.</p><p>The largest yellowfin weighed <strong>282 pounds</strong>, while the other six ranged from approximately <strong>178 to 240 pounds</strong>.</p><p>These reports highlighted the presence of exceptionally large yellowfin tuna around the offshore banks.</p><p>Fishing for tuna of this size requires patience, suitable tackle and favorable ocean conditions. Even when large fish are present, hookups and successful landings are never guaranteed.</p><h2>Black Marlin Activity at Outer Gordo</h2><p>Black marlin were another highlight of the week.</p><p>On Saturday, August 1, two black marlin catches were reported from the Outer Gordo area.</p><p>One fish weighed approximately 380 pounds, while the other was estimated at around 450 pounds.</p><p>These catches demonstrated the variety of large game fish present around the offshore banks during this period.</p><p>The wider regional tournament held that week also recorded black and blue marlin catches, reflecting the presence of billfish in the surrounding waters.</p><h2>Dorado and Wahoo Fishing</h2><p>Dorado were reported in limited numbers, primarily while anglers were fishing for yellowfin tuna with live sardines.</p><p>Although tuna clearly dominated the fishing activity, these occasional dorado catches provided additional variety.</p><p><strong>No wahoo catches were reported in the weekly source report.</strong></p><p>This does not mean wahoo were absent from the region, only that none were documented in the report used for this Fishing Log.</p><h2>Bottom Fishing — Inner Gordo</h2><p>Bottom-fishing opportunities were also reported around Inner Gordo.</p><p>Additional baitfish schools were observed in the area, and some boats used chunks of skipjack while drifting over bottom structure.</p><p>On Friday, July 31, one reported outing produced four dogtooth snapper, along with several other lost hookups.</p><p>Although yellowfin tuna remained the principal fishing target, this bottom activity showed that anglers also had opportunities to pursue reef-associated species.</p><h2>Fishing Conditions Summary</h2><ul><li><p><strong>Vinorama:</strong> Strong yellowfin tuna action on live sardines, with most fish weighing approximately 25–80 pounds.</p></li><li><p><strong>Outer Gordo:</strong> Seven large yellowfin tuna reported during the weekend, ranging from 178 to 282 pounds.</p></li><li><p><strong>Black marlin:</strong> Two catches reported at Outer Gordo on August 1, weighing approximately 380 and 450 pounds.</p></li><li><p><strong>Dorado:</strong> Occasional catches while fishing live sardines for tuna.</p></li><li><p><strong>Wahoo:</strong> No catches documented in the weekly report.</p></li><li><p><strong>Inner Gordo:</strong> Dogtooth snapper caught while drifting chunks of skipjack.</p></li><li><p><strong>Weather:</strong> Port reopened July 28 after Hurricane Genevieve, with residual swell and choppy seas early in the week.</p></li></ul><h2>Fishing Outlook</h2><p>The improvement in yellowfin tuna fishing following Hurricane Genevieve was an encouraging development as August began.</p><p>Vinorama offered productive opportunities for yellowfin tuna, while Outer Gordo produced reports of much larger fish.</p><p>However, shark activity and changing ocean conditions continued to influence fishing success.</p><p>As always during tropical storm season, anglers should monitor current marine forecasts and confirm port conditions before planning a fishing trip.</p><h2>Plan Your Private Fishing Charter</h2><p>Exotic Fish Cabo offers <strong>100% private fishing charters departing exclusively from Puerto Los Cabos Marina in San Jose del Cabo</strong>.</p><p>Whether your goal is to target yellowfin tuna, marlin, dorado or other seasonal species, our private fishing charters offer a personalized experience in the waters of Los Cabos.</p><p>Explore our <a href="https://fish-cabo.com/fishing-charters">private fishing charters</a> to discover our available fishing trips.</p><p>Ready to plan your next adventure? <a href="https://fish-cabo.com/contact">Contact Exotic Fish Cabo</a> to discuss your fishing preferences and charter options.</p><p><em>This Fishing Log summarizes historical regional fishing reports. All reported catches are regional observations and are not attributed to Exotic Fish Cabo. Fishing conditions change, and catches are never guaranteed.</em></p>
+
+
+
+
+
+
+<a href="/fishing-reports?author=69113037595a20384a76acde">
+
+<img alt="" data-ext="https://images.squarespace-cdn.com/content/v2/namespaces/memberAccountAvatars/libraries/69113037595a20384a76acde/7369365e-53a6-4827-a5f7-e9ab40202a55/thirdPartyMemberAvatar-69113037595a20384a76acde-05d37562-5925-4737-a06c-ad6b5d6b9050?format=300w"/>
+
+EXOTIC FISH-CABO
+</a>
+
+
+<section>
+
+
+
+
+</section>
+
+</article>
+
+<section>
+<a href="/fishing-reports/san-jose-del-cabo-fishing-log-august-3-9-2026">
+
+
+
+
+Previous
+Previous
+<h2>San Jose del Cabo Fishing Log — August 3–9, 2026</h2>
+
+</a>
+<a href="/fishing-reports/mahi-mahi-fishing-san-jose-del-cabo-august-2026">
+
+Next
+Next
+<h2>Mahi-Mahi Fishing Report – San José del Cabo, August 2026</h2>
+
+
+
+
+</a>
+</section>

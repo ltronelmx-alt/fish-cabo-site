@@ -2,21 +2,28 @@ import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 
-// Fishing Reports & weekly Fishing Logs. One Markdown file per article.
-// The file name is the URL slug, so existing Squarespace URLs are preserved exactly.
+// Fishing Reports & weekly Fishing Logs — one Markdown file per article (file name = URL slug).
+// Imported articles keep their ORIGINAL HTML body (format: html) and ORIGINAL <head> tags (originalHead).
+// New articles written in the CMS use Markdown (format: markdown) and get head tags from the fields below.
 const reports = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/fishing-reports' }),
   schema: z.object({
     title: z.string(),
     seoTitle: z.string().optional(),
-    description: z.string(),
+    description: z.string().default(''),
     date: z.coerce.date(),
-    category: z.enum(['San Jose del Cabo Fishing Log', 'Fishing Report']),
-    image: z.object({ src: z.string(), alt: z.string(), width: z.number(), height: z.number() }),
-    excerpt: z.string(),
+    category: z.string().default('Fishing Report'),
+    tags: z.array(z.string()).default([]),
+    author: z.string().default('EXOTIC FISH-CABO'),
+    image: z.object({ src: z.string(), alt: z.string().default('') }).nullable().optional(),
+    thumbnail: z.object({ src: z.string(), alt: z.string().default('') }).nullable().optional(),
+    thumbnailSource: z.string().optional(),
+    listingRank: z.number().default(999), // tie-breaker for posts published the same day (original order)
+    excerpt: z.string().default(''),
+    excerptSource: z.string().optional(),
+    format: z.enum(['html', 'markdown']).default('markdown'),
     draft: z.boolean().default(false),
-    imported: z.boolean().default(false), // false = article body not yet imported from Squarespace
+    originalHead: z.array(z.string()).optional(),
   }),
 });
-
 export const collections = { reports };
