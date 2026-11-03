@@ -1,7 +1,7 @@
 ---
 // Responsive, self-hosted image: AVIF + WebP at several widths, real width/height
 // (no layout shift), lazy-loaded unless it is the hero (LCP) image.
-import { media } from '../lib/media';
+import { media, capStyle } from '../lib/media';
 interface Props {
   src: string; // original path "uuid/File+Name.webp"
   alt: string;
@@ -24,6 +24,7 @@ const cdn = `https://images.squarespace-cdn.com/content/v1/6911316472567617bebc2
     alt={alt}
     width={m.width}
     height={m.height}
+    style={capStyle(m.width, m.height)}
     loading={priority ? 'eager' : 'lazy'}
     decoding={priority ? 'sync' : 'async'}
     fetchpriority={priority ? 'high' : undefined}

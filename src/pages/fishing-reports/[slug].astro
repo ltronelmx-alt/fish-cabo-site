@@ -47,6 +47,6 @@ const mdy = d.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric',
   .article > article > a[href*='/category/'] { display: inline-block; margin: 8px 12px 18px 0; padding: 6px 14px; border-radius: 999px; background: var(--orange); color: var(--ink); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; }
   .article > article a[href*='author='] { display: inline-block; padding: 8px 4px; min-height: 24px; }
   /* article photos: never wider than ~960px on desktop (sharp at their resolution), centred, whole */
-  .article picture { max-width: 960px; margin-inline: auto !important; }
+  .article picture { display: block; max-width: 960px; margin-inline: auto !important; }
   .article picture img { width: 100%; height: auto; }
 </style>

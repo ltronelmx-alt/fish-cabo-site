@@ -19,6 +19,8 @@ export function media(src: string): ({ width: number; height: number; widths: nu
 }
 
 /** Rewrite original <img alt=".." data-path=".."> tags into responsive self-hosted <picture> (alt kept verbatim). */
+/** Display cap: never wider than the file itself (no blurry upscaling) and never taller than 85% of the screen. Proportions kept. */
+export const capStyle = (w: number, h: number) => `max-width:min(100%,${w}px,calc(85vh * ${w} / ${h}))`;
 export function pictures(html: string, sizes = '(min-width: 1000px) 50vw, 92vw') {
   let n = 0;
   html = html.replace(/<img([^>]*?)\sdata-ext="([^"]+)"([^>]*)\/?>/g, (_m, a, src, b) => `<img${a}${b.replace(/\/$/, '')} src="${src}" loading="lazy" decoding="async"/>`);
@@ -28,6 +30,6 @@ export function pictures(html: string, sizes = '(min-width: 1000px) 50vw, 92vw')
     const m = media(p.replace(/&amp;/g, '&'));
     const lazy = n++ > 0 ? 'lazy' : 'eager';
     if (!m) return `<img alt="${alt}" src="https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/${p}" loading="${lazy}" decoding="async"/>`;
-    return `<picture><source type="image/avif" srcset="${m.avif}" sizes="${sizes}"/><img alt="${alt}" src="${m.at(1000)}" srcset="${m.webp}" sizes="${sizes}" width="${m.width}" height="${m.height}" loading="${lazy}" decoding="async"/></picture>`;
+    return `<picture><source type="image/avif" srcset="${m.avif}" sizes="${sizes}"/><img alt="${alt}" src="${m.at(1000)}" srcset="${m.webp}" sizes="${sizes}" width="${m.width}" height="${m.height}" style="${capStyle(m.width, m.height)}" loading="${lazy}" decoding="async"/></picture>`;
   });
 }

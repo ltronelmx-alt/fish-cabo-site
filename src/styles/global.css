@@ -287,3 +287,9 @@ body { line-height: 1.75; color: #262626; counter-reset: sec; }
 .btn-paypal { background: #ffc439; color: #003087; }
 .btn-paypal:hover, .dark .btn-paypal:hover { background: #f2b52a; color: #003087; }
 .btn-pay:hover { transform: translateY(-2px); }
+
+/* content images are capped (see capStyle) and centred; hero / banner photos keep the full width */
+main picture > img, main .media > img { margin-inline: auto; }
+.hero .hero-img, .o-hero .o-hero-bg img, .banner .banner-img img, .o-paymethods img, .o-small-logo img { max-width: 100% !important; }
+.article img:not([style]) { max-width: min(100%, 960px); margin-inline: auto; }
+.article img[style] { width: 100%; }

@@ -4,6 +4,8 @@ import icons from '../data/pay-icons.json';
 interface Props { block: { href?: string; text?: string }; primary?: boolean; track?: string }
 const { block, primary, track } = Astro.props;
 const t = (block.text || '').toLowerCase();
-const pay = /^stripe$/.test(t) ? 'stripe' : /^wise$/.test(t) ? 'wise' : /^paypal$/.test(t) ? 'paypal' : '';
+const h = (block.href || '').toLowerCase(), tt = t.trim();
+// detected from the payment link first (some original labels have typos, e.g. "Stipe"), then from the label
+const pay = /stripe\.com/.test(h) || /^stri?pe$/.test(tt) ? 'stripe' : /wise\.com/.test(h) || tt === 'wise' ? 'wise' : /paypal\./.test(h) || tt === 'paypal' ? 'paypal' : '';
 ---
 <a class:list={['btn', primary && !pay && 'btn-primary', pay && `btn-pay btn-${pay} no-arrow`, /->\s*$/.test(block.text || '') && 'no-arrow']} href={block.href} data-track={track}>{pay && <svg class="pay-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d={(icons as any)[pay]} /></svg>}{block.text}</a>

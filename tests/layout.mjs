@@ -45,6 +45,18 @@ for (const w of widths) {
       }
       // text overflowing its own box (cut words, buttons too narrow)
       document.querySelectorAll('main a.btn, main h1, main h2, main h3, main h4').forEach((e) => { if (!skip(e) && e.scrollWidth > e.clientWidth + 2 && getComputedStyle(e).overflow !== 'visible') issues.push(`text overflow: ${name(e)}`); });
+      // payment links must always use the payment-button style
+      document.querySelectorAll('main a[href*="stripe.com"], main a[href*="wise.com"], main a[href*="paypal."]').forEach((a) => { if (!a.classList.contains('btn-pay')) issues.push(`payment link without payment style: ${name(a)}`); });
+      // images: never shown far above their real resolution (blurry) and never taller than the screen outside the hero
+      const vh = window.innerHeight;
+      document.querySelectorAll('main img').forEach((im) => {
+        if (skip(im) || im.closest('.hero, .o-hero, .banner')) return;
+        const r = im.getBoundingClientRect(); if (r.width < 2) return;
+        const nat = +im.getAttribute('width') || 0;
+        if (nat && r.width > nat * 1.25 && r.width > 300) issues.push(`image upscaled ${Math.round(r.width)}px > natural ${nat}px: ${name(im)}`);
+        if (r.height > vh * 1.0) issues.push(`image taller than the screen (${Math.round(r.height)}px): ${name(im)}`);
+        if (vw >= 1000 && r.width > 1000 && !im.closest('.o-gallery.n1')) issues.push(`image very wide on desktop (${Math.round(r.width)}px): ${name(im)}`);
+      });
       return [...new Set(issues)].slice(0, 30);
     });
     // covered content: buttons, headings and images must be the topmost element at their centre

@@ -184,7 +184,7 @@ Pages and boat pages can also be edited ("advanced" collections). These edit the
 |---|---|---|
 | Content + SEO verbatim check (DOM order, headings, links, alts, text, head tags, JSON-LD, lang) | 83 pages vs Squarespace export | ✅ 581/581 identical. The only intentional difference is the owner-approved Iman Bank link fix (`scripts/link_fixes.py`) |
 | Functional QA (Playwright: routes, navigation, chatbot EN/ES/FR + WhatsApp, contact form, booking buttons, headers, staging protection, runtime errors) | local Cloudflare runtime | ✅ 145/145 |
-| Layout audit (horizontal overflow, overlapping boxes, content covered by another element, text overflow) | 81 URLs × 3 widths (1440 / 820 / 390) | ✅ 243/243 (`tests/layout.mjs`, `docs/layout-results.json`) |
+| Layout audit: horizontal overflow, overlapping boxes, content covered by another element, text overflow, every payment link styled as a payment button, no image upscaled above its file resolution, no content image taller than the screen, no oversized article image on desktop | 81 URLs × 3 widths (1440 / 820 / 390) | ✅ 243/243 (`tests/layout.mjs`, `docs/layout-results.json`) |
 | All sitemap URLs + robots, admin, chatbot JS, pagination, category page | live staging | ✅ 88/88 return 200, unknown URL → 404 |
 | Internal links found on every page | live staging | ✅ 100 distinct internal links, 0 broken |
 | Security headers | live staging | ✅ CSP, HSTS, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy |
@@ -242,3 +242,4 @@ The other Squarespace PSI runs did not complete: the PSI UI stayed on "Analyse e
 - The Iman Bank "wahoo" link is broken. It is fixed on the new site.
 - The PayPal button href is empty on all 10 boat pages.
 - The chatbot shows `**` around bold words. Its original code does not render markdown.
+- The Stripe button label on the 31ft boat page is misspelled "Stipe" in the original. The label is kept verbatim; the button is detected from its stripe.com link.

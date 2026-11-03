@@ -35,7 +35,7 @@ function groups(blocks: Block[]) {
   for (const b of blocks) {
     const k = b.kind === 'img' ? 'img' : b.kind === 'button' ? 'button' : 'one';
     const last = out[out.length - 1];
-    const isPay = (x: Block) => /^(stripe|wise|paypal)$/i.test((x.text || '').trim());
+    const isPay = (x: Block) => /^(stri?pe|wise|paypal)$/i.test((x.text || '').trim()) || /stripe\.com|wise\.com|paypal\./i.test(x.href || '');
     // payment buttons and navigation buttons (e.g. "Next Boat") never share a row
     if (last && last.kind === k && k !== 'one' && (k !== 'button' || isPay(last.items[last.items.length - 1]) === isPay(b))) last.items.push(b);
     else out.push({ kind: k, items: [b] });
@@ -66,7 +66,7 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
       <div class="container o-flow">
         {groups(sec.blocks).map((g, gi, arr) => {
           const prev = arr[gi - 1], next = arr[gi + 1];
-          const stripeRow = (x?: { kind: string; items: Block[] }) => !!x && x.kind === 'button' && x.items.some((b) => /^stripe$/i.test((b.text || '').trim()));
+          const stripeRow = (x?: { kind: string; items: Block[] }) => !!x && x.kind === 'button' && x.items.some((b) => /^stri?pe$/i.test((b.text || '').trim()) || /stripe\.com/i.test(b.href || ''));
           // the small "Card, Apple Pay, Google Pay, Link" picture that follows the Stripe button sits next to it
           if (g.kind === 'img' && g.items.length === 1 && stripeRow(prev)) return null;
           if (g.kind === 'img') return (
