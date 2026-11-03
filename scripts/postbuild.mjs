@@ -10,7 +10,7 @@ const isProd = process.env.PUBLIC_SITE_ENV === 'production';
 
 const csp = [
   "default-src 'self'",
-  "img-src 'self' data: https://images.squarespace-cdn.com",
+  "img-src 'self' data:",
   "script-src 'self' https://static.cloudflareinsights.com https://challenges.cloudflare.com",
   "connect-src 'self' https://cloudflareinsights.com",
   "style-src 'self' 'unsafe-inline'",
@@ -34,6 +34,9 @@ ${isProd ? '' : '  X-Robots-Tag: noindex, nofollow\n'}
   Cache-Control: public, max-age=31536000, immutable
 
 /fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/media/*
   Cache-Control: public, max-age=31536000, immutable
 
 /favicon.ico

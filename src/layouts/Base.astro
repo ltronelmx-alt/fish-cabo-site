@@ -4,6 +4,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import Chat from '../components/Chat.astro';
 import { SITE } from '../data/site';
+import { media } from '../lib/media';
 
 interface Props {
   title: string;
@@ -19,8 +20,8 @@ const { title, description, canonical, ogImage, breadcrumb, jsonLd = [] } = Astr
 const isProd = import.meta.env.PUBLIC_SITE_ENV === 'production';
 const path = canonical ?? (Astro.url.pathname.replace(/\/$/, '') || '/');
 const canonicalUrl = new URL(path, SITE.url).href.replace(/\/$/, path === '/' ? '/' : '');
-const LOGO = `https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/${SITE.logo}`;
-const og = ogImage ?? 'https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/6ba6d05e-3401-4565-8d73-2a9403da9828/EXOTIC+banner.webp?format=1500w';
+const LOGO = new URL(media(SITE.logo).at(216), SITE.url).href;
+const og = ogImage ?? new URL(media('6ba6d05e-3401-4565-8d73-2a9403da9828/EXOTIC+banner.webp').at(1500), SITE.url).href;
 const beacon = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
 
 // One business entity, referenced everywhere by @id (the current site publishes two conflicting ones).
@@ -35,7 +36,7 @@ const business = {
     'Private sportfishing charters departing from Puerto Los Cabos Marina in San José del Cabo, Mexico: marlin, tuna, dorado, wahoo and roosterfish. Family friendly.',
   telephone: SITE.phone,
   email: SITE.email,
-  image: 'https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/1762994227375-8V5FEBCX5CV3KU2EBTP4/Marylou+Fishing+San+Jose+del+Cabo.webp',
+  image: new URL(media('1762994227375-8V5FEBCX5CV3KU2EBTP4/Marylou+Fishing+San+Jose+del+Cabo.webp').at(631), SITE.url).href,
   logo: LOGO,
   priceRange: '$350-$600+',
   address: {
@@ -76,7 +77,6 @@ const graph = [website, business, ...(crumbs ? [crumbs] : []), ...jsonLd];
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="preload" href="/fonts/syne-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/syne-mono-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preconnect" href="https://images.squarespace-cdn.com" />
     <meta property="og:site_name" content="EXOTIC FISH CABO" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />

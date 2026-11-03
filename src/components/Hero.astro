@@ -25,9 +25,9 @@ const { image, variant, align = 'start', tone = 'white', overlay = 0, bg = '#000
   .hero :global(h1) { margin: 0; }
 
   /* Home: tall image hero, headline lower third, intro under it */
-  .hero-home { min-height: max(574px, 76.3vw); align-items: flex-end; padding-bottom: 5.5vw; }
+  .hero-home { min-height: max(574px, 76.3vw); align-items: flex-start; padding-top: 25.8vw; padding-bottom: 5vw; }
   .hero-home .hero-content { padding-inline: 0; }
-  .hero-home :global(p) { font-size: var(--fs-p-lg); margin: 4.6vw 0 0; padding-inline: 1vw; max-width: 92vw; }
+  .hero-home :global(p) { font-size: var(--fs-p-lg); margin: 2.85vw 0 0; padding-inline: 1vw; max-width: 92vw; }
   .hero-home :global(h1) { margin-left: -1vw; }
 
   /* Fishing Charters: short banner */
@@ -36,7 +36,7 @@ const { image, variant, align = 'start', tone = 'white', overlay = 0, bg = '#000
   .hero-tall { min-height: max(380px, 42.4vw); align-items: center; }
 
   @media (max-width: 767px) {
-    .hero-home { padding-bottom: 28px; min-height: 574px; }
+    .hero-home { padding-top: 62px; padding-bottom: 28px; min-height: 574px; }
     .hero-home :global(p) { margin-top: 24px; padding-inline: 10px; }
     .hero-home :global(h1) { margin-left: -12px; }
   }
