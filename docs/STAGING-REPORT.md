@@ -16,8 +16,8 @@ Nothing was changed on Squarespace, DNS, the domain, Search Console or any payme
 | Original multilingual chatbot (EN/ES/FR + WhatsApp) | ✅ Original code ported verbatim. Tested in all 3 languages |
 | Contact form (same fields), Worker + Cloudflare Turnstile, safe test mode | ✅ Validation tested. Full submission to be tested on staging (Turnstile needs the internet) |
 | CMS (Sveltia CMS, free, Git-based, drafts, preview, image upload, SEO fields) | ✅ Configured. **Needs staging + a GitHub token to be used** (see §7) |
-| Protected Cloudflare staging URL | ⏳ **Waiting for the owner**: importing the repo in Cloudflare is a dashboard step (§8) |
-| Real performance comparison | ⚠️ Partial: Squarespace homepage measured. Everything else is pending staging (§6) |
+| Cloudflare staging URL | ✅ Live: https://fish-cabo.small-boat-4235.workers.dev (Workers Builds from GitHub, auto-deploy on push). Cloudflare Access: **to be enabled by the owner** |
+| Performance | ✅ New site: Lighthouse 99–100 mobile, 100 desktop on all 7 key pages (§11). Squarespace: homepage mobile 49 (PSI) |
 | Automated QA (Playwright) | ✅ 145/145 passed |
 
 ## 2. Architecture and costs
@@ -176,3 +176,69 @@ Pages and boat pages can also be edited ("advanced" collections). These edit the
 - `/api/contact`: an incomplete submission is rejected (400). A complete submission passes Turnstile with the test key and returns `{"ok":true,"test":true}`, which means no email is sent. The Turnstile widget is present on `/contact`.
 - Cloudflare Access: **not yet enabled** at the time of this check.
 - PageSpeed Insights could not resolve the new workers.dev hostname yet. The measurement will be retried; no figures are reported until it succeeds.
+
+
+## 11. Full test battery — 2026-11-03 (final run, all green)
+
+| Test | Where | Result |
+|---|---|---|
+| Content + SEO verbatim check (DOM order, headings, links, alts, text, head tags, JSON-LD, lang) | 83 pages vs Squarespace export | ✅ 581/581 identical. The only intentional difference is the owner-approved Iman Bank link fix (`scripts/link_fixes.py`) |
+| Functional QA (Playwright: routes, navigation, chatbot EN/ES/FR + WhatsApp, contact form, booking buttons, headers, staging protection, runtime errors) | local Cloudflare runtime | ✅ 145/145 |
+| Layout audit (horizontal overflow, overlapping boxes, content covered by another element, text overflow) | 81 URLs × 3 widths (1440 / 820 / 390) | ✅ 243/243 (`tests/layout.mjs`, `docs/layout-results.json`) |
+| All sitemap URLs + robots, admin, chatbot JS, pagination, category page | live staging | ✅ 88/88 return 200, unknown URL → 404 |
+| Internal links found on every page | live staging | ✅ 100 distinct internal links, 0 broken |
+| Security headers | live staging | ✅ CSP, HSTS, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy |
+| Contact API | live staging | ✅ complete form → 200 `{"ok":true,"test":true}` (test mode, no email); empty form → 400; honeypot → silently accepted, nothing sent |
+| Turnstile | live staging | ✅ invisible test key (`1x00000000000000000000BB`): no widget box shown. A real site key must be created before cut-over (choose "Invisible") |
+| Payment buttons | all 10 boat pages | ✅ links unchanged; buttons in platform colours with logos; Stripe payment-methods picture shown small next to the Stripe button; "Next Boat" on its own row. No transaction made |
+| Staging is not indexable | live staging | ✅ `robots.txt` Disallow + `X-Robots-Tag: noindex` |
+
+### Performance — new site (Lighthouse 12, simulated throttling, production build)
+
+Measured locally on the production build (no noindex). Lab figures. They are not field data.
+
+| Page | Mobile perf / a11y / BP / SEO | Mobile LCP | Desktop perf / a11y / BP / SEO | Desktop LCP | CLS |
+|---|---|---|---|---|---|
+| / | 99 / 100 / 100 / 100 | 1.8 s | 100 / 100 / 100 / 100 | 0.5 s | 0 |
+| /fishing-charters | 99 / 100 / 100 / 100 | 1.8 s | 100 / 100 / 100 / 100 | 0.6 s | 0 |
+| /fishing-boats | 100 / 98 / 100 / 100 | 1.8 s | 100 / 98 / 100 / 100 | 0.5 s | 0 |
+| /fishing-boats/23ft-panga | 99 / 100 / 100 / 100 | 1.9 s | 100 / 100 / 100 / 100 | 0.5 s | 0 |
+| /fishing-reports | 99 / 98 / 100 / 92 | 2.0 s | 100 / 98 / 100 / 92 | 0.4 s | 0 |
+| /fishing-reports/wahoo-… (a Fishing Log) | 100 / 100 / 100 / 100 | 1.5 s | 100 / 100 / 100 / 100 | 0.4 s | 0 |
+| /contact | 99 / 100 / 96 / 100 | 1.8 s | 100 / 100 / 96 / 100 | 0.5 s | 0 |
+
+Raw data: `docs/lighthouse-local.tsv`. The remaining points come from the original content and were left unchanged on purpose:
+- **/fishing-reports SEO 92:** the original "Read More" link text.
+- **98 accessibility:** the original heading levels (h2 → h4).
+- **/contact best practices 96:** a console error that only happens in the test sandbox, which has no internet.
+
+**PageSpeed Insights (Google, real network) on the live staging homepage:**
+- **Mobile:** 99 performance, 91 accessibility, 96 best practices, SEO 61.
+- **Desktop:** 100 performance, 91 accessibility, 100 best practices, SEO 69.
+
+Why SEO is low on staging: Lighthouse reports "page is blocked from indexing". This is the intentional staging `noindex` plus the `robots.txt` Disallow. In the production build, SEO is 100.
+
+The accessibility 91 was caused by three things, all fixed after that run:
+- the contrast of the orange labels;
+- the chat bubble's missing role;
+- a redundant footer logo label.
+
+**Squarespace (PSI, mobile homepage, 2026-11-03 11:05):**
+- performance 49;
+- FCP 3.1 s, LCP 9.5 s;
+- TBT 580 ms, CLS 0, SI 6.4 s.
+
+The other Squarespace PSI runs did not complete: the PSI UI stayed on "Analyse en cours", and the anonymous PSI API returned a daily-quota 429. No figure was invented. To finish the comparison, run https://pagespeed.web.dev on the 6 other pages.
+
+### Remaining owner actions before any production cut-over
+1. Enable Cloudflare Access on the workers.dev URL (Settings → Domains & Routes → Enable Cloudflare Access).
+2. Create a real Turnstile site key (Invisible) and set `PUBLIC_TURNSTILE_SITEKEY` / `TURNSTILE_SECRET`.
+3. Choose the contact email provider: Resend or Email Routing. It needs approval.
+4. Decide on the empty PayPal links and the shared Stripe links (§5).
+5. CMS login test: it needs the owner's GitHub token, entered by the owner.
+6. Production cut-over (DNS) **only with explicit approval** (§9). Rollback plan: §10.
+
+### Known items on the live Squarespace site (not changed there)
+- The Iman Bank "wahoo" link is broken. It is fixed on the new site.
+- The PayPal button href is empty on all 10 boat pages.
+- The chatbot shows `**` around bold words. Its original code does not render markdown.
