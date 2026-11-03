@@ -187,3 +187,13 @@ Notes on the remaining points:
 | Production SEO crawl | ✅ No markup in titles, no missing canonical or description on original pages, 1 business entity, 0 external og hosts, 0 broken internal links, sitemap valid XML with canonical absolute URLs only |
 | Staging indexing protection | ✅ robots Disallow + X-Robots-Tag + meta robots on staging only |
 | Lighthouse | ✅ See §8. No regression versus the earlier 2026-11-03 baseline |
+
+## 12. Live staging verification after deployment (commit 6be958e)
+
+- **Fixes live:**
+  - `/marlin-fishing-cabo` title without `<br/>`;
+  - homepage with 1 LocalBusiness block;
+  - video page with 1 H1;
+  - the new footer links;
+  - og:image file served (200).
+- **Staging protection still active:** `robots.txt Disallow: /`, `X-Robots-Tag: noindex, nofollow`, `<meta name="robots" content="noindex, nofollow">`.
