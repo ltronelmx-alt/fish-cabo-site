@@ -4,7 +4,8 @@ import { byH3, byH4 } from '../lib/original';
 interface Props { html: string; mode?: 'plain' | 'cards'; class?: string }
 const { html: raw, mode = 'plain', class: cls } = Astro.props;
 // Design hook only: paragraphs made entirely of bold text get class="sub" (styled as sub-headings). Text untouched.
-const html = raw.replace(/<p>(<strong>(?:(?!<\/?strong>)[\s\S])*<\/strong>)<\/p>/g, '<p class="sub">$1</p>')
+// (only short ones: a long all-bold paragraph is body text, styled as a lead paragraph instead)
+const html = raw.replace(/<p>(<strong>(?:(?!<\/?strong>)[\s\S])*<\/strong>)<\/p>/g, (_m, inner: string) => `<p class="${inner.replace(/<[^>]+>/g, '').length > 110 ? 'lead-strong' : 'sub'}">${inner}</p>`)
   // paragraphs that contain nothing but one link → styled as a button (class only)
   .replace(/<p>(<a [^>]*>(?:<strong>)?[^<]*(?:<\/strong>)?<\/a>)<\/p>/g, '<p class="cta">$1</p>');
 const kvRe = /<p><strong>[^<]*<\/strong>(?:<strong>[^<]*<\/strong>)?[^<]+<\/p>/;

@@ -150,13 +150,12 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
   .o-gallery.n3, .o-gallery.n4 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .o-gallery.n1 .media { max-width: 1200px; }
   .o-gallery .media img { width: 100%; height: auto; }
-  .o-gallery.n2 .media img, .o-gallery.n3 .media img, .o-gallery.n4 .media img { aspect-ratio: 4 / 3; object-fit: cover; }
   @media (max-width: 760px) { .o-gallery.n2, .o-gallery.n3, .o-gallery.n4 { grid-template-columns: 1fr; } }
   .o-html img { border-radius: var(--radius); }
   .o-html picture { display: block; margin: 24px 0; }
   .o-gallery-html { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: clamp(14px, 1.6vw, 28px); }
   .o-gallery-html picture, .o-gallery-html > img { margin: 0; }
-  .o-gallery-html img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+  .o-gallery-html img { width: 100%; }
   .o-video iframe, .o-map iframe { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; }
   .o-map iframe { aspect-ratio: 21 / 9; min-height: 320px; }
   .o-paylabel { margin-bottom: -12px; }
@@ -184,7 +183,8 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
   .bg-sand .o-text > .o-chunk:nth-child(even) { background: var(--white); box-shadow: 0 0 0 100vmax var(--white); }
   .dark .o-text > .o-chunk:nth-child(even) { background: rgb(255 255 255 / 0.03); box-shadow: none; clip-path: none; }
   .o-text > .o-chunk:last-child { padding-bottom: 0; }
-  .o-text > .o-chunk:nth-child(even):last-child { padding-bottom: clamp(56px, 6vw, 112px); margin-bottom: calc(-1 * clamp(64px, 7vw, 140px)); }
+  .o-text > .o-chunk:nth-child(even):last-child { padding-bottom: clamp(56px, 6vw, 112px); }
+  .o-flow > .o-text:last-child > .o-chunk:nth-child(even):last-child { margin-bottom: calc(-1 * clamp(64px, 7vw, 140px)); }
   .o-chunk > h2 { max-width: 22ch; }
   .o-chunk > h2 + p { font-size: var(--fs-lead); line-height: 1.6; color: var(--ink); }
   .dark .o-chunk > h2 + p { color: #ececec; }
@@ -214,6 +214,8 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
   .o-sec .rich p.cta > a strong { color: inherit; }
   .dark .o-sec .rich p.cta > a, .o-sec.dark .rich p.cta > a { border-color: var(--white); color: var(--white); }
   /* key/value lines (“Period … / January–March …”) read as a clean table */
+  .rich p.lead-strong { font-size: var(--fs-lead); line-height: 1.6; color: var(--ink); }
+  .dark .rich p.lead-strong, .dark .rich p.lead-strong strong { color: #ececec; }
   .o-sec .rich > p.kv { padding: 12px 0; margin: 0; border-bottom: 1px solid var(--line); }
   .o-sec .rich > p.kv strong:first-child { display: inline-block; min-width: 13em; }
   .o-sec .rich pre { font-family: var(--font-body); background: var(--sand); border-left: 3px solid var(--orange); padding: 18px 22px; }
