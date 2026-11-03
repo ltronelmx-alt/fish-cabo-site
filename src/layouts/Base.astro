@@ -5,7 +5,7 @@ import Footer from '../components/Footer.astro';
 import Chat from '../components/Chat.astro';
 import { SITE } from '../data/site';
 import { media } from '../lib/media';
-import { fixHead } from '../lib/seo-fixes';
+import { fixHead, heroFallback } from '../lib/seo-fixes';
 
 interface Props {
   // SEO: either the ORIGINAL Squarespace head tags (verbatim) or a minimal title/description (404 only).
@@ -16,7 +16,7 @@ interface Props {
   canonical?: string; // override (paginated archive only)
 }
 const { original, title, description, solidHeader = false, canonical } = Astro.props;
-const head = original ? fixHead(original.head, { canonical }) : [];
+const head = original ? fixHead(original.head, { canonical, fallback: heroFallback(original) }) : [];
 const bodyLd = original ? fixHead(original.bodyLd) : [];
 // Safety: every build is "staging" (noindex) unless SITE_ENV=production is set explicitly.
 const isProd = import.meta.env.PUBLIC_SITE_ENV === 'production';

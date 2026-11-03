@@ -29,8 +29,17 @@ export function mirroredOg(url: string): string {
   return hits.length === 1 ? `${SITE}/media/${hits[0]}-${(manifest as any)[hits[0]].widths.at(-1)}.webp` : url;
 }
 
-export function fixHead(tags: string[], opts: { canonical?: string } = {}): string[] {
-  return tags
+/** F6c — the page's own hero photo (self-hosted), used only when the original social image is already 404 on Squarespace */
+export function heroFallback(page: any): { url: string; w: number; h: number } | null {
+  const first = page?.sections?.[0];
+  const p = first?.bg?.path || first?.blocks?.find((b: any) => b.kind === 'img')?.path;
+  const e = p && (manifest as any)[key(p)];
+  return e ? { url: `${SITE}/media/${key(p)}-${e.widths.at(-1)}.webp`, w: e.widths.at(-1), h: Math.round((e.height * e.widths.at(-1)) / e.width) } : null;
+}
+
+export function fixHead(tags: string[], opts: { canonical?: string; fallback?: { url: string; w: number; h: number } | null } = {}): string[] {
+  let usedFallback = false;
+  const out = tags
     // F2 — legacy second LocalBusiness block ("Fish Cabo", www host, other coordinates, unverifiable rating) conflicts with the main @id entity
     .filter((t) => !(/application\/ld\+json/.test(t) && /"name"\s*:\s*"Fish Cabo"/.test(t) && !/"@id"/.test(t)))
     .map((t) => {
@@ -43,9 +52,16 @@ export function fixHead(tags: string[], opts: { canonical?: string } = {}): stri
       if (/og:image|twitter:image|itemprop="image"|thumbnailUrl|application\/ld\+json/.test(t)) {
         t = localImage(t);
         t = t.replace(/(?:https?:)?\/\/static1\.squarespace\.com\/[^"\s]+/g, (u) => mirroredOg(u.startsWith('//') ? 'https:' + u : u));
+        if (/property="og:image"|name="twitter:image"/.test(t) && /static1\.squarespace\.com/.test(t) && opts.fallback) {
+          t = t.replace(/content="[^"]*"/, `content="${opts.fallback.url}"`); usedFallback = true;
+        }
       }
       return t;
     });
+  // keep og:image:width/height true to the fallback picture
+  return usedFallback && opts.fallback
+    ? out.map((t) => /property="og:image:width"/.test(t) ? t.replace(/content="[^"]*"/, `content="${opts.fallback!.w}"`) : /property="og:image:height"/.test(t) ? t.replace(/content="[^"]*"/, `content="${opts.fallback!.h}"`) : t)
+    : out;
 }
 
 /** F4/F5 — one H1 per page. Visible text, order and look unchanged (CSS classes keep the size). */

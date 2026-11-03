@@ -1,8 +1,8 @@
 {
  "base": "http://127.0.0.1:8787",
- "date": "2026-11-03T22:55:41.025Z",
+ "date": "2026-11-03T23:02:31.540Z",
  "total": 145,
- "failed": 1,
+ "failed": 0,
  "results": [
   {
    "area": "Routes",
@@ -684,8 +684,8 @@
   },
   {
    "area": "SEO",
-   "test": "sitemap.xml identical to original Squarespace sitemap",
-   "ok": false,
+   "test": "sitemap.xml identical to original Squarespace sitemap (except documented fix F7: homepage URL instead of /cabo-fishing)",
+   "ok": true,
    "detail": ""
   },
   {

@@ -29,7 +29,16 @@ def _og(m):
     hits = BYNAME.get(name, [])
     return f"{SITE}/media/{hits[0]}-{MAN[hits[0]]['widths'][-1]}.webp" if len(hits) == 1 else u
 
-def fix_head_tag(t):
+def hero_fallback(slug):
+    try: page = json.load(open(os.path.join(HERE, '..', 'src', 'data', 'original', (slug or 'home') + '.json')))
+    except Exception: return None
+    first = (page.get('sections') or [{}])[0]
+    p = (first.get('bg') or {}).get('path') or next((b.get('path') for b in first.get('blocks', []) if b.get('kind') == 'img'), None)
+    e = MAN.get(_key(p)) if p else None
+    if not e: return None
+    w = e['widths'][-1]; return (f"{SITE}/media/{_key(p)}-{w}.webp", w, round(e['height'] * w / e['width']))
+
+def fix_head_tag(t, fb=None, used=None):
     if re.search(r'application/ld\+json', t) and re.search(r'"name"\s*:\s*"Fish Cabo"', t) and '"@id"' not in t:
         return None  # F2
     if t.startswith('<title') or re.search(r'property="og:title"|name="twitter:title"|itemprop="name"', t):
@@ -37,15 +46,21 @@ def fix_head_tag(t):
     if re.search(r'og:image|twitter:image|itemprop="image"|thumbnailUrl|application/ld\+json', t):
         t = CDN.sub(_img, t)  # F6
         t = re.sub(r'(?:https?:)?//static1\.squarespace\.com/[^"\s]+', _og, t)  # F6b
+        if fb and re.search(r'property="og:image"|name="twitter:image"', t) and 'static1.squarespace.com' in t:
+            t = re.sub(r'content="[^"]*"', f'content="{fb[0]}"', t, count=1); used.append(1)  # F6c
     return t
 
 def fix_soup(soup, slug):
     """Apply F1/F2/F6 on <head>, F4/F5/listing H1→H2 on the body of the ORIGINAL page (BeautifulSoup, in place)."""
     from bs4 import BeautifulSoup
+    fb = None if slug.startswith('fishing-reports/') else hero_fallback('home' if slug in ('index', 'cabo-fishing', '') else slug); used = []
     for tag in list(soup.head.find_all(['title', 'meta', 'link', 'script'])):
-        new = fix_head_tag(str(tag))
+        new = fix_head_tag(str(tag), fb, used)
         if new is None: tag.decompose(); continue
         if new != str(tag): tag.replace_with(BeautifulSoup(new, 'html.parser'))
+    if used:
+        for m in soup.head.find_all('meta', attrs={'property': 'og:image:width'}): m['content'] = str(fb[1])
+        for m in soup.head.find_all('meta', attrs={'property': 'og:image:height'}): m['content'] = str(fb[2])
     main = soup.select_one('article#page-regions') or soup.select_one('main') or soup
     if slug.startswith('cabo-fishing-videos/v/') and not main.find('h1'):
         h = main.find('h2')

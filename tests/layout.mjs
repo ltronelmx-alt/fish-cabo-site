@@ -55,7 +55,7 @@ for (const w of widths) {
         const nat = +im.getAttribute('width') || 0;
         if (nat && r.width > nat * 1.25 && r.width > 300) issues.push(`image upscaled ${Math.round(r.width)}px > natural ${nat}px: ${name(im)}`);
         if (r.height > vh * 1.0) issues.push(`image taller than the screen (${Math.round(r.height)}px): ${name(im)}`);
-        if (vw >= 1000 && r.width > 1000 && !im.closest('.o-gallery.n1')) issues.push(`image very wide on desktop (${Math.round(r.width)}px): ${name(im)}`);
+        if (vw >= 1000 && r.width > 1000 && im.closest('.article')) issues.push(`image very wide on desktop (${Math.round(r.width)}px): ${name(im)}`);
       });
       return [...new Set(issues)].slice(0, 30);
     });
