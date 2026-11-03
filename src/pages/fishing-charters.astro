@@ -46,11 +46,11 @@ const bt = b1.filter((b) => b.kind === 'button');
 
 <style>
   .s1grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(32px, 6vw, 96px); row-gap: clamp(32px, 4vw, 56px); align-items: start; }
-  .s1grid :global(.main) { grid-column: 1 / -1; grid-row: 1; max-width: 900px; justify-self: center; }
+  .s1grid :global(.main) { grid-column: 1 / -1; grid-row: 1; }
   .s1grid :global(.main ul) { grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); }
   .s1grid :global(.gh2) { grid-column: 1; grid-row: 2; align-self: center; padding-top: var(--section-pad); }
   .s1grid :global(.amber) { grid-column: 2; grid-row: 2; margin-top: var(--section-pad); }
-  .s1grid :global(.grounds) { grid-column: 1 / -1; grid-row: 3; max-width: 900px; }
+  .s1grid :global(.grounds) { grid-column: 1 / -1; grid-row: 3; }
   .s1grid :global(.img1) { grid-column: 1; grid-row: 4; }
   .s1grid :global(.img2) { grid-column: 2; grid-row: 4; }
   .s1grid :global(.btnB) { grid-column: 1; grid-row: 5; justify-self: end; }

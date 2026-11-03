@@ -91,11 +91,11 @@ h4 { font-size: var(--fs-h4); line-height: 1.1; letter-spacing: -0.015em; }
 .lead { font-size: var(--fs-lead); line-height: 1.6; color: var(--text); }
 .dark .lead { color: #e5e5e5; }
 .muted { color: var(--muted); }
-.head { max-width: 820px; margin-bottom: clamp(36px, 4vw, 64px); }
+.head { max-width: none; margin-bottom: clamp(36px, 4vw, 64px); }
 .head.center { margin-inline: auto; text-align: center; }
 .head.center .eyebrow { justify-content: center; }
 .head h2 { margin-bottom: 0.35em; }
-.prose { max-width: 760px; }
+.prose { max-width: none; }
 .prose h3 { margin-top: 1.8em; }
 .prose > :first-child { margin-top: 0; }
 
@@ -213,3 +213,10 @@ blockquote { margin: 0; }
 .ftr strong { color: inherit; }
 .faq-list > p:first-of-type { font-size: inherit; line-height: inherit; color: inherit; }
 .band-sand .card { background: var(--white) !important; border-color: var(--line) !important; }
+
+/* ---------- Full-width text (owner request): paragraphs use the whole page width ---------- */
+:root { --container: 100%; }
+.rich p, .rich ul, .lead { max-width: none !important; }
+.cards-from-h3 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); }
+.split, .split.wide-text { grid-template-columns: 1fr !important; }
+.sticky { position: static !important; }

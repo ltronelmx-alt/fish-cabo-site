@@ -54,10 +54,10 @@ const faq = s4.blocks.filter((b) => b.ga[3] - b.ga[1] > 12);
 </Base>
 
 <style>
-  :global(.boats-intro) { max-width: 900px; margin-inline: auto; }
+  :global(.boats-intro) { max-width: none; }
   .fleet { padding-block: clamp(40px, 5vw, 72px); }
   .boats { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); column-gap: clamp(18px, 2vw, 28px); row-gap: 0; }
-  .two .boats { max-width: 900px; }
+  .two .boats { max-width: none; }
   .boats > :global(*) { background: var(--white); }
   .bg-white .boats > :global(*) { background: var(--sand); }
   .boats :global(.boat-media) { border-radius: var(--radius) var(--radius) 0 0; }
@@ -73,5 +73,5 @@ const faq = s4.blocks.filter((b) => b.ga[3] - b.ga[1] > 12);
     .boats :global(.boat-media) { margin-top: 28px; }
   }
   :global(.faq-list h3) { padding-top: 24px; border-top: 1px solid var(--line); margin-top: 24px; }
-  :global(.faq-list) { max-width: 900px; }
+  :global(.faq-list) { max-width: none; }
 </style>

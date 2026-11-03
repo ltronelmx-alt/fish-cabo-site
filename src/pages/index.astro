@@ -72,12 +72,12 @@ const c4 = byH2(txt(s4)[0].html!); // areas · different · fish
 
 <style is:global>
   .hero-text h1 { margin-bottom: 0.4em; }
-  .hero-text p { max-width: 640px; font-size: var(--fs-lead); line-height: 1.6; }
+  .hero-text p { max-width: 900px; font-size: var(--fs-lead); line-height: 1.6; }
   .hero-text p strong { font-weight: 400; color: #f0f0f0; }
-  .intro h2 { max-width: 18ch; }
+  .intro h2 { max-width: none; }
   .center-head > h2 { text-align: center; max-width: 20ch; margin-inline: auto; }
   .center-head > h2::before { margin-inline: auto; }
-  .two-col { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); column-gap: clamp(32px, 6vw, 96px); }
+  .two-col { display: block; }
   .two-col > h2 { grid-column: 1; grid-row: 1 / span 20; margin-top: 0; }
   .two-col > :not(h2) { grid-column: 2; }
   @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } .two-col > * { grid-column: 1 !important; grid-row: auto !important; } }
@@ -90,25 +90,28 @@ const c4 = byH2(txt(s4)[0].html!); // areas · different · fish
   .species .card { border-color: rgb(255 255 255 / 0.1); }
   .faq-list h3 { padding-top: 24px; border-top: 1px solid var(--line); margin-top: 24px; }
   .faq-list h2 + h3 { margin-top: 32px; }
-  .s4grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: clamp(32px, 6vw, 96px); align-items: start; }
-  .s4a { grid-column: 1; grid-row: 1 / span 2; }
-  .s4img { grid-column: 2; grid-row: 1; margin-top: 70px; }
-  .s4btn { grid-column: 2; grid-row: 2; align-self: start; }
-  .s4b { grid-column: 1 / -1; grid-row: 3; }
-  .s4c { grid-column: 1 / -1; grid-row: 4; }
+  .s4grid { display: grid; grid-template-columns: minmax(0, 1fr); column-gap: clamp(32px, 6vw, 96px); align-items: start; }
+  .s4a { grid-column: 1; grid-row: 1; }
+  .s4img { grid-column: 1; grid-row: 2; margin-top: 40px; }
+  .s4btn { grid-column: 1; grid-row: 3; align-self: start; }
+  .s4b { grid-column: 1; grid-row: 4; }
+  .s4c { grid-column: 1; grid-row: 5; }
   .band { position: relative; margin-top: var(--section-pad); padding-block: var(--section-pad); }
   .s4b { margin-top: var(--section-pad); }
   .band-sand { box-shadow: 0 0 0 100vmax var(--sand); clip-path: inset(0 -100vmax); background: var(--sand); }
   .band-black { box-shadow: 0 0 0 100vmax var(--ink); clip-path: inset(0 -100vmax); background: var(--ink); margin-bottom: calc(-1 * var(--section-pad)); }
   .s4c h2, .s4c h3, .s4c strong { color: var(--white); }
-  .s6grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: clamp(32px, 6vw, 96px); align-items: start; }
+  .s6grid { display: grid; grid-template-columns: minmax(0, 1fr); column-gap: clamp(32px, 6vw, 96px); align-items: start; }
   .s6img { grid-column: 1; grid-row: 1; }
-  .s6btn { grid-column: 1; grid-row: 2; align-self: start; }
-  .s6txt { grid-column: 2; grid-row: 1 / span 3; }
+  .s6btn { grid-column: 1; grid-row: 3; align-self: start; }
+  .s6txt { grid-column: 1; grid-row: 2; margin-top: 40px; }
   @media (max-width: 900px) {
     .s4grid, .s6grid { grid-template-columns: 1fr; }
     .s4grid > *, .s6grid > * { grid-column: 1 !important; grid-row: auto !important; }
     .s4img { margin-top: 32px; }
-    .s4a { order: 1; } .s4img { order: 2; } .s4btn { order: 3; } .s4b { order: 4; } .s4c { order: 5; }
+
   }
+  .s4img img, .s6img img { aspect-ratio: 21 / 9; }
+  section .split > .media img { aspect-ratio: 21 / 9; }
+  .faq-list > h3, .faq-list > p { max-width: none; }
 </style>
