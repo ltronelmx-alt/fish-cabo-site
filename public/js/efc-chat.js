@@ -507,6 +507,7 @@ resetAutoOpen();
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   $('efc-chat-bubble') && $('efc-chat-bubble').addEventListener('click', toggleChat);
+  $('efc-chat-bubble') && $('efc-chat-bubble').addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleChat(); } });
   $('efc-close') && $('efc-close').addEventListener('click', toggleChat);
   ['en', 'es', 'fr'].forEach(function (l) { var b = $('btn-' + l); b && b.addEventListener('click', function () { setLang(l); }); });
   $('efc-send') && $('efc-send').addEventListener('click', sendMessage);

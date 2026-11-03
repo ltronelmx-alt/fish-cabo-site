@@ -131,7 +131,7 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
   .o-hero-portrait > .hero-inner { align-self: center; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); column-gap: clamp(32px, 5vw, 96px); align-items: center; padding-top: 130px; }
   .o-hero-portrait > .hero-inner > * { grid-column: 1; }
   .o-hero .o-hero-portrait > .hero-inner > .o-hero-abs, .o-hero-portrait > .hero-inner > .o-hero-abs { position: static; grid-column: 2; grid-row: 1 / span 6; border-radius: var(--radius); overflow: hidden; }
-  .o-hero-portrait > .hero-inner > .o-hero-abs img { height: auto !important; max-height: 78svh !important; width: auto; max-width: 100%; margin-inline: auto; }
+  .o-hero-portrait > .hero-inner > .o-hero-abs img { width: 100%; height: auto !important; max-height: 78svh !important; object-fit: contain !important; margin-inline: auto; }
   @media (max-width: 760px) {
     .o-hero.o-hero-portrait > .hero-inner { grid-template-columns: 1fr; grid-row: 1; padding-top: 110px; }
     .o-hero-portrait > .hero-inner > .o-hero-abs { grid-column: 1; grid-row: auto; }
@@ -255,7 +255,7 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
   .o-html:not(.article) > article > :not(a:first-child) { margin-inline: 22px; }
   .o-html:not(.article) > article > .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 18px; font-size: 12px; letter-spacing: 0.04em; color: var(--muted); }
   .o-html:not(.article) > article > .meta + .meta { display: none; }
-  .o-html:not(.article) > article > .meta a { padding: 5px 12px; border-radius: 999px; background: var(--orange); color: var(--white); text-decoration: none; text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; }
+  .o-html:not(.article) > article > .meta a { padding: 5px 12px; border-radius: 999px; background: var(--orange); color: var(--ink); font-weight: 700; text-decoration: none; text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; }
   .o-html:not(.article) > article > .meta span { text-transform: uppercase; }
   .o-html:not(.article) > article > h1 { font-size: clamp(19px, 0.5vw + 15px, 24px); line-height: 1.15; margin-top: 16px; }
   .o-html:not(.article) > article > h1 a { text-decoration: none; }
