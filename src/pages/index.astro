@@ -114,4 +114,9 @@ const c4 = byH2(txt(s4)[0].html!); // areas · different · fish
   .s4img img, .s6img img { aspect-ratio: 21 / 9; }
   section .split > .media img { aspect-ratio: 21 / 9; }
   .faq-list > h3, .faq-list > p { max-width: none; }
+  /* Book-your-charter facts shown as tiles (original paragraphs, CSS only) */
+  .cta-links > p:has(> strong:first-child):not(.sub) { display: inline-block; vertical-align: top; width: calc(50% - 10px); margin: 0 6px 12px 0; padding: 20px 24px; border: 1px solid rgb(255 255 255 / 0.12); border-radius: var(--radius-sm); background: rgb(255 255 255 / 0.04); }
+  .cta-links > p:has(> strong:first-child):not(.sub) strong { display: block; color: var(--orange); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 4px; }
+  @media (min-width: 1100px) { .cta-links > p:has(> strong:first-child):not(.sub) { width: calc(25% - 10px); } }
+  @media (max-width: 640px) { .cta-links > p:has(> strong:first-child):not(.sub) { width: 100%; } }
 </style>
