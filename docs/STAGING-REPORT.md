@@ -166,3 +166,13 @@ Pages and boat pages can also be edited ("advanced" collections). These edit the
 - Keep the Squarespace site and subscription active for at least 30 days after the switch.
 - Rollback = point the DNS records back to Squarespace's values (save them before the switch). Propagation follows the lowered TTL (minutes to 1 hour).
 - On Cloudflare, every deploy is versioned: Workers → Deployments → "Rollback" to any previous version instantly.
+
+## Staging deployment check — 2026-11-03
+
+- URL: `https://fish-cabo.small-boat-4235.workers.dev` (Workers Builds, GitHub `ltronelmx-alt/fish-cabo-site`, branch `main`). The production domain is not connected.
+- All 85 sitemap URLs plus `/robots.txt`, `/admin/`, `/js/efc-chat.js`, `/fishing-reports?offset=1` and `/fishing-reports/older` return 200. An unknown URL returns 404.
+- Staging protection: `robots.txt` has `Disallow: /`, the `X-Robots-Tag: noindex, nofollow` header is set, and CSP and HSTS are present.
+- Iman Bank "wahoo" link resolves to `/fishing-reports/wahoo-fishing-san-jose-del-cabo-august-2026` (200).
+- `/api/contact`: an incomplete submission is rejected (400). A complete submission passes Turnstile with the test key and returns `{"ok":true,"test":true}`, which means no email is sent. The Turnstile widget is present on `/contact`.
+- Cloudflare Access: **not yet enabled** at the time of this check.
+- PageSpeed Insights could not resolve the new workers.dev hostname yet. The measurement will be retried; no figures are reported until it succeeds.
