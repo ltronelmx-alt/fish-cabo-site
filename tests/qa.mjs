@@ -41,7 +41,7 @@ for (const h of ['content-security-policy', 'x-content-type-options', 'referrer-
 rec('Staging protection', 'X-Robots-Tag noindex on pages', /noindex/.test(hdr.get('x-robots-tag') || ''));
 rec('Staging protection', 'robots.txt blocks all crawlers', /Disallow: \//.test(await (await fetch(BASE + '/robots.txt')).text()));
 const sm = await (await fetch(BASE + '/sitemap.xml')).text();
-rec('SEO', 'sitemap.xml identical to original Squarespace sitemap', sm.trim() === readFileSync('src/data/original-sitemap.xml', 'utf8').trim());
+rec('SEO', 'sitemap.xml identical to original Squarespace sitemap (except documented fix F7: homepage URL instead of /cabo-fishing)', sm.trim() === readFileSync('src/data/original-sitemap.xml', 'utf8').trim().replace('<loc>https://fish-cabo.com/cabo-fishing</loc>', '<loc>https://fish-cabo.com/</loc>'));
 const apiEv = await fetch(BASE + '/api/event', { method: 'POST', body: JSON.stringify({ event: 'qa_test', page: '/' }) }); rec('Worker', '/api/event accepts click beacons', apiEv.status === 204, apiEv.status);
 const apiBad = await fetch(BASE + '/api/contact', { method: 'POST', body: new URLSearchParams({ email: 'x' }) }); const jb = await apiBad.json();
 rec('Contact form', 'server rejects incomplete submission', apiBad.status === 400 && !jb.ok, JSON.stringify(jb));

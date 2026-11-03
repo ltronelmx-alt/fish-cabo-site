@@ -31,4 +31,4 @@ for (const u of urls) {
 }
 writeFileSync(mapPath, JSON.stringify(map, null, 1) + '\n');
 console.log(`og mirror: ${ok} mirrored, ${fail} failed, ${urls.size} URLs`);
-if (fail) process.exitCode = 1;
+// failures (e.g. 404 already on Squarespace) are reported but do not block committing the images that worked

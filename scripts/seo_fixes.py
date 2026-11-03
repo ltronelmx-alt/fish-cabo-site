@@ -18,10 +18,16 @@ def _img(m):
     k = _key(m.group(1)); e = MAN.get(k)
     return f"{SITE}/media/{k}-{e['widths'][-1]}.webp" if e else m.group(0)
 
+BYNAME = {}
+for _k in MAN: BYNAME.setdefault(_k.split('/', 1)[1], []).append(_k)
+
 def _og(m):
     u = m.group(0); u2 = ('https:' + u) if u.startswith('//') else u
     k = re.sub(r'^https?:', '', u2).split('?')[0]
-    return SITE + OG[k] if k in OG else u
+    if k in OG: return SITE + OG[k]
+    name = _key('x/' + k.rsplit('/', 1)[1])[2:]
+    hits = BYNAME.get(name, [])
+    return f"{SITE}/media/{hits[0]}-{MAN[hits[0]]['widths'][-1]}.webp" if len(hits) == 1 else u
 
 def fix_head_tag(t):
     if re.search(r'application/ld\+json', t) and re.search(r'"name"\s*:\s*"Fish Cabo"', t) and '"@id"' not in t:

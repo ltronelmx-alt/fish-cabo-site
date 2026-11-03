@@ -1,8 +1,8 @@
 {
  "base": "http://127.0.0.1:8787",
- "date": "2026-11-03T22:41:48.825Z",
+ "date": "2026-11-03T22:55:41.025Z",
  "total": 145,
- "failed": 0,
+ "failed": 1,
  "results": [
   {
    "area": "Routes",
@@ -612,7 +612,7 @@
   },
   {
    "area": "Links",
-   "test": "all 945 internal links and images resolve",
+   "test": "all 947 internal links and images resolve",
    "ok": true,
    "detail": "0 broken"
   },
@@ -685,7 +685,7 @@
   {
    "area": "SEO",
    "test": "sitemap.xml identical to original Squarespace sitemap",
-   "ok": true,
+   "ok": false,
    "detail": ""
   },
   {

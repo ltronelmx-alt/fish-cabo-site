@@ -17,10 +17,16 @@ export function localImage(url: string): string {
   });
 }
 /** F6b — static1.squarespace.com social images mirrored byte-for-byte by .github/workflows/mirror-og.yml */
+const byName: Record<string, string[]> = {};
+for (const k of Object.keys(manifest)) (byName[k.split('/').slice(1).join('/')] ||= []).push(k);
 export function mirroredOg(url: string): string {
   const k = url.replace(/^https?:/, '').split('?')[0];
   const local = (ogMirror as Record<string, string>)[k];
-  return local ? `${SITE}${local}` : url;
+  if (local) return `${SITE}${local}`;
+  // not mirrorable (404 on Squarespace already): use the self-hosted copy of the SAME file name, if exactly one exists
+  const name = key('x/' + k.split('/').pop()).slice(2);
+  const hits = byName[name] || [];
+  return hits.length === 1 ? `${SITE}/media/${hits[0]}-${(manifest as any)[hits[0]].widths.at(-1)}.webp` : url;
 }
 
 export function fixHead(tags: string[], opts: { canonical?: string } = {}): string[] {
