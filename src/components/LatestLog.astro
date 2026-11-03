@@ -1,0 +1,44 @@
+---
+// Latest weekly Fishing Log — picked automatically from the content collection
+// (newest published "San Jose del Cabo Fishing Log"). Never hardcoded.
+import { getCollection } from 'astro:content';
+import Img from './Img.astro';
+const logs = (await getCollection('reports', (e) => !e.data.draft && e.data.category === 'San Jose del Cabo Fishing Log'))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+const latest = logs[0];
+const fmt = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+---
+{latest && (
+  <div class="ll-wrap">
+    <article class="ll">
+      <a class="ll-media" href={`/fishing-reports/${latest.id}`} tabindex="-1" aria-hidden="true">
+        <Img {...latest.data.image} sizes="(min-width: 900px) 40vw, 92vw" />
+      </a>
+      <div class="ll-body">
+        <p class="ll-kicker">Latest Fishing Log</p>
+        <h2 class="ll-title"><a href={`/fishing-reports/${latest.id}`}>{latest.data.title}</a></h2>
+        <p class="ll-date"><time datetime={latest.data.date.toISOString().slice(0, 10)}>{fmt(latest.data.date)}</time></p>
+        <p class="ll-excerpt">{latest.data.excerpt}</p>
+        <a class="ll-link" href={`/fishing-reports/${latest.id}`} data-track="latest_log">READ FULL FISHING LOG →</a>
+      </div>
+    </article>
+  </div>
+)}
+<style>
+  /* Adapts to the width of its container (not the viewport) via container queries. */
+  .ll-wrap { container-type: inline-size; }
+  .ll { display: grid; grid-template-columns: 1fr; gap: 22px; color: var(--offwhite); }
+  .ll-media :global(img) { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
+  .ll-kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 12px; }
+  .ll-title { font-size: 21px; line-height: 1.18; letter-spacing: -0.025em; color: var(--gray); margin: 0 0 12px; }
+  .ll-title a { text-decoration: none; }
+  .ll-date { font-size: 13px; margin: 0 0 18px; }
+  .ll-excerpt { font-size: 17px; line-height: 1.7; margin: 0 0 18px; }
+  .ll-link { display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: 0.045em; text-decoration: none; padding-bottom: 6px; border-bottom: 1.5px solid currentColor; }
+  .ll-link:hover { opacity: 0.8; }
+  @container (min-width: 640px) {
+    .ll { grid-template-columns: minmax(0, 43fr) minmax(0, 57fr); gap: 3%; align-items: center; }
+    .ll-media :global(img) { aspect-ratio: 4 / 3; height: 100%; }
+    .ll-title { font-size: clamp(26px, 3.1cqi, 40px); }
+  }
+</style>

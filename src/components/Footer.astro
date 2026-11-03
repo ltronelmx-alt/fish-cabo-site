@@ -1,0 +1,131 @@
+---
+import { FOOTER_NAV, SITE } from '../data/site';
+const LOGO = `https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/${SITE.logo}`;
+const year = new Date().getFullYear();
+---
+<footer class="ftr">
+  <div class="ftr-in">
+    <div class="ftr-top">
+      <div class="ftr-brand">
+        <a class="ftr-logo" href="/"><img src={`${LOGO}?format=500w`} alt="Exotic Fish Cabo" width="216" height="175" loading="lazy" /></a>
+        <p class="ftr-tag">Private Fishing Charters in San José del Cabo</p>
+        <p class="ftr-desc">Explore the Sea of Cortez with Exotic Fish Cabo. Private 6-hour and 8-hour fishing charters departing exclusively from Puerto Los Cabos Marina. Discover unforgettable fishing experiences with experienced local crews.</p>
+      </div>
+      <div class="ftr-actions">
+        <a class="ftr-boats" href="/fishing-boats" data-track="footer_boats">EXPLORE OUR FISHING BOATS →</a>
+        <a class="ftr-dir" href={SITE.directionsUrl} target="_blank" rel="noopener" data-track="footer_directions">
+          <svg viewBox="0 0 24 24" width="25" height="25" aria-hidden="true"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>
+          GET DIRECTIONS TO THE MARINA ↗
+        </a>
+      </div>
+    </div>
+    <hr />
+    <nav class="ftr-nav" aria-label="Footer">
+      {FOOTER_NAV.map((col) => (
+        <details class="ftr-menu" open>
+          <summary>{col.title}</summary>
+          <div class="ftr-links">{col.links.map(([t, h]) => <a href={h}>{t}</a>)}</div>
+        </details>
+      ))}
+    </nav>
+    <hr />
+    <div class="ftr-loc">
+      <div>
+        <p class="ftr-h">YOUR FISHING ADVENTURE STARTS HERE</p>
+        <p><strong>Puerto Los Cabos Marina</strong></p>
+        <p>San José del Cabo, Baja California Sur</p>
+        <p>Mexico</p>
+      </div>
+      <div class="ftr-trip">
+        <p class="ftr-h">FISHING CHARTER INFORMATION</p>
+        <p>Private Fishing Trips: 6 or 8 Hours</p>
+        <p>Departure: 6:30 AM</p>
+        <p>Departures from Puerto Los Cabos Marina</p>
+      </div>
+    </div>
+    <hr />
+    <div class="ftr-rev">
+      <span class="ftr-stars" aria-hidden="true">★★★★★</span>
+      <a href={SITE.googleReviews} target="_blank" rel="noopener">READ OUR GOOGLE REVIEWS ↗</a>
+      <a href={SITE.googleLeaveReview} target="_blank" rel="noopener">LEAVE A REVIEW ↗</a>
+    </div>
+    <hr />
+    <div class="ftr-bottom">
+      <small>© {year} Exotic Fish Cabo. All Rights Reserved.</small>
+      <div class="ftr-legal"><a href="/terms-conditions">Terms &amp; Conditions</a><a href="/privacy-policy">Privacy Policy</a></div>
+    </div>
+    <p class="ftr-credit">Website by AryaWebdesign</p>
+  </div>
+</footer>
+
+<style>
+  .ftr { background: var(--black); color: var(--offwhite); }
+  .ftr-in { max-width: 1250px; margin: 0 auto; padding: 44px 12px 25px; line-height: 1.6; }
+  .ftr a { color: inherit; text-decoration: none; transition: opacity 0.2s ease; }
+  .ftr a:hover { opacity: 0.7; }
+  .ftr hr { border: 0; border-top: 1px solid rgb(250 250 250 / 0.25); margin: 0; }
+  .ftr p { margin: 0; }
+  .ftr-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 32px; padding-bottom: 36px; }
+  .ftr-brand { flex: 1 1 470px; max-width: 570px; min-width: 0; }
+  .ftr-logo { display: inline-flex; margin-bottom: 15px; }
+  .ftr-logo img { max-width: 220px; max-height: 105px; width: auto; height: auto; }
+  .ftr-tag { font-size: 15px; font-weight: 700; margin-bottom: 9px !important; }
+  .ftr-desc { font-size: 14px; line-height: 1.8; opacity: 0.85; }
+  .ftr-actions { display: flex; flex-direction: column; gap: 15px; flex: 0 1 420px; width: 100%; }
+  .ftr-boats {
+    display: flex; justify-content: center; align-items: center; min-height: 56px; padding: 15px 23px;
+    border: 1.5px solid currentColor; border-radius: 7px; font-size: 13px; font-weight: 700; letter-spacing: 0.045em; text-align: center;
+  }
+  .ftr .ftr-dir {
+    display: flex; justify-content: center; align-items: center; gap: 12px; min-height: 70px; padding: 19px 22px;
+    background: var(--orange-ui); color: var(--ink); border-radius: 9px; box-shadow: 0 6px 20px rgb(0 0 0 / 0.18);
+    font-size: 14px; font-weight: 700; letter-spacing: 0.035em; text-align: center; transition: transform 0.2s ease, filter 0.2s ease;
+  }
+  .ftr .ftr-dir:hover { opacity: 1; filter: brightness(0.95); transform: translateY(-2px); }
+  .ftr-nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 30px; padding: 39px 0; }
+  .ftr-menu summary { list-style: none; font-size: 13px; font-weight: 700; letter-spacing: 0.045em; pointer-events: none; }
+  .ftr-menu summary::-webkit-details-marker { display: none; }
+  .ftr-links { display: flex; flex-direction: column; gap: 12px; padding-top: 21px; }
+  .ftr-links a { font-size: 13px; line-height: 1.55; overflow-wrap: break-word; }
+  .ftr-loc { display: flex; flex-wrap: wrap; gap: 40px; padding: 33px 0; }
+  .ftr-loc > div { flex: 1 1 270px; }
+  .ftr-loc p { font-size: 14px; margin-bottom: 5px; }
+  .ftr-loc .ftr-h { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+  .ftr-trip p:not(.ftr-h) { font-size: 13px; line-height: 1.8; }
+  .ftr-rev { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 15px 24px; padding: 26px 0; text-align: center; }
+  .ftr-rev a { font-size: 13px; font-weight: 700; }
+  .ftr-stars { font-size: 19px; letter-spacing: 3px; line-height: 1; }
+  .ftr-bottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 18px; padding-top: 23px; }
+  .ftr-bottom small, .ftr-bottom a { font-size: 12px; }
+  .ftr-bottom small { opacity: 0.85; }
+  .ftr-legal { display: flex; flex-wrap: wrap; gap: 18px; }
+  .ftr-credit { padding-top: 18px; text-align: center; font-size: 11px; opacity: 0.65; }
+  @media (max-width: 900px) {
+    .ftr-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 35px; }
+    .ftr-actions { flex: 1 1 100%; max-width: 500px; }
+  }
+  @media (max-width: 767px) {
+    .ftr-in { padding: 30px 8px 24px; }
+    .ftr-top { flex-direction: column; align-items: stretch; gap: 24px; padding-bottom: 28px; }
+    .ftr-brand, .ftr-actions { flex: none; max-width: none; width: 100%; }
+    .ftr-logo img { max-width: 175px; max-height: 90px; }
+    .ftr .ftr-dir { min-height: 68px; font-size: 13px; padding: 16px 13px; }
+    .ftr-nav { display: block; padding: 10px 0; }
+    .ftr-menu { border-bottom: 1px solid rgb(250 250 250 / 0.2); }
+    .ftr-menu:last-child { border-bottom: 0; }
+    .ftr-menu summary { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; cursor: pointer; pointer-events: auto; }
+    .ftr-menu summary::after { content: '+'; font-size: 23px; font-weight: 400; line-height: 1; }
+    .ftr-menu[open] summary::after { content: '\2212'; }
+    .ftr-links { padding: 0 0 22px 13px; gap: 16px; }
+    .ftr-loc { flex-direction: column; gap: 22px; padding: 30px 0; }
+    .ftr-rev { flex-direction: column; gap: 14px; }
+    .ftr-bottom { flex-direction: column; align-items: flex-start; gap: 13px; }
+  }
+</style>
+
+<script>
+  // Footer menus are open on desktop and collapsed (accordion) on mobile — same as today.
+  if (matchMedia('(max-width: 767px)').matches) {
+    document.querySelectorAll('.ftr-menu').forEach((d) => d.removeAttribute('open'));
+  }
+</script>

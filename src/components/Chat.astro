@@ -1,0 +1,22 @@
+---
+// Floating WhatsApp button. Prototype: opens WhatsApp directly with a prefilled
+// message. The existing multilingual chat assistant (EN/ES/FR knowledge base that
+// hands off to WhatsApp) will be ported here unchanged in the full migration.
+import { SITE } from '../data/site';
+const msg = encodeURIComponent('Hello Exotic Fish Cabo! I would like information about a private fishing charter.');
+const href = `https://wa.me/${SITE.whatsapp.replace(/\D/g, '')}?text=${msg}`;
+---
+<a class="wa" href={href} target="_blank" rel="noopener" aria-label="Chat with Exotic Fish Cabo on WhatsApp" data-track="whatsapp">
+  <svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><path fill="#fff" d="M16 3C8.8 3 3 8.7 3 15.8c0 2.5.7 4.8 2 6.8L3 29l6.6-1.9c1.9 1 4.1 1.6 6.4 1.6 7.2 0 13-5.7 13-12.8S23.2 3 16 3Zm0 23.4c-2.1 0-4-.6-5.7-1.6l-.4-.2-3.9 1.1 1.1-3.8-.3-.4a10.4 10.4 0 0 1-1.7-5.7C5.1 10 10 5.3 16 5.3S26.9 10 26.9 15.8 22 26.4 16 26.4Zm6-7.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.6-1.6-1-.9-1.6-1.9-1.8-2.2-.2-.3 0-.5.1-.7l.5-.6c.2-.2.2-.4.3-.6.1-.2 0-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.1-1.2 2.8s1.2 3.2 1.4 3.5c.2.2 2.4 3.6 5.8 5 .8.4 1.4.6 1.9.7.8.3 1.6.2 2.2.1.7-.1 1.9-.8 2.2-1.5.3-.8.3-1.4.2-1.5-.1-.2-.3-.3-.6-.4Z"/></svg>
+</a>
+<style>
+  .wa {
+    position: fixed; right: 24px; bottom: 24px; z-index: 58; width: 60px; height: 60px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+    box-shadow: 0 4px 20px rgb(37 211 102 / 0.4); transition: transform 0.3s ease;
+  }
+  .wa:hover { transform: scale(1.08); }
+  /* Fix from the audit: on mobile the bubble covered the BOOK NOW button. */
+  @media (max-width: 800px) { .wa { right: 14px; bottom: calc(72px + env(safe-area-inset-bottom, 0px)); width: 54px; height: 54px; } }
+</style>

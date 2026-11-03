@@ -1,0 +1,22 @@
+{
+  "name": "fish-cabo",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build && node scripts/postbuild.mjs",
+    "build:prod": "PUBLIC_SITE_ENV=production astro build && PUBLIC_SITE_ENV=production node scripts/postbuild.mjs",
+    "preview": "npm run build && wrangler dev",
+    "deploy": "npm run build && wrangler deploy"
+  },
+  "dependencies": {
+    "@fontsource/syne": "^5.3.0",
+    "@fontsource/syne-mono": "^5.3.0",
+    "astro": "^7.4.5"
+  },
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261102.1",
+    "wrangler": "^4.156.2"
+  }
+}

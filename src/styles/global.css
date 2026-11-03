@@ -1,0 +1,159 @@
+/* =========================================================
+   EXOTIC FISH CABO — design tokens measured on fish-cabo.com
+   (Squarespace 7.1 theme + custom efc/efc2 code), rebuilt natively.
+   ========================================================= */
+@font-face {
+  font-family: 'Syne';
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/syne-latin-700-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Syne';
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/syne-latin-ext-700-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+20A0-20AB, U+20AD-20C0, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Syne Mono';
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/syne-mono-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Syne Mono';
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/syne-mono-latin-ext-400-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+20A0-20AB, U+20AD-20C0, U+2C60-2C7F, U+A720-A7FF;
+}
+
+:root {
+  --orange: #fb7704; /* "dark-bold" section background */
+  --orange-ui: #ff8a00; /* footer directions button, hovers */
+  --orange-hover: #ff9a24;
+  --yellow: #ffcd38; /* header BOOK NOW */
+  --black: #000;
+  --ink: #171717;
+  --white: #fff;
+  --offwhite: #fafafa;
+  --gray: #dcdcdc;
+  --font-head: 'Syne', 'Arial Black', Arial, sans-serif;
+  --font-body: 'Syne Mono', ui-monospace, 'Courier New', monospace;
+  --font-ui: Arial, Helvetica, sans-serif;
+
+  /* Fluid type — same scale as the Squarespace theme on desktop,
+     calibrated against measurements at 375px, 1440px and 1694px. */
+  --fs-h1: 47px;
+  --fs-h2: 43px;
+  --fs-h3: 33.5px;
+  --fs-h4: 27px;
+  --fs-p: 17px;
+  --fs-p-lg: 18.5px;
+  --fs-btn: 19px;
+  --gutter: 6vw; /* side margins */
+  --inset: 6vw; /* indented text columns */
+  --section-pad: 48px;
+}
+@media (min-width: 768px) {
+  :root {
+    --fs-h1: calc(3.84vw + 18px);
+    --fs-h2: calc(3.36vw + 18px);
+    --fs-h3: calc(2.16vw + 18px);
+    --fs-h4: calc(1.44vw + 18px);
+    --fs-p: max(17px, calc(0.92vw + 6.48px));
+    --fs-p-lg: max(18.5px, calc(1vw + 7.05px));
+    --fs-btn: max(19px, calc(0.362vw + 17.97px));
+    --gutter: 4vw;
+    --inset: 7.85vw;
+    --section-pad: 3.3vw;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--white);
+  color: var(--black);
+  font-family: var(--font-body);
+  font-size: var(--fs-p);
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; height: auto; display: block; }
+a { color: inherit; }
+p { margin: 0 0 1em; }
+p:last-child { margin-bottom: 0; }
+strong { font-weight: 700; }
+
+h1, h2, h3, h4 {
+  font-family: var(--font-head);
+  font-weight: 700;
+  text-transform: uppercase;
+  margin: 0 0 0.5em;
+  overflow-wrap: break-word;
+  hyphens: none;
+}
+h1 { font-size: var(--fs-h1); line-height: 1.046; letter-spacing: -0.03em; }
+h2 { font-size: var(--fs-h2); line-height: 1.066; letter-spacing: -0.03em; margin-top: 1.1em; }
+h3 { font-size: var(--fs-h3); line-height: 1.114; letter-spacing: -0.03em; margin-top: 1em; }
+h4 { font-size: var(--fs-h4); line-height: 1.15; letter-spacing: -0.02em; }
+.flow > :first-child { margin-top: 0; }
+ul { padding-left: 1.2em; margin: 0 0 1em; }
+li p { margin: 0 0 0.4em; }
+
+/* ---------- Sections (Squarespace themes) ---------- */
+.section { position: relative; padding: var(--section-pad) var(--gutter); }
+.theme-light { background: var(--white); color: var(--black); }
+.theme-white { background: var(--offwhite); color: var(--black); }
+.theme-orange { background: var(--orange); color: var(--offwhite); }
+.theme-black { background: var(--black); color: var(--offwhite); }
+.inset { padding-inline: calc(var(--inset) - var(--gutter)); }
+@media (max-width: 767px) { .inset { padding-inline: 0; } }
+
+/* ---------- Buttons (Squarespace "primary" outline style) ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3em;
+  padding: 0.6em 1.2em;
+  border: 2px solid currentColor;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-body);
+  font-size: var(--fs-btn);
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+.btn:hover { opacity: 0.75; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 40px; }
+.btn-row.center { justify-content: center; }
+.btn-row.split { justify-content: space-between; }
+@media (min-width: 768px) {
+  .btn-row .btn { min-width: 22vw; }
+}
+
+:focus-visible { outline: 2px solid var(--orange-ui); outline-offset: 3px; }
+
+.visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.skip-link {
+  position: absolute; left: 12px; top: -60px; z-index: 10000;
+  background: var(--black); color: var(--offwhite); padding: 12px 18px; text-decoration: none;
+}
+.skip-link:focus { top: 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}

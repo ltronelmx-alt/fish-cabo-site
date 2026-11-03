@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "fish-cabo",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
+  },
+  "observability": { "enabled": true },
+  // Enable after creating the dataset (free): uncomment to store click counts.
+  // "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "fishcabo_events" }],
+  "vars": { "SITE_ENV": "staging" }
+}

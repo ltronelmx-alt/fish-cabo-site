@@ -1,0 +1,36 @@
+---
+// Responsive image. During the prototype, files are served from the existing
+// Squarespace CDN (they are Exotic Fish Cabo's own uploads). Before cut-over,
+// images are copied into the repo and IMG_BASE switches to local files — no
+// page needs to change. Width/height are always set so the layout never shifts.
+interface Props {
+  src: string; // path relative to the media base, e.g. "uuid/file.webp"
+  alt: string;
+  width: number; // natural width of the original file
+  height: number;
+  sizes?: string;
+  priority?: boolean; // hero / LCP image
+  class?: string;
+  fit?: 'cover' | 'contain';
+}
+const { src, alt, width, height, sizes = '100vw', priority = false, class: cls, fit } = Astro.props;
+const BASE = 'https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/';
+const steps = [300, 500, 750, 1000, 1500, 2500].filter((w) => w < width);
+steps.push(width);
+const url = (w: number) => `${BASE}${src}?format=${Math.min(w, 2500)}w`;
+const srcset = steps.map((w) => `${url(w)} ${w}w`).join(', ');
+const fallback = url(steps.find((w) => w >= 1000) ?? width);
+---
+<img
+  src={fallback}
+  srcset={srcset}
+  sizes={sizes}
+  alt={alt}
+  width={width}
+  height={height}
+  loading={priority ? 'eager' : 'lazy'}
+  decoding={priority ? 'sync' : 'async'}
+  fetchpriority={priority ? 'high' : undefined}
+  class={cls}
+  style={fit ? `object-fit:${fit}` : undefined}
+/>

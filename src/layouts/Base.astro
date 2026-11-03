@@ -1,0 +1,113 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Chat from '../components/Chat.astro';
+import { SITE } from '../data/site';
+
+interface Props {
+  title: string;
+  description: string;
+  canonical?: string; // path, defaults to current path
+  ogImage?: string; // absolute URL
+  breadcrumb?: { name: string; path: string }[];
+  jsonLd?: Record<string, unknown>[];
+}
+const { title, description, canonical, ogImage, breadcrumb, jsonLd = [] } = Astro.props;
+
+// Safety: every build is "staging" (noindex) unless SITE_ENV=production is set explicitly.
+const isProd = import.meta.env.PUBLIC_SITE_ENV === 'production';
+const path = canonical ?? (Astro.url.pathname.replace(/\/$/, '') || '/');
+const canonicalUrl = new URL(path, SITE.url).href.replace(/\/$/, path === '/' ? '/' : '');
+const LOGO = `https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/${SITE.logo}`;
+const og = ogImage ?? 'https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/6ba6d05e-3401-4565-8d73-2a9403da9828/EXOTIC+banner.webp?format=1500w';
+const beacon = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
+
+// One business entity, referenced everywhere by @id (the current site publishes two conflicting ones).
+const business = {
+  '@context': 'https://schema.org',
+  '@type': 'LocalBusiness',
+  '@id': `${SITE.url}/#business`,
+  name: SITE.name,
+  alternateName: ['Fish Cabo', 'Fish-Cabo'],
+  url: `${SITE.url}/`,
+  description:
+    'Private sportfishing charters departing from Puerto Los Cabos Marina in San José del Cabo, Mexico: marlin, tuna, dorado, wahoo and roosterfish. Family friendly.',
+  telephone: SITE.phone,
+  email: SITE.email,
+  image: 'https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/1762994227375-8V5FEBCX5CV3KU2EBTP4/Marylou+Fishing+San+Jose+del+Cabo.webp',
+  logo: LOGO,
+  priceRange: '$350-$600+',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: 'Bd Tiburón, La Playa',
+    addressLocality: 'San José del Cabo',
+    addressRegion: 'Baja California Sur',
+    postalCode: '23403',
+    addressCountry: 'MX',
+  },
+  geo: { '@type': 'GeoCoordinates', latitude: 23.0600625, longitude: -109.6706875 },
+  hasMap: 'https://maps.app.goo.gl/d3TAakiLjgiS9kNM7',
+  areaServed: [
+    { '@type': 'City', name: 'San José del Cabo' },
+    { '@type': 'City', name: 'Cabo San Lucas' },
+  ],
+  sameAs: SITE.sameAs,
+};
+const website = { '@context': 'https://schema.org', '@type': 'WebSite', '@id': `${SITE.url}/#website`, url: `${SITE.url}/`, name: 'EXOTIC FISH CABO', publisher: { '@id': `${SITE.url}/#business` } };
+const crumbs = breadcrumb && {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [{ name: 'Home', path: '/' }, ...breadcrumb].map((b, i) => ({
+    '@type': 'ListItem', position: i + 1, name: b.name, item: new URL(b.path, SITE.url).href,
+  })),
+};
+const graph = [website, business, ...(crumbs ? [crumbs] : []), ...jsonLd];
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+    {!isProd && <meta name="robots" content="noindex, nofollow" />}
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="preload" href="/fonts/syne-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/syne-mono-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preconnect" href="https://images.squarespace-cdn.com" />
+    <meta property="og:site_name" content="EXOTIC FISH CABO" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={og} />
+    <meta property="og:locale" content="en_US" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={og} />
+    <meta name="theme-color" content="#000000" />
+    {graph.map((g) => <script type="application/ld+json" set:html={JSON.stringify(g)} />)}
+    <slot name="head" />
+  </head>
+  <body>
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+    <Chat />
+    {beacon && <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon={JSON.stringify({ token: beacon })}></script>}
+    <script>
+      // Commercial-action tracking: records clicks only (never claims a booking was completed).
+      document.addEventListener('click', (e) => {
+        const el = (e.target as HTMLElement).closest<HTMLElement>('[data-track]');
+        if (!el) return;
+        const body = JSON.stringify({ event: el.dataset.track, page: location.pathname, href: (el as HTMLAnchorElement).href || '' });
+        navigator.sendBeacon?.('/api/event', new Blob([body], { type: 'application/json' }));
+      });
+    </script>
+  </body>
+</html>

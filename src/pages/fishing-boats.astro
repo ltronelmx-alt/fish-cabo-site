@@ -1,0 +1,116 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import Img from '../components/Img.astro';
+import { BOATS } from '../data/boats';
+
+// Same row grouping and background rhythm as the current page: 3 · 3 · 2 · 2
+const rows = [
+  { boats: BOATS.slice(0, 3), theme: 'theme-white' },
+  { boats: BOATS.slice(3, 6), theme: 'theme-light' },
+  { boats: BOATS.slice(6, 8), theme: 'theme-light' },
+  { boats: BOATS.slice(8, 10), theme: 'theme-white' },
+];
+const listLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Private fishing boat options in San José del Cabo',
+  itemListElement: BOATS.map((b, i) => ({ '@type': 'ListItem', position: i + 1, name: b.title, url: `https://fish-cabo.com/fishing-boats/${b.slug}` })),
+};
+const faq: [string, string][] = [
+  ['Which fishing boat should I choose in Los Cabos?', 'The best fishing boat depends on your group size, budget, fishing preferences, and desired amenities. Smaller pangas can be a practical choice for couples, while larger center consoles, catamarans, and sportfishing boats provide alternatives for families and groups. Contact our team for help comparing options.'],
+  ['Are all Exotic Fish Cabo fishing charters private?', 'Yes. Exotic Fish Cabo offers private fishing charters. Your selected boat is reserved for your group rather than shared with unrelated guests.'],
+  ['Where do the fishing boats depart?', 'All Exotic Fish Cabo fishing charters depart exclusively from Puerto Los Cabos Marina in San José del Cabo, Mexico. We welcome guests staying in Cabo San Lucas, but our charters do not depart from Cabo San Lucas Marina.'],
+  ['How much does a private fishing charter cost?', 'Selected 6-hour private charters start from $350 USD per boat for 1–2 guests. Selected 8-hour private fishing charters start from $600 USD per boat. Prices vary depending on the boat, group size, trip duration, and availability. Contact us for a confirmed quote.'],
+  ['What is included in a private fishing charter?', 'Every charter includes a local captain and crew, fishing rods, reels, basic tackle, bottled water, and soft drinks. Fishing licenses, live bait, food, and fish-cleaning services may vary by charter.'],
+];
+const faqLd = { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) };
+---
+<Base
+  title="Cabo Fishing Boats | Private Charters in San Jose del Cabo"
+  description="Compare 10 private fishing boat options in Los Cabos, from pangas to spacious sportfishers. All charters depart from Puerto Los Cabos Marina in San Jose del Cabo."
+  breadcrumb={[{ name: 'Fishing Boats', path: '/fishing-boats' }]}
+  jsonLd={[listLd, faqLd]}
+>
+  <Hero variant="tall" tone="gray" overlay={0.15} image={{ src: 'cf0dfaef-0572-4b9f-981e-6170549b4e2d/Fishing+San+Jose+del+Cabo+for+Wahoo2.webp', alt: 'Anglers with a wahoo on a private fishing boat in San José del Cabo', width: 923, height: 547 }}>
+    <h1>Cabo Fishing Boats – Private Charters in San José del Cabo</h1>
+  </Hero>
+
+  <section class="section theme-white intro">
+    <div class="flow">
+      <p><strong>Choose Your Fishing Boat in San José del Cabo</strong></p>
+      <p>Looking for the right fishing boat for your Cabo adventure? Exotic Fish Cabo offers a selection of 10 private fishing boat options, from compact pangas for couples to larger center consoles, catamarans, and sportfishing boats for groups.</p>
+      <p>All our fishing charters depart exclusively from Puerto Los Cabos Marina in San José del Cabo, Baja California Sur, Mexico. Guests staying in Cabo San Lucas are welcome to join us at this departure location.</p>
+      <p>Choose between private 6-hour fishing trips starting from $350 USD per boat for selected 1–2 guest options and 8-hour charters starting from $600 USD per boat. Final pricing depends on the boat, group size, trip duration, and availability.</p>
+      <p>Every charter includes an experienced local captain and crew, fishing rods, reels, basic tackle, bottled water, and soft drinks. Additional services, including fishing licenses, live bait, food, and fish cleaning, vary by charter and must be confirmed before booking.</p>
+      <p>Explore the boat options below to find a suitable choice for your group. Our team can help you compare passenger capacity, onboard amenities, and charter prices before making a reservation.</p>
+      <p><strong>Unforgettable Sportfishing in San José del Cabo</strong></p>
+      <p>Enjoy a private sportfishing experience in San José del Cabo with a local captain and a boat selected for your group size, preferences, and fishing goals.</p>
+      <p>Depending on the season and ocean conditions, fishing trips may target marlin, yellowfin tuna, dorado (mahi-mahi), wahoo, roosterfish, and other species.</p>
+      <p>Fishing grounds such as Gordo Banks and Iman Bank may be considered when conditions allow. Your captain determines suitable fishing locations based on weather, sea conditions, and seasonal fish activity.</p>
+      <p>Whether you're planning your first family fishing trip or an offshore adventure with experienced anglers, Exotic Fish Cabo can help you choose an appropriate private charter.</p>
+      <p><strong>Why Fish With Exotic Fish Cabo</strong></p>
+      <ul>
+        <li><p><strong>10 Boat Options:</strong> Compare different boat sizes and styles, from traditional pangas to larger offshore fishing boats.</p></li>
+        <li><p><strong>100% Private Charters:</strong> Your trip is reserved for your group, with no unrelated guests sharing your charter.</p></li>
+        <li><p><strong>Experienced Local Crews:</strong> Every trip includes a local captain and crew familiar with fishing around San José del Cabo.</p></li>
+        <li><p><strong>Flexible Fishing Opportunities:</strong> Choose between 6-hour and 8-hour trips, with fishing locations adapted to weather and seasonal conditions.</p></li>
+        <li><p><strong>Clear Booking Information:</strong> We help confirm boat capacity, charter pricing, included services, and available amenities before you book.</p></li>
+      </ul>
+      <p>Explore our fishing boat options below and contact Exotic Fish Cabo to check availability for your preferred date.</p>
+    </div>
+  </section>
+
+  {rows.map((row, i) => (
+    <section class:list={['section boats', row.theme, row.boats.length === 2 && 'two', i === 0 && 'first']}>
+      <ul class="boat-grid" role="list">
+        {row.boats.map((b) => (
+          <li class="boat">
+            <a class="boat-media" href={`/fishing-boats/${b.slug}`} tabindex="-1" aria-hidden="true">
+              <Img {...b.image} sizes={row.boats.length === 2 ? '(min-width: 768px) 30vw, 92vw' : '(min-width: 1000px) 23vw, (min-width: 600px) 45vw, 92vw'} />
+            </a>
+            <h4>{b.title}</h4>
+            <p><strong>{b.label}:</strong> {b.blurb}</p>
+            <a class="btn" href={`/fishing-boats/${b.slug}`} data-track={`boat_${b.slug}`}>{b.button}</a>
+          </li>
+        ))}
+      </ul>
+      {i === 3 && (
+        <div class="flow inset boats-faq">
+          <h2>Cabo Fishing Boats – Frequently Asked Questions</h2>
+          {faq.map(([q, a]) => (<><h3>{q}</h3><p>{a}</p></>))}
+        </div>
+      )}
+    </section>
+  ))}
+
+  <section class="section theme-light end-btns">
+    <div class="btn-row split">
+      <a class="btn" href="/fishing-calendar">Go to Fishing Calendar</a>
+      <a class="btn" href="/fish-species">Go to Fish Species</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .intro { padding-top: var(--section-pad); }
+  .boats { padding-block: 6.6vw; }
+  .boats.first { padding-top: 0; }
+  .boat-grid { list-style: none; margin: 0 auto; padding: 0 calc(var(--inset) - var(--gutter)); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px 8.3%; }
+  .two .boat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 72vw; gap: 48px 15%; }
+  .boat { display: flex; flex-direction: column; }
+  .boat-media :global(img) { width: 100%; aspect-ratio: 319 / 265; object-fit: cover; }
+  .two .boat-media :global(img) { aspect-ratio: 429 / 305; }
+  .boat h4 { text-align: center; margin: 0.4em 0 0.5em; }
+  .boat p { font-size: max(17px, 1.25vw); flex: 1; margin-bottom: 1.4em; }
+  .boat .btn { width: 100%; }
+  .boats-faq { margin-top: 6vw; }
+  .end-btns { padding-top: 0; }
+  @media (max-width: 999px) {
+    .boat-grid, .two .boat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: none; gap: 48px 6%; }
+  }
+  @media (max-width: 599px) {
+    .boat-grid, .two .boat-grid { grid-template-columns: 1fr; padding: 0; }
+    .end-btns .btn-row { flex-direction: column; align-items: center; }
+  }
+</style>

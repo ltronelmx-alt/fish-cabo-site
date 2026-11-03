@@ -1,0 +1,204 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import Img from '../components/Img.astro';
+import LatestLog from '../components/LatestLog.astro';
+
+const faq: [string, string[]][] = [
+  ['Where does Exotic Fish Cabo depart from?', ['All Exotic Fish Cabo fishing charters depart exclusively from Puerto Los Cabos Marina in San José del Cabo, Baja California Sur, Mexico.', 'Guests staying in Cabo San Lucas are welcome to book, but our fishing trips do not depart from Cabo San Lucas Marina.']],
+  ['Are all your fishing charters private?', ['Yes. Every Exotic Fish Cabo charter is private, meaning the selected boat is reserved for your group.']],
+  ['How much does a fishing charter cost?', ['Selected 6-hour private fishing charters start from $350 USD per boat for 1–2 guests.', 'Selected 8-hour private fishing charters start from $600 USD per boat.', 'Final prices depend on the boat, passenger count, availability, and trip details.']],
+  ['Do I need fishing experience?', ['No. Beginners are welcome on suitable charters. Our local crews can explain basic fishing techniques and assist during the trip.']],
+  ['What should I bring on a fishing charter?', ['We recommend appropriate sun protection, comfortable clothing, non-slip footwear, and any personal items you may need.', 'Bottled water and soft drinks are included. Please confirm fishing licenses, live bait, food, and other services before departure.']],
+  ['When is the best time to fish in Cabo?', ['Fishing opportunities exist throughout the year, but the best period depends on the species you want to target.', 'Our Fishing Calendar provides information about typical seasonal patterns for marlin, tuna, dorado, wahoo, roosterfish, and other species.']],
+];
+// FAQPage markup mirrors the visible FAQ section exactly.
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a.join(' ') } })),
+};
+---
+<Base
+  title="San Jose del Cabo Fishing Charters | Marlin, Tuna & Dorado Trips"
+  description="Book premier fishing charters in San José del Cabo with Exotic Fish Cabo. Private boats, expert captains. Marlin, tuna, dorado. From $350."
+  canonical="/"
+  jsonLd={[faqLd]}
+>
+  <Hero variant="home" image={{ src: '6ba6d05e-3401-4565-8d73-2a9403da9828/EXOTIC+banner.webp', alt: 'Angler holding a large yellowfin tuna on a private fishing charter in San José del Cabo', width: 1402, height: 863 }}>
+    <h1>Cabo Fishing Charters – Departing from San José del Cabo</h1>
+    <p><strong>Private fishing charters departing from Puerto Los Cabos Marina. Target marlin, tuna, dorado and more with experienced local captains.</strong></p>
+  </Hero>
+
+  <section class="section theme-light">
+    <div class="flow">
+      <h2>Private Fishing Charters from Puerto Los Cabos Marina</h2>
+      <p><strong>Private Sportfishing Charters in Los Cabos, Mexico</strong></p>
+      <p>Experience private fishing in San José del Cabo with Exotic Fish Cabo. We offer personalized sportfishing charters for couples, families, beginners, and experienced anglers looking to explore the waters of Baja California Sur.</p>
+      <p>All our fishing trips depart exclusively from <strong>Puerto Los Cabos Marina in San José del Cabo</strong>, with access to coastal fishing areas, offshore banks, and seasonal opportunities for marlin, yellowfin tuna, dorado, wahoo, roosterfish, and other game fish.</p>
+      <p>Choose from private 6-hour and 8-hour fishing charters with experienced local captains and crews. Whether you're staying in San José del Cabo or Cabo San Lucas, our team can help you choose a suitable boat and plan your fishing adventure.</p>
+      <h2>Why Choose Exotic Fish Cabo?</h2>
+      <h3>A Local Fishing Charter Service, Not Just a Booking Website</h3>
+      <p>At Exotic Fish Cabo, we believe a memorable fishing experience begins before you arrive at the marina.</p>
+      <p>Our team helps guests compare fishing boats, understand charter options, and prepare for their day on the water.</p>
+      <p>Instead of leaving you to guess which trip fits your needs, we discuss your group size, fishing experience, preferred species, and budget before booking.</p>
+      <p>Our goal is simple: clear communication, suitable boat options, and a private fishing experience tailored to your group.</p>
+      <h3>Experienced Local Captains and Crews</h3>
+      <p>Fishing around San José del Cabo requires knowledge of changing ocean conditions, seasonal fish activity, underwater structure, and local fishing techniques.</p>
+      <p>Our local captains use their experience to select suitable fishing areas and techniques according to the day's conditions.</p>
+      <p>Depending on the season, fishing may involve trolling, jigging, natural bait, or other methods appropriate for the target species.</p>
+      <p>Fishing is never guaranteed, but careful preparation and local knowledge help create a better experience on the water.</p>
+      <h3>Private Fishing Charters for Your Group</h3>
+      <p>Every Exotic Fish Cabo fishing charter is private.</p>
+      <p>Your selected boat is reserved for your group, without unrelated passengers joining your trip.</p>
+      <p>Whether you're fishing with a partner, bringing your family, or organizing an adventure with friends, we can help you find a suitable option.</p>
+      <p>Our boat selection includes smaller fishing platforms and larger vessels for groups, with different seating arrangements, amenities, and passenger capacities.</p>
+      <p>Boat features and onboard services vary, so our team confirms the important details before booking.</p>
+      <h2>About Exotic Fish Cabo</h2>
+      <p>Exotic Fish Cabo is a locally operated private sportfishing charter service based at Puerto Los Cabos Marina in San José del Cabo, Mexico.</p>
+      <p>Our approach combines local fishing knowledge, direct communication with guests, and a selection of private boats for different fishing styles and group sizes.</p>
+      <p>We welcome first-time visitors, returning guests, couples, families, and experienced anglers seeking a personalized fishing experience in Los Cabos.</p>
+      <p>From your first questions about boat options to your confirmed departure instructions, our team is here to help you prepare for your trip.</p>
+      <p>We believe guests should know where they are departing from, what their charter includes, and what to expect before arriving at the marina.</p>
+      <p>Our goal is to help you enjoy a well-organized private fishing adventure and experience the waters of San José del Cabo with confidence.</p>
+      <h2>Book Your Private Cabo Fishing Charter</h2>
+      <p>Ready to plan your next fishing adventure?</p>
+      <p>Choose your preferred fishing date, group size, and trip duration. Our team will help you compare available boats and confirm your charter details.</p>
+      <p><strong>Departure:</strong> Puerto Los Cabos Marina, San José del Cabo, Mexico.</p>
+      <p><strong>Typical departure time:</strong> 6:30 AM.</p>
+      <p><strong>Private trips:</strong> 6 hours or 8 hours.</p>
+      <p><strong>Fishing opportunities:</strong> Marlin, tuna, dorado, wahoo, roosterfish, and other seasonal species.</p>
+      <p><a href="/fishing-boats" data-track="home_explore_boats"><strong>EXPLORE FISHING BOATS</strong></a></p>
+      <p><a href="/contact" data-track="home_contact"><strong>CONTACT EXOTIC FISH CABO</strong></a></p>
+    </div>
+  </section>
+
+  <section class="section theme-orange log-sec">
+    <LatestLog />
+  </section>
+
+  <section class="section theme-white">
+    <Img class="wide-img" src="9240e701-3192-43e5-994e-4e8fa814baf8/Fishing+San+Jose+del+Cabo+31Ft.webp" alt="A white boat docked in a marina with a sunset sky, palm trees, and parked cars in the background." width={2382} height={1550} sizes="92vw" />
+    <div class="flow mt">
+      <h2>Private Fishing Charter Options in San José del Cabo</h2>
+      <h3>6-Hour Private Fishing Charter – From $350 USD</h3>
+      <p>Our 6-hour fishing trips are a practical choice for couples, families, beginners, and anglers who want a personalized experience without spending a full day on the water.</p>
+      <p>Selected private charters for 1–2 guests start from $350 USD per boat.</p>
+      <p>Depending on weather, seasonal fishing activity, and the selected boat, your captain may recommend coastal or offshore fishing opportunities.</p>
+      <h3>8-Hour Private Fishing Charter – From $600USD</h3>
+      <p>Our 8-hour private charters provide additional time to explore fishing areas around San José del Cabo.</p>
+      <p>They can be suitable for anglers who want to pursue offshore species such as marlin, yellowfin tuna, dorado, or wahoo when conditions allow.</p>
+      <p>Selected 8-hour private charters start from $600 USD per boat.</p>
+      <p>Larger group options are available, with final pricing depending on the selected vessel, passenger count, and trip details.</p>
+      <p><strong>All trips normally depart at 6:30 AM from Puerto Los Cabos Marina.</strong></p>
+      <p>Contact us to confirm the schedule, price, availability, and included services for your preferred fishing date.</p>
+    </div>
+    <div class="btn-row center"><a class="btn" href="/contact" data-track="home_contact_btn">Contact us</a></div>
+  </section>
+
+  <section class="section theme-light">
+    <div class="flow inset">
+      <h2>Fishing Areas Around San José del Cabo</h2>
+      <p>Our fishing charters depart from Puerto Los Cabos Marina, providing access to fishing opportunities along the coast and farther offshore.</p>
+      <p>Depending on the season and sea conditions, fishing areas may include:</p>
+      <ul>
+        <li><p><a href="/gordo-banks-fishing"><strong>Gordo Banks</strong></a><strong>:</strong> Offshore fishing grounds associated with yellowfin tuna, wahoo, marlin, and other seasonal game fish.</p></li>
+        <li><p><a href="/iman-bank-fishing-san-jose-del-cabo"><strong>Iman Bank</strong></a><strong>:</strong> Another offshore area where fishing opportunities depend on currents, bait availability, and seasonal activity.</p></li>
+        <li><p><strong>Coastal waters near San José del Cabo:</strong> Suitable habitats for various inshore species, including roosterfish, jack crevalle, and snapper.</p></li>
+      </ul>
+      <p>Your captain selects fishing locations based on weather, sea conditions, safety, and recent fish activity.</p>
+      <p>Visiting a particular fishing bank cannot be guaranteed on every trip.</p>
+      <h2>What Makes Our Fishing Experience Different?</h2>
+      <h3>Personal Service Before Your Trip</h3>
+      <p>We help guests understand their charter choices before they commit to a reservation.</p>
+      <p>You can ask about boat capacity, fishing goals, departure instructions, onboard amenities, and pricing.</p>
+      <p>Our team can also explain which services are included and which may involve additional costs.</p>
+      <h3>Fishing Equipment and Local Assistance</h3>
+      <p>Every private charter includes an experienced local captain and crew, fishing rods, reels, and basic tackle.</p>
+      <p>Bottled water and soft drinks are included in every charter. Fishing licenses, live bait, food, transportation, and fish-cleaning services may vary by charter.</p>
+      <h3>Respect for the Ocean</h3>
+      <p>The waters around Baja California Sur support a remarkable variety of marine life.</p>
+      <p>We encourage responsible fishing practices, respect for applicable regulations, and appropriate handling of fish.</p>
+      <p>Catch-and-release may be recommended or practiced depending on the species, fishing circumstances, and applicable rules.</p>
+      <h3>Real Fishing Experiences</h3>
+      <p>Our Fishing Reports feature fishing trips, photos, and catches from guests who have explored the waters around San José del Cabo.</p>
+      <p>These reports provide a useful picture of past fishing experiences, although conditions and catches may differ on future trips.</p>
+      <p>You can also read independent guest reviews on Tripadvisor to learn about other anglers' experiences with Exotic Fish Cabo.</p>
+      <h2>What Fish Can You Catch in Cabo?</h2>
+      <p>The waters around Los Cabos offer a variety of inshore and offshore fishing opportunities throughout the year.</p>
+      <h3>Marlin Fishing</h3>
+      <p>Striped marlin and blue marlin are among the best-known offshore game fish in Los Cabos.</p>
+      <p>Their availability changes with seasonal migrations, water temperature, and baitfish activity.</p>
+      <h3>Yellowfin Tuna Fishing</h3>
+      <p>Yellowfin tuna are valued for their strength and powerful runs.</p>
+      <p>Fishing areas such as Gordo Banks and Iman Bank may provide opportunities when ocean conditions and fish activity are favorable.</p>
+      <h3>Dorado (Mahi-Mahi) Fishing</h3>
+      <p>Dorado are known for their bright colors, aggressive strikes, and acrobatic jumps.</p>
+      <p>They are commonly associated with warmer-water fishing periods, although seasonal activity varies.</p>
+      <h3>Wahoo Fishing</h3>
+      <p>Wahoo are fast offshore predators known for sudden strikes and powerful fights.</p>
+      <p>They may be encountered around offshore banks and areas where baitfish concentrate.</p>
+      <h3>Roosterfish and Inshore Fishing</h3>
+      <p>Roosterfish are among the most distinctive coastal game fish in Baja California Sur.</p>
+      <p>Other possible inshore targets include jack crevalle, sierra mackerel, snapper, and additional species depending on conditions.</p>
+      <p><strong>Fishing opportunities change throughout the year. No particular species or catch is guaranteed.</strong></p>
+      <p>Explore our Fishing Calendar for a month-by-month overview of seasonal fishing patterns in Los Cabos.</p>
+    </div>
+    <div class="img-cta inset">
+      <a href="/fishing-reports" class="img-cta-img"><Img src="a16585da-05fe-4c07-a5ce-b1932f6a3b30/reports.webp" alt="Three photos of men holding large fish, with logos and text describing fishing reports and updates from Cabo and San Jose del Cabo." width={1203} height={762} sizes="(min-width: 768px) 60vw, 92vw" /></a>
+      <a class="btn" href="/fishing-calendar">Fishing Calendar</a>
+    </div>
+  </section>
+
+  <section class="section theme-white">
+    <Img class="center-img" src="1762994991264-D2BNOZJMHWYN2OIPCUCX/fishing+gordo+banks+on+a+panga+for+marlin.webp" alt="Four boys holding a large fish on a boat with ocean in the background.Fishing San Jose del Cabo" width={1000} height={623} sizes="(min-width: 768px) 58vw, 92vw" />
+    <div class="flow inset mt">
+      <h2>Fishing Boats for Couples, Families, and Groups</h2>
+      <p>Choosing the right fishing boat can make a significant difference to your experience.</p>
+      <p>Exotic Fish Cabo offers several boat styles to accommodate different group sizes, fishing preferences, and budgets.</p>
+      <p>Smaller boats can be an appealing choice for couples or individual anglers, while larger center consoles, catamarans, and sportfishing boats provide additional options for families and groups.</p>
+      <p>Available features may include shade, seating, cabins, or onboard toilets, depending on the selected vessel.</p>
+      <p>Before booking, our team can help confirm maximum passenger capacity, available amenities, and pricing.</p>
+      <p><a href="/fishing-boats"><strong>Explore Our Fishing Boats</strong></a></p>
+      <h2>Family-Friendly Fishing Charters in Los Cabos</h2>
+      <p>Fishing can be an enjoyable way for families to experience the ocean together.</p>
+      <p>Exotic Fish Cabo welcomes families and first-time anglers on suitable private charters.</p>
+      <p>Our local crews can introduce beginners to basic fishing techniques, explain the equipment, and help guests participate in the experience.</p>
+      <p>For families with children, we recommend discussing the children's ages, group size, preferred trip duration, and any concerns about seasickness before booking.</p>
+      <p>We can help you compare boats and discuss fishing options that may be more comfortable for your group when ocean conditions permit.</p>
+      <p>Safety equipment, age requirements, and passenger capacities must be confirmed for the selected vessel.</p>
+    </div>
+  </section>
+
+  <section class="section theme-light">
+    <Img class="right-img" src="8e35f2e5-eaba-4e78-9e68-5e78b78652f3/44ft+premium+flybridge+yacht+fishing+san+jose+del+cabo.webp" alt="44ft premium flybridge yacht fishing San Jose del Cabo" width={1200} height={780} sizes="(min-width: 768px) 43vw, 92vw" />
+    <div class="flow mt">
+      <h2>Cabo Fishing Charters – Frequently Asked Questions</h2>
+      {faq.map(([q, a]) => (
+        <>
+          <h3>{q}</h3>
+          {a.map((t) => <p>{t}</p>)}
+        </>
+      ))}
+    </div>
+    <div class="btn-row split inset">
+      <a class="btn" href="/fishing-boats" data-track="home_faq_book">Book Now</a>
+      <a class="btn" href="/cabo-fishing-faq">FAQ's page</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .mt { margin-top: 40px; }
+  .log-sec { padding-block: 60px; }
+  .wide-img :global(img), :global(img.wide-img) { width: 100%; aspect-ratio: 1310 / 542; object-fit: cover; }
+  :global(img.center-img) { width: 58%; margin-inline: auto; }
+  :global(img.right-img) { width: 43%; margin-left: auto; }
+  .img-cta { display: grid; grid-template-columns: 68fr 23fr; gap: 4%; align-items: end; margin-top: 48px; }
+  .img-cta .btn { justify-self: stretch; }
+  @media (max-width: 767px) {
+    :global(img.center-img), :global(img.right-img) { width: 100%; }
+    .img-cta { grid-template-columns: 1fr; gap: 24px; }
+    .btn-row.split { flex-direction: column; align-items: center; }
+  }
+</style>
