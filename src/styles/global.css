@@ -256,7 +256,6 @@ body { line-height: 1.75; color: #262626; counter-reset: sec; }
 .media:hover img { transform: scale(1.03); }
 /* hero */
 .hero :global(h1), .hero h1 { text-shadow: 0 2px 30px rgb(0 0 0 / 0.35); }
-.hero-inner::after { content: ''; display: block; width: 1px; height: 56px; margin-top: clamp(32px, 4vw, 56px); background: linear-gradient(var(--white), transparent); opacity: 0.7; }
 /* lists */
 .rich ul li { padding: clamp(14px, 1.2vw, 22px) clamp(18px, 1.6vw, 28px) clamp(14px, 1.2vw, 22px) clamp(42px, 3vw, 56px); border: 1px solid var(--line); }
 .bg-sand .rich ul li { border-color: transparent; }
@@ -281,3 +280,14 @@ body { line-height: 1.75; color: #262626; counter-reset: sec; }
 .o-gallery .media img, .o-gallery-html img, .ll-media img, .article picture img {
   height: auto !important; aspect-ratio: auto !important; object-fit: contain !important; max-height: none !important;
 }
+
+/* Payment buttons in the colours of each platform (Stripe violet, Wise green, PayPal yellow) */
+.btn-pay { min-width: 200px; gap: 12px; font-size: 14px; border: 0; }
+.btn-pay .pay-ico { width: 22px; height: 22px; flex: none; fill: currentColor; }
+.btn-stripe { background: #635bff; color: #fff; }
+.btn-stripe:hover, .dark .btn-stripe:hover { background: #4b44e6; color: #fff; }
+.btn-wise { background: #9fe870; color: #163300; }
+.btn-wise:hover, .dark .btn-wise:hover { background: #8edb5d; color: #163300; }
+.btn-paypal { background: #ffc439; color: #003087; }
+.btn-paypal:hover, .dark .btn-paypal:hover { background: #f2b52a; color: #003087; }
+.btn-pay:hover { transform: translateY(-2px); }

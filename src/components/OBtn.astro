@@ -1,5 +1,9 @@
 ---
+// Original button (verbatim text + link). Payment buttons get the payment platform's colour and logo (design only).
+import icons from '../data/pay-icons.json';
 interface Props { block: { href?: string; text?: string }; primary?: boolean; track?: string }
 const { block, primary, track } = Astro.props;
+const t = (block.text || '').toLowerCase();
+const pay = /^stripe$/.test(t) ? 'stripe' : /^wise$/.test(t) ? 'wise' : /^paypal$/.test(t) ? 'paypal' : '';
 ---
-<a class:list={['btn', primary && 'btn-primary']} href={block.href} data-track={track}>{block.text}</a>
+<a class:list={['btn', primary && !pay && 'btn-primary', pay && `btn-pay btn-${pay} no-arrow`, /->\s*$/.test(block.text || '') && 'no-arrow']} href={block.href} data-track={track}>{pay && <svg class="pay-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d={(icons as any)[pay]} /></svg>}{block.text}</a>
