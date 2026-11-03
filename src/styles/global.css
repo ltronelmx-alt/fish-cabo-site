@@ -116,31 +116,34 @@ li p { margin: 0 0 0.4em; }
 .inset { padding-inline: calc(var(--inset) - var(--gutter)); }
 @media (max-width: 767px) { .inset { padding-inline: 0; } }
 
-/* ---------- Buttons (Squarespace "primary" outline style) ---------- */
+/* ---------- Buttons: same design as the footer "EXPLORE OUR FISHING BOATS" button ---------- */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 3em;
-  padding: 0.6em 1.2em;
-  border: 2px solid currentColor;
-  border-radius: 0;
+  min-height: 56px;
+  padding: 15px 23px;
+  border: 1.5px solid currentColor;
+  border-radius: 7px;
   background: transparent;
   color: inherit;
   font-family: var(--font-body);
-  font-size: var(--fs-btn);
-  line-height: 1.2;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  line-height: 1.4;
+  text-transform: uppercase;
   text-align: center;
   text-decoration: none;
-  transition: opacity 0.2s ease;
+  white-space: normal;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
-.btn:hover { opacity: 0.75; }
-.btn-row { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 40px; }
+.btn:hover { opacity: 0.8; }
+.theme-black .btn, .theme-orange .btn { color: var(--white); }
+@media (min-width: 768px) { .btn-row .btn { min-width: 300px; } }
+.btn-row { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 40px; }
 .btn-row.center { justify-content: center; }
 .btn-row.split { justify-content: space-between; }
-@media (min-width: 768px) {
-  .btn-row .btn { min-width: 22vw; }
-}
 
 :focus-visible { outline: 2px solid var(--orange-ui); outline-offset: 3px; }
 
