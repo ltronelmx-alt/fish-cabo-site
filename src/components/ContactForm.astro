@@ -2,7 +2,7 @@
 // Replaces the Squarespace form block. Same fields, labels, options and button text as the original form.
 // Submits to the Worker (/api/contact): validation + Cloudflare Turnstile. No data is stored.
 import form from '../data/contact-form.json';
-const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY || '1x00000000000000000000AA'; // Cloudflare's public TEST key (always passes)
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY || '1x00000000000000000000BB'; // Cloudflare's public TEST key (always passes, invisible: no widget box shown)
 const id = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 ---
 <form class="cform card" id="contact-form" method="post" action="/api/contact" novalidate>
@@ -13,16 +13,16 @@ const id = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^
       <label>Last Name<input name="lname" autocomplete="family-name" required={f.required} maxlength="80" /></label>
     </fieldset>
   ) : f.type === 'select' ? (
-    <label class="cf-row">{f.title}{f.required && <span aria-hidden="true"> *</span>}
+    <label class="cf-row"><span class="cf-lbl">{f.title}{f.required && <span class="req" aria-hidden="true"> *</span>}</span>
       <select name={id(f.title)} required={f.required}>
         <option value="">{f.placeholder || 'Select an option'}</option>
         {(f.options || []).map((o) => <option>{o.trim()}</option>)}
       </select>
     </label>
   ) : f.type === 'textarea' ? (
-    <label class="cf-row">{f.title}{f.required && <span aria-hidden="true"> *</span>}<textarea name="message" rows="6" required={f.required} maxlength="5000"></textarea></label>
+    <label class="cf-row"><span class="cf-lbl">{f.title}{f.required && <span class="req" aria-hidden="true"> *</span>}</span><textarea name="message" rows="6" required={f.required} maxlength="5000"></textarea></label>
   ) : (
-    <label class="cf-row">{f.title}{f.required && <span aria-hidden="true"> *</span>}
+    <label class="cf-row"><span class="cf-lbl">{f.title}{f.required && <span class="req" aria-hidden="true"> *</span>}</span>
       <input name={f.type} type={f.type === 'phone' ? 'tel' : f.type} required={f.required} maxlength="120"
         autocomplete={f.type === 'email' ? 'email' : f.type === 'phone' ? 'tel' : 'off'} />
     </label>
@@ -54,7 +54,11 @@ const id = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^
   });
 </script>
 <style>
-  .cform { display: grid; gap: 18px; background: var(--white) !important; }
+  .cform { display: grid; gap: 18px; background: var(--white) !important; width: 100%; max-width: 680px; margin-inline: auto; padding: clamp(24px, 3vw, 40px) !important; border: 1px solid var(--line) !important; border-top: 3px solid var(--orange) !important; box-shadow: var(--shadow); }
+  .cform:hover { transform: none; }
+  .cf-lbl { display: block; }
+  .cf-lbl .req { color: var(--orange); }
+  .cf-turnstile:empty { display: none; }
   .cf-row { display: grid; gap: 8px; font-size: 14px; font-weight: 700; color: var(--ink); border: 0; padding: 0; margin: 0; }
   .cf-row.two { grid-template-columns: 1fr 1fr; column-gap: 14px; }
   .cf-row.two legend { grid-column: 1 / -1; padding: 0; margin-bottom: 8px; }

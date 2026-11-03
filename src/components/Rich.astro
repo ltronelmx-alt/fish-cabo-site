@@ -1,12 +1,25 @@
 ---
 // Renders an original text block. mode="cards" wraps each <h3> group in a card (markup only).
-import { byH3 } from '../lib/original';
+import { byH3, byH4 } from '../lib/original';
 interface Props { html: string; mode?: 'plain' | 'cards'; class?: string }
 const { html: raw, mode = 'plain', class: cls } = Astro.props;
 // Design hook only: paragraphs made entirely of bold text get class="sub" (styled as sub-headings). Text untouched.
-const html = raw.replace(/<p>(<strong>(?:(?!<\/?strong>)[\s\S])*<\/strong>)<\/p>/g, '<p class="sub">$1</p>');
-const { intro, groups } = byH3(html);
+const html = raw.replace(/<p>(<strong>(?:(?!<\/?strong>)[\s\S])*<\/strong>)<\/p>/g, '<p class="sub">$1</p>')
+  // paragraphs that contain nothing but one link → styled as a button (class only)
+  .replace(/<p>(<a [^>]*>(?:<strong>)?[^<]*(?:<\/strong>)?<\/a>)<\/p>/g, '<p class="cta">$1</p>');
+const kvRe = /<p><strong>[^<]*<\/strong>(?:<strong>[^<]*<\/strong>)?[^<]+<\/p>/;
+// runs of 3+ "<strong>Label</strong> value" paragraphs → class="kv" (read as a table). Class only.
+const html2 = html.replace(new RegExp(`(?:${kvRe.source}){3,}`, 'g'), (run) => run.replace(/<p>/g, '<p class="kv">'));
+const h3 = byH3(html2);
+const h4 = byH4(html2);
+// cards from <h3> groups; if the block has no h3 groups, use <h4> groups (3 or more). Markup only, text untouched.
+const useH4 = h3.groups.length < 2 && h4.groups.length >= 3;
+const { intro, groups } = useH4 ? h4 : h3;
+// h3 groups that themselves hold several <h4> questions/items → h3 as a sub-heading + a grid of h4 cards
+const nested = !useH4 && groups.length > 1 && groups.filter((g) => byH4(g).groups.length >= 2).length * 2 >= groups.length;
 ---
-{mode === 'cards' && groups.length > 1
-  ? <div class:list={['rich', cls]}><Fragment set:html={intro} /><div class="cards-from-h3">{groups.map((g) => <div class="card reveal"><Fragment set:html={g} /></div>)}</div></div>
-  : <div class:list={['rich', cls]} set:html={html} />}
+{mode === 'cards' && nested
+  ? <div class:list={['rich', cls]}><Fragment set:html={intro} />{groups.map((g) => { const x = byH4(g); return <div class="h3-block"><Fragment set:html={x.intro} />{x.groups.length > 0 && <div class="cards-from-h3 cards-h4">{x.groups.map((q) => <div class="card reveal"><Fragment set:html={q} /></div>)}</div>}</div>; })}</div>
+  : mode === 'cards' && groups.length > 1
+  ? <div class:list={['rich', cls]}><Fragment set:html={intro} /><div class:list={['cards-from-h3', useH4 && 'cards-h4']}>{groups.map((g) => <div class="card reveal"><Fragment set:html={g} /></div>)}</div></div>
+  : <div class:list={['rich', cls]} set:html={html2} />}

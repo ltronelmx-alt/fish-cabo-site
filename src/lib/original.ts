@@ -17,6 +17,12 @@ export function byH3(html: string) {
   const intro = parts[0].startsWith('<h3') ? '' : parts.shift()!;
   return { intro, groups: parts };
 }
+/** Split a chunk into [intro, ...groups] at each <h4>. */
+export function byH4(html: string) {
+  const parts = html.split(/(?=<h4[\s>])/);
+  const intro = parts[0].startsWith('<h4') ? '' : parts.shift()!;
+  return { intro, groups: parts };
+}
 /** First heading of a chunk + the rest. */
 export function headAndRest(html: string) {
   const m = html.match(/^(<h[1-4][^>]*>[\s\S]*?<\/h[1-4]>)([\s\S]*)$/);

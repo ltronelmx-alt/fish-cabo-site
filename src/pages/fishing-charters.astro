@@ -57,10 +57,13 @@ const bt = b1.filter((b) => b.kind === 'button');
   .s1grid :global(.btnA) { grid-column: 2; grid-row: 5; justify-self: start; }
   @media (max-width: 900px) { .s1grid { grid-template-columns: 1fr; } .s1grid > :global(*) { grid-column: 1 !important; grid-row: auto !important; justify-self: stretch !important; }
     .s1grid :global(.main) { order: 1; } .s1grid :global(.gh2) { order: 2; } .s1grid :global(.amber) { order: 3; } .s1grid :global(.grounds) { order: 4; } .s1grid :global(.img1) { order: 5; } .s1grid :global(.img2) { order: 6; } .s1grid :global(.btnB) { order: 7; } .s1grid :global(.btnA) { order: 8; } .s1grid :global(.gh2) { padding-top: 0; } .s1grid :global(.amber) { margin-top: 0; } }
-  .banner { position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: center; justify-content: center; min-height: clamp(320px, 34vw, 520px); padding: 64px 0; text-align: center; background: var(--ink); }
-  .banner :global(.banner-img) { position: absolute; inset: 0; z-index: -2; border-radius: 0; }
-  .banner :global(.banner-img img) { width: 100%; height: 100%; object-fit: cover; }
-  .banner::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(to top, rgb(0 0 0 / 0.75), rgb(0 0 0 / 0.35)); }
+  .banner { position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template: 1fr / 1fr; text-align: center; background: var(--ink); }
+  .banner > :global(.banner-img), .banner::after, .banner > .container { grid-area: 1 / 1; }
+  .banner :global(.banner-img) { position: relative; z-index: -2; border-radius: 0; box-shadow: none; }
+  .banner :global(.banner-img img) { width: 100%; height: auto; }
+  .banner::after { content: ''; position: relative; z-index: -1; background: linear-gradient(to top, rgb(0 0 0 / 0.75), rgb(0 0 0 / 0.35)); }
+  .banner > .container { align-self: center; padding-block: 48px; }
+  @media (max-width: 760px) { .banner { grid-template: auto auto / 1fr; } .banner > .container { grid-row: 2; } .banner::after { display: none; } }
   .banner :global(h3) { color: var(--white); font-size: clamp(28px, 2.6vw + 14px, 60px); line-height: 1.02; letter-spacing: -0.03em; max-width: 20ch; margin: 0 auto; }
   .review { display: flex; flex-direction: column; text-align: left; background: var(--white) !important; }
   .review :global(p:first-child) { color: var(--orange); letter-spacing: 0.2em; }

@@ -7,7 +7,7 @@ import OBtn from './OBtn.astro';
 import LatestLog from './LatestLog.astro';
 import ContactForm from './ContactForm.astro';
 import { byH2, type Page, type Block } from '../lib/original';
-import { pictures } from '../lib/media';
+import { pictures, media } from '../lib/media';
 import { SITE } from '../data/site';
 
 interface Props { page: Page & { videos?: string[] }; slug: string }
@@ -24,6 +24,10 @@ const first = S[0];
 const heroImgBlock = first && !first.bg ? first.blocks.find((b) => b.kind === 'img') : undefined;
 const isHero = !!first && hasH1(first) && (!!first.bg || !!heroImgBlock);
 let codeIdx = 0;
+// hero photo placed as a content block: the section takes the photo's own proportions, so the whole photo shows
+const heroM = heroImgBlock?.path ? media(heroImgBlock.path) : null;
+const heroAr = heroM ? `${heroM.width} / ${heroM.height}` : '';
+const heroPortrait = !!heroM && heroM.height > heroM.width * 0.9;
 
 // Group consecutive blocks of the same kind (images → gallery row, buttons → button row). Order is preserved.
 function groups(blocks: Block[]) {
@@ -43,12 +47,12 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
   // ---------- First section = hero ----------
   if (si === 0 && isHero) {
     return (
-      <section class="hero dark hero-page o-hero">
+      <section class:list={['hero dark hero-page o-hero', heroAr && 'o-hero-block', heroPortrait && 'o-hero-portrait']} style={heroAr ? `--ar:${heroAr}` : undefined}>
         {sec.bg && <OImg block={{ path: sec.bg.path, alt: sec.bg.alt }} class="o-hero-bg" sizes="100vw" priority />}
         <div class="hero-shade" aria-hidden="true"></div>
         <div class="container hero-inner">
           {sec.blocks.map((b) => b.kind === 'img'
-            ? <OImg block={b} class="o-hero-bg" sizes="100vw" priority />
+            ? <OImg block={b} class={b === heroImgBlock ? 'o-hero-bg o-hero-abs' : 'o-hero-img'} sizes="100vw" priority={b === heroImgBlock} />
             : b.kind === 'button' ? <div class="btn-row"><OBtn block={b} primary /></div>
             : <div class="hero-text" set:html={pictures(b.html || '')} />)}
         </div>
@@ -61,7 +65,7 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
         {groups(sec.blocks).map((g, gi, arr) => {
           if (g.kind === 'img') return (
             <div class:list={['o-gallery', `n${Math.min(g.items.length, 4)}`]}>
-              {g.items.map((b) => <OImg block={b} class="reveal" sizes={g.items.length > 1 ? '(min-width: 900px) 33vw, 92vw' : '(min-width: 1240px) 1200px, 92vw'} />)}
+              {g.items.map((b) => <OImg block={b} class:list={['reveal', /Cabo Casita Keeper/i.test(b.alt || '') && 'o-small-logo']} sizes={g.items.length > 1 ? '(min-width: 900px) 33vw, 92vw' : '(min-width: 1240px) 1200px, 92vw'} />)}
             </div>
           );
           if (g.kind === 'button') return (
@@ -102,12 +106,38 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
 })}
 
 <style is:global>
-  .o-hero { position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: flex-end; background: var(--ink); color: #e9e9e9; min-height: clamp(460px, 62svh, 760px); }
-  .o-hero .hero-shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(to top, rgb(0 0 0 / 0.82) 0%, rgb(0 0 0 / 0.35) 45%, rgb(0 0 0 / 0.1) 70%, rgb(0 0 0 / 0.4) 100%), linear-gradient(to right, rgb(0 0 0 / 0.45), transparent 60%); }
-  .o-hero .hero-inner { position: static; padding-top: 150px; padding-bottom: clamp(40px, 5vw, 72px); }
-  .o-hero .hero-inner > .o-hero-bg { position: absolute; }
-  .o-hero .o-hero-bg { position: absolute; inset: 0; z-index: -2; border-radius: 0; box-shadow: none; }
-  .o-hero .o-hero-bg img { width: 100%; height: 100%; object-fit: cover; }
+  /* Whole photo, never cropped */
+  .o-hero { position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template: 1fr / 1fr; background: var(--ink); color: #e9e9e9; }
+  .o-hero > .o-hero-bg, .o-hero > .hero-shade, .o-hero > .hero-inner { grid-area: 1 / 1; }
+  .o-hero .o-hero-bg { position: relative; z-index: -2; border-radius: 0; box-shadow: none; background: transparent; }
+  .o-hero .o-hero-bg img { width: 100%; height: auto; max-height: 100svh; object-fit: contain; margin-inline: auto; }
+  .o-hero .o-hero-bg:hover img { transform: none; }
+  .o-hero .hero-shade { position: relative; z-index: -1; background: linear-gradient(to top, rgb(0 0 0 / 0.82) 0%, rgb(0 0 0 / 0.35) 45%, rgb(0 0 0 / 0.1) 70%, rgb(0 0 0 / 0.4) 100%), linear-gradient(to right, rgb(0 0 0 / 0.45), transparent 60%); }
+  .o-hero .hero-inner { position: static; align-self: end; padding-top: 150px; padding-bottom: clamp(40px, 5vw, 72px); }
+  .o-hero-block { aspect-ratio: var(--ar); max-height: 100svh; min-height: 420px; }
+  .o-hero-block > .hero-inner { align-self: end; }
+  .o-hero .hero-inner > .o-hero-abs { position: absolute; inset: 0; z-index: -2; }
+  .o-hero .hero-inner > .o-hero-abs picture, .o-hero .hero-inner > .o-hero-abs img { width: 100%; height: 100% !important; object-fit: contain !important; }
+  /* portrait photo: text on the left, whole photo on the right */
+  .o-hero-portrait { aspect-ratio: auto; max-height: none; min-height: 0; }
+  .o-hero-portrait > .hero-shade { display: none; }
+  .o-hero-portrait > .hero-inner { align-self: center; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); column-gap: clamp(32px, 5vw, 96px); align-items: center; padding-top: 130px; }
+  .o-hero-portrait > .hero-inner > * { grid-column: 1; }
+  .o-hero .o-hero-portrait > .hero-inner > .o-hero-abs, .o-hero-portrait > .hero-inner > .o-hero-abs { position: static; grid-column: 2; grid-row: 1 / span 6; border-radius: var(--radius); overflow: hidden; }
+  .o-hero-portrait > .hero-inner > .o-hero-abs img { height: auto !important; max-height: 78svh !important; width: auto; max-width: 100%; margin-inline: auto; }
+  @media (max-width: 760px) {
+    .o-hero.o-hero-portrait > .hero-inner { grid-template-columns: 1fr; grid-row: 1; padding-top: 110px; }
+    .o-hero-portrait > .hero-inner > .o-hero-abs { grid-column: 1; grid-row: auto; }
+    .o-hero-block { aspect-ratio: auto; max-height: none; min-height: 0; }
+    .o-hero-block > .hero-shade { display: none; }
+    .o-hero .hero-inner > .o-hero-abs { position: static; margin-top: 24px; border-radius: var(--radius); }
+    .o-hero .hero-inner > .o-hero-abs img { height: auto !important; }
+    .o-hero-block > .hero-inner { padding-top: 110px; }
+    .o-hero { grid-template: auto auto / 1fr; }
+    .o-hero > .o-hero-bg, .o-hero > .hero-shade { grid-row: 1; }
+    .o-hero > .hero-shade { background: linear-gradient(to bottom, rgb(0 0 0 / 0.55), transparent 35%); }
+    .o-hero > .hero-inner { grid-row: 2; padding-top: 32px; }
+  }
   .o-hero .hero-text h1 { color: var(--white); font-size: clamp(36px, 3.6vw + 14px, 80px); max-width: 24ch; }
   .o-hero .hero-text p { font-size: var(--fs-lead); color: #ededed; max-width: 900px; }
   .o-hero .hero-text strong { color: #fff; }
@@ -143,4 +173,68 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
   .o-html nav a, .o-html section > a:has(h2) { display: inline-flex; flex-direction: column; gap: 4px; margin-top: 24px; padding: 18px 22px; border: 1.5px solid var(--line); border-radius: var(--radius-sm); text-decoration: none; }
   .o-html section > a:has(h2) h2 { font-size: var(--fs-h3); margin: 0; }
   .o-html section > a:has(h2) h2::before { display: none; }
+
+  /* =========== v4 — editorial layout for every content page (design only, text untouched) =========== */
+  /* each H2 chapter becomes its own full-width band, alternating colours */
+  .o-text > .o-chunk { position: relative; padding-block: clamp(56px, 6vw, 112px); }
+  .o-text > .o-chunk:first-child { padding-top: 0; }
+  .o-text > .o-chunk:nth-child(even) { background: var(--sand); box-shadow: 0 0 0 100vmax var(--sand); clip-path: inset(0 -100vmax); }
+  .bg-sand .o-text > .o-chunk:nth-child(even) { background: var(--white); box-shadow: 0 0 0 100vmax var(--white); }
+  .dark .o-text > .o-chunk:nth-child(even) { background: rgb(255 255 255 / 0.03); box-shadow: none; clip-path: none; }
+  .o-text > .o-chunk:last-child { padding-bottom: 0; }
+  .o-text > .o-chunk:nth-child(even):last-child { padding-bottom: clamp(56px, 6vw, 112px); margin-bottom: calc(-1 * clamp(64px, 7vw, 140px)); }
+  .o-chunk > h2 { max-width: 22ch; }
+  .o-chunk > h2 + p { font-size: var(--fs-lead); line-height: 1.6; color: var(--ink); }
+  .dark .o-chunk > h2 + p { color: #ececec; }
+  /* page intro (text before the first H2) */
+  .o-sec .rich > p:first-child { font-size: var(--fs-lead); line-height: 1.6; color: var(--ink); }
+  /* cards from H4 groups (months, questions, fishing spots…) */
+  .cards-h4 { counter-reset: card; }
+  @media (min-width: 640px) { .cards-h4 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
+  @media (min-width: 1500px) { .cards-h4:not(:has(> .card:nth-child(4):last-child)) { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
+  .cards-h4 > .card { display: flex; flex-direction: column; background: var(--white) !important; border: 1px solid var(--line) !important; border-top: 3px solid var(--orange) !important; }
+  .bg-white .o-chunk:not(:nth-child(even)) .cards-h4 > .card, .bg-white > .container > .rich .cards-h4 > .card { background: var(--sand) !important; border-color: transparent !important; border-top-color: var(--orange) !important; }
+  .cards-h4 > .card > h4:first-child { margin-top: 0; font-size: clamp(19px, 0.6vw + 15px, 26px); line-height: 1.15; }
+  .cards-h4 > .card > p { font-size: 0.95em; }
+  .cards-h4 > .card > p.sub { font-size: 1em; margin-top: 1.2em; }
+  .cards-h4 > .card ul li { background: var(--sand); }
+  .dark .cards-h4 > .card { background: rgb(255 255 255 / 0.04) !important; border-color: rgb(255 255 255 / 0.1) !important; border-top-color: var(--orange) !important; }
+  .h3-block { margin-top: clamp(48px, 5vw, 88px); }
+  .h3-block > h3:first-child { font-size: clamp(24px, 1.4vw + 16px, 42px); line-height: 1.05; letter-spacing: -0.02em; padding-top: 22px; border-top: 1px solid var(--line); margin-bottom: 0.4em; }
+  .h3-block .cards-h4 { margin-top: clamp(20px, 2vw, 32px); }
+  /* call-to-action paragraphs that are a single link → buttons (same style as the site buttons) */
+  .o-sec .rich p.cta > a {
+    display: inline-flex; align-items: center; gap: 10px; min-height: 52px; padding: 14px 24px; border: 1.5px solid var(--ink); border-radius: var(--radius-sm);
+    text-decoration: none; font-family: var(--font-body); font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink);
+    transition: background 0.25s var(--ease), color 0.25s var(--ease);
+  }
+  .o-sec .rich p.cta > a:hover { background: var(--ink); color: var(--white); }
+  .o-sec .rich p.cta > a strong { color: inherit; }
+  .dark .o-sec .rich p.cta > a, .o-sec.dark .rich p.cta > a { border-color: var(--white); color: var(--white); }
+  /* key/value lines (“Period … / January–March …”) read as a clean table */
+  .o-sec .rich > p.kv { padding: 12px 0; margin: 0; border-bottom: 1px solid var(--line); }
+  .o-sec .rich > p.kv strong:first-child { display: inline-block; min-width: 13em; }
+  .o-sec .rich pre { font-family: var(--font-body); background: var(--sand); border-left: 3px solid var(--orange); padding: 18px 22px; }
+  .o-sec .rich pre code { font-family: inherit; }
+  /* images: whole, rounded, soft shadow */
+  .o-gallery { align-items: start; }
+  .o-html picture img, .o-html > img { width: 100%; height: auto; }
+  .o-gallery-html { align-items: start; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)) !important; }
+  .o-gallery-html figure { margin: 0; }
+  .o-gallery-html picture { border-radius: var(--radius); overflow: hidden; box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.35); }
+  /* lists of items with a photo (species, spots…) → photo cards */
+  .rich ul:has(> li > picture), .rich ul:has(> li > img) { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 460px), 1fr)); gap: clamp(16px, 2vw, 32px); counter-reset: none; }
+  .rich ul > li:has(> picture), .rich ul > li:has(> img) { display: flex; flex-direction: column; padding: clamp(22px, 2.4vw, 40px) !important; background: var(--white) !important; border: 1px solid var(--line) !important; border-top: 3px solid var(--orange) !important; border-radius: var(--radius); }
+  .rich ul > li:has(> picture)::before, .rich ul > li:has(> img)::before { display: none; }
+  .rich ul > li > picture { margin: 0 0 22px; border-radius: var(--radius-sm); overflow: hidden; background: var(--sand); }
+  .rich ul > li > picture img { width: 100%; height: auto; }
+  .rich ul > li:has(> picture) > h2 { font-size: var(--fs-h3); margin: 0 0 0.6em; counter-increment: none; }
+  .rich ul > li:has(> picture) > h2::before { display: none; }
+  .rich ul > li:has(> picture) p { margin: 0 0 0.9em; font-size: 0.95em; }
+  .rich ul > li:has(> picture) p:has(> a:only-child) { margin-top: auto; padding-top: 10px; }
+  .rich ul > li:has(> picture) p > a:only-child { display: inline-flex; min-height: 48px; align-items: center; padding: 12px 20px; border: 1.5px solid var(--ink); border-radius: var(--radius-sm); text-decoration: none; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .rich ul > li:has(> picture) p > a:only-child:hover { background: var(--ink); color: var(--white); }
+  /* contact page: small partner logo, fixed-size form */
+  .o-small-logo { width: clamp(120px, 12vw, 170px) !important; max-width: 170px; box-shadow: none !important; background: transparent !important; border-radius: 0 !important; }
+  .o-small-logo img { width: 100%; height: auto; }
 </style>

@@ -272,3 +272,12 @@ body { line-height: 1.75; color: #262626; counter-reset: sec; }
   .cards-from-h3:has(> .card:nth-child(4):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (min-width: 1300px) { .cards-from-h3:has(> .card:nth-child(4):last-child) { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+/* =========================================================
+   v4 — whole images everywhere (owner request: never cropped)
+   ========================================================= */
+.media { background: transparent; }
+.media img, .ratio-4x3 img, .ratio-3x2 img, .ratio-16x9 img, .ratio-4x5 img,
+.o-gallery .media img, .o-gallery-html img, .ll-media img, .article picture img {
+  height: auto !important; aspect-ratio: auto !important; object-fit: contain !important; max-height: none !important;
+}
