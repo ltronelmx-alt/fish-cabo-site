@@ -18,7 +18,7 @@ Nothing was changed on Squarespace, DNS, the domain, Search Console or any payme
 | CMS (Sveltia CMS, free, Git-based, drafts, preview, image upload, SEO fields) | ✅ Configured. **Needs staging + a GitHub token to be used** (see §7) |
 | Protected Cloudflare staging URL | ⏳ **Waiting for the owner**: importing the repo in Cloudflare is a dashboard step (§8) |
 | Real performance comparison | ⚠️ Partial: Squarespace homepage measured. Everything else is pending staging (§6) |
-| Automated QA (Playwright) | ✅ 144/146 passed. The 2 failures are the same broken link, which also exists on the live site (§4) |
+| Automated QA (Playwright) | ✅ 145/145 passed |
 
 ## 2. Architecture and costs
 
@@ -67,7 +67,7 @@ Nothing was changed on Squarespace, DNS, the domain, Search Console or any payme
 - `/cabo-fishing` duplicates the homepage (same title; canonical points to `/`).
 - 6 video pages have no H1.
 - `/fishing-reports` has 21 H1 tags, and 7 Fishing Logs have 2 H1s each.
-- **Broken link on the live site:** `/iman-bank-fishing-san-jose-del-cabo` links to `/wahoo-fishing-san-jose-del-cabo-august-2026`, which does not exist. The correct URL is `/fishing-reports/wahoo-fishing-san-jose-del-cabo-august-2026`. Proposed fix: correct the link, or add a 301 redirect.
+- **Broken link — fixed on the new site (owner-approved, 2026-11-03):** `/iman-bank-fishing-san-jose-del-cabo` linked "wahoo" to `/wahoo-fishing-san-jose-del-cabo-august-2026` (404 on the live site). It now points to `/fishing-reports/wahoo-fishing-san-jose-del-cabo-august-2026`. This is the only intentional difference from the original content; it is listed in `scripts/link_fixes.py`, and the verifier accounts for it. The live Squarespace page still has the broken link.
 - `/terms-conditions` and `/privacy-policy` are missing from the sitemap.
 
 ## 4. Functional tests (Playwright, local Cloudflare runtime) — `docs/qa-results.json`

@@ -1,7 +1,9 @@
 # Extracts content and SEO tags VERBATIM from the exported Squarespace pages.
 # Text, heading levels, links, alt texts, meta tags and JSON-LD are kept exactly;
 # only Squarespace's presentational attributes/wrappers are removed.
-import json, re, sys
+import json, re, sys, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from link_fixes import fix_html
 from bs4 import BeautifulSoup, NavigableString, Comment
 
 SRC = '/home/claude/export/site/pages/'
@@ -82,6 +84,7 @@ def page(name, slug):
     raw = open(SRC + name).read()
     vids = list(dict.fromkeys(re.findall(r'https?:(?:\\/|/)(?:\\/|/)www\.youtube\.com(?:\\/|/)embed(?:\\/|/)([\w-]{6,})', raw)))
     out = {'lang': soup.html.get('lang', 'en-US'), 'head': head_tags, 'bodyLd': body_ld, 'sections': sections, 'videos': vids}
+    out = json.loads(fix_html(json.dumps(out, ensure_ascii=False)))
     json.dump(out, open(OUT + slug + '.json', 'w'), ensure_ascii=False, indent=1)
     print(slug, len(sections), 'sections', sum(len(s['blocks']) for s in sections), 'blocks', len(head_tags), 'head tags', len(body_ld), 'body ld', 'no-area', sum(1 for s in sections for b in s['blocks'] if b['ga'][0] == 999))
 

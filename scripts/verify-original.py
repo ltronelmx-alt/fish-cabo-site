@@ -2,13 +2,15 @@
 import re, sys
 from bs4 import BeautifulSoup
 import glob, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from link_fixes import fix_html
 EXP = '/home/claude/export/site/pages/'
 PAIRS = [(f[len(EXP):-5], f[len(EXP):-5]) for f in sorted(glob.glob(EXP + '**/*.html', recursive=True))]
 QUIET = '-q' in sys.argv
 norm = lambda s: re.sub(r'\s+', ' ', s).strip()
 ok = True
 for o, n in PAIRS:
-    A = BeautifulSoup(open(f'/home/claude/export/site/pages/{o}.html').read(), 'lxml')
+    A = BeautifulSoup(fix_html(open(f'/home/claude/export/site/pages/{o}.html').read()), 'lxml')
     B = BeautifulSoup(open(f'dist/{n}.html').read(), 'lxml') if os.path.exists(f'dist/{n}.html') else None
     if not os.path.exists(f'dist/{n}.html'): ok = False; print(f'MISSING ROUTE {o}'); continue
     a = A.select_one('article#page-regions') or A.select_one('main'); b = B.select_one('main')

@@ -1,8 +1,8 @@
 {
  "base": "http://127.0.0.1:8787",
- "date": "2026-11-03T05:03:18.922Z",
- "total": 146,
- "failed": 2,
+ "date": "2026-11-03T19:34:35.401Z",
+ "total": 145,
+ "failed": 0,
  "results": [
   {
    "area": "Routes",
@@ -612,15 +612,9 @@
   },
   {
    "area": "Links",
-   "test": "/wahoo-fishing-san-jose-del-cabo-august-2026 (from /iman-bank-fishing-san-jose-del-cabo)",
-   "ok": false,
-   "detail": "404"
-  },
-  {
-   "area": "Links",
-   "test": "all 946 internal links and images resolve",
-   "ok": false,
-   "detail": "1 broken"
+   "test": "all 945 internal links and images resolve",
+   "ok": true,
+   "detail": "0 broken"
   },
   {
    "area": "Routing",
