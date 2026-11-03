@@ -7,13 +7,18 @@ from bs4 import BeautifulSoup, NavigableString, Comment
 SRC = '/home/claude/export/site/pages/'
 OUT = '/home/claude/fish-cabo/src/data/original/'
 CDN = 'https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/'
-KEEP = {'a': ['href', 'target', 'rel'], 'img': ['alt'], 'td': ['colspan', 'rowspan'], 'th': ['colspan', 'rowspan']}
+KEEP = {'a': ['href', 'target', 'rel'], 'img': ['alt', 'data-path'], 'iframe': ['src', 'title', 'allow', 'allowfullscreen'], 'time': ['datetime'], 'source': [], 'video': [], 'td': ['colspan', 'rowspan'], 'th': ['colspan', 'rowspan']}
 UNWRAP = {'span', 'div', 'font'}
 
 def clean(node):
     node = BeautifulSoup(str(node), 'lxml')
     for t in node(['script', 'style', 'noscript', 'svg']): t.decompose()
     for c in node.find_all(string=lambda s: isinstance(s, Comment)): c.extract()
+    for im in node.find_all('img'):
+        pth = path_of(im.get('data-src') or im.get('data-image') or im.get('src'))
+        if pth: im['data-path'] = pth
+    for ifr in node.find_all('iframe'):
+        if ifr.get('data-src') and not ifr.get('src'): ifr['src'] = ifr['data-src']
     for el in node.find_all(True):
         if el.name in UNWRAP: el.unwrap(); continue
         el.attrs = {k: v for k, v in el.attrs.items() if k in KEEP.get(el.name, [])}
@@ -45,7 +50,7 @@ def page(name, slug):
     body_ld = [str(s) for s in soup.body.select('script[type="application/ld+json"]')]
     areas = grid_areas(soup)
     sections = []
-    for sec in soup.select('article#page-regions section.page-section') or soup.select('section.page-section'):
+    for sec in soup.select('article#page-regions section.page-section') or soup.select('main article.sections > section') or soup.select('section.page-section'):
         bg = sec.select_one('.section-background img')
         blocks = []
         for i, fe in enumerate(sec.select('.fe-block')):
@@ -66,10 +71,23 @@ def page(name, slug):
             else:
                 content = fe.select_one('.sqs-block-content')
                 blocks.append({'kind': 'code', 'html': clean(content) if content else '', 'ga': ga, 'dom': i, 'btype': btype})
+        if not sec.select('.fe-block'):
+            content = sec.select_one('.content') or sec
+            kind = 'gallery' if 'gallery-section' in (sec.get('class') or []) else 'html'
+            if content.get_text(strip=True) or content.select('img, iframe'):
+                blocks.append({'kind': kind, 'html': clean(content), 'ga': [0, 0, 0, 0], 'dom': 0})
         blocks.sort(key=lambda b: (b['ga'][0], b['ga'][1], b['dom']))
         sections.append({'theme': sec.get('data-section-theme', ''), 'bg': {'path': path_of(bg.get('data-src') or bg.get('src')), 'alt': bg.get('alt', '')} if bg else None, 'blocks': blocks})
     out = {'lang': soup.html.get('lang', 'en-US'), 'head': head_tags, 'bodyLd': body_ld, 'sections': sections}
     json.dump(out, open(OUT + slug + '.json', 'w'), ensure_ascii=False, indent=1)
     print(slug, len(sections), 'sections', sum(len(s['blocks']) for s in sections), 'blocks', len(head_tags), 'head tags', len(body_ld), 'body ld', 'no-area', sum(1 for s in sections for b in s['blocks'] if b['ga'][0] == 999))
 
-page('index.html', 'home'); page('fishing-charters.html', 'fishing-charters'); page('fishing-boats.html', 'fishing-boats')
+import glob, os
+if len(sys.argv) > 1 and sys.argv[1] == 'all':
+    for f in sorted(glob.glob(SRC + '**/*.html', recursive=True)):
+        rel = f[len(SRC):-5]
+        slug = 'home' if rel == 'index' else rel
+        os.makedirs(os.path.dirname(OUT + slug + '.json') or '.', exist_ok=True)
+        page(rel + '.html', slug)
+else:
+    page('index.html', 'home'); page('fishing-charters.html', 'fishing-charters'); page('fishing-boats.html', 'fishing-boats')
