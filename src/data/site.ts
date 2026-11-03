@@ -7,9 +7,9 @@ export const SITE = {
   whatsapp: '+526241223506',
   marina: 'Puerto Los Cabos Marina, San José del Cabo, Baja California Sur, Mexico',
   gpsUrl:
-    'https://www.google.com/maps/dir/?api=1&destination=23.0600625%2C-109.6706875&travelmode=driving',
+    'https://www.google.com/maps/dir/?api=1&destination=23.060275%2C-109.670677&travelmode=driving',
   directionsUrl:
-    'https://www.google.com/maps/dir/?api=1&destination=Marina%20Puerto%20Los%20Cabos%2C%20San%20Jose%20del%20Cabo%2C%20Mexico',
+    'https://www.google.com/maps/dir/?api=1&destination=23.060275%2C-109.670677&travelmode=driving',
   bookUrl: '/fishing-boats',
   googleReviews: 'https://g.page/r/CVkU9WoXqp_DEBM',
   googleLeaveReview: 'https://g.page/r/CVkU9WoXqp_DEBM/review',
