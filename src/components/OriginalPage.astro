@@ -102,7 +102,10 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
 })}
 
 <style is:global>
-  .o-hero { min-height: clamp(460px, 62svh, 760px); }
+  .o-hero { position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: flex-end; background: var(--ink); color: #e9e9e9; min-height: clamp(460px, 62svh, 760px); }
+  .o-hero .hero-shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(to top, rgb(0 0 0 / 0.82) 0%, rgb(0 0 0 / 0.35) 45%, rgb(0 0 0 / 0.1) 70%, rgb(0 0 0 / 0.4) 100%), linear-gradient(to right, rgb(0 0 0 / 0.45), transparent 60%); }
+  .o-hero .hero-inner { position: static; padding-top: 150px; padding-bottom: clamp(40px, 5vw, 72px); }
+  .o-hero .hero-inner > .o-hero-bg { position: absolute; }
   .o-hero .o-hero-bg { position: absolute; inset: 0; z-index: -2; border-radius: 0; box-shadow: none; }
   .o-hero .o-hero-bg img { width: 100%; height: 100%; object-fit: cover; }
   .o-hero .hero-text h1 { color: var(--white); font-size: clamp(36px, 3.6vw + 14px, 80px); max-width: 24ch; }
