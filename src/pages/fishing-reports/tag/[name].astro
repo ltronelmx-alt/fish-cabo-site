@@ -7,7 +7,7 @@ export async function getStaticPaths() {
   return [...new Set(all.flatMap((e) => e.data.tags))].map((name) => ({ params: { name }, props: { name, items: all.filter((e) => e.data.tags.includes(name)) } }));
 }
 const { name, items } = Astro.props;
-const page = { lang: 'en-US', head: [`<title>${name} — Cabo Fishing Reports | Exotic Fish Cabo</title>`, `<link rel="canonical" href="https://fish-cabo.com/fishing-reports/tag/${encodeURIComponent(name)}"/>`], bodyLd: [],
+const page = { lang: 'en-US', head: [`<title>${name} — Cabo Fishing Reports | Exotic Fish Cabo</title>`, `<meta name="description" content="Fishing Reports tagged “${name}” from Exotic Fish Cabo, private fishing charters departing from Puerto Los Cabos Marina, San José del Cabo."/>`, `<link rel="canonical" href="https://fish-cabo.com/fishing-reports/tag/${encodeURIComponent(name)}"/>`], bodyLd: [],
   sections: [{ theme: 'light', bg: null, blocks: [{ kind: 'text', html: `<h1>${name}</h1>`, ga: [0, 0, 0, 0] }] }, { theme: 'white', bg: null, blocks: [{ kind: 'html', html: items.map(itemHtml).join(''), ga: [0, 0, 0, 0] }] }] };
 ---
 <Base original={page as any} solidHeader><OriginalPage page={page as any} slug="fishing-reports" /></Base>

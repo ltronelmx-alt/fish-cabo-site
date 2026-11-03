@@ -56,6 +56,9 @@ export const FOOTER_NAV = [
       ['Fishing Boats', '/fishing-boats'],
       ['Family Fishing Charters', '/family-fishing-charters-san-jose-del-cabo'],
       ['Cabo San Lucas Charters', '/cabo-san-lucas-fishing-charters'],
+      // F8 — these two indexed pages had no internal link (orphans; reachable only via the sitemap)
+      ['Deep Sea Fishing Charters', '/deep-sea-fishing-charters'],
+      ['Deep Sea Fishing Cabo', '/deep-sea-fishing-cabo'],
       ['Contact & Booking', '/contact'],
     ],
   },

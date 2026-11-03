@@ -14,5 +14,5 @@ export function itemHtml(e: Report) {
   const d = e.data, url = `/fishing-reports/${e.id}`;
   const meta = `<div class="meta">` + (d.category ? `<a href="${catUrl(d.category)}">${esc(d.category)}</a>` : '') + `<span>${esc(d.author)}</span><time>${mdy(d.date)}</time></div>`;
   const img = d.thumbnail ? `<a href="${url}" aria-label="${esc(d.title)}"><img alt="${esc(d.thumbnail.alt)}" data-path="${esc(d.thumbnail.src)}"/></a>` : '';
-  return `<article>${img}${meta}${meta}<h1><a href="${url}">${esc(d.title)}</a></h1>${d.excerpt ? `<p>${d.excerpt}</p>` : ''}<a href="${url}">Read More</a></article>`;
+  return `<article>${img}${meta}${meta}<h2 class="as-h1"><a href="${url}">${esc(d.title)}</a></h2>${d.excerpt ? `<p>${d.excerpt}</p>` : ''}<a href="${url}" aria-label="Read more: ${esc(d.title)}">Read More</a></article>`;
 }

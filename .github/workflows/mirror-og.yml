@@ -1,0 +1,24 @@
+# One-off (re-runnable) job: copies the social-preview images still hosted by Squarespace into the repo,
+# so they keep working after Squarespace is cancelled. Commits public/og/ + src/data/og-mirror.json.
+name: Mirror social preview images
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['scripts/mirror-og.mjs', '.github/workflows/mirror-og.yml']
+permissions:
+  contents: write
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node scripts/mirror-og.mjs
+      - name: Commit mirrored images
+        run: |
+          git config user.name "og-mirror bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add public/og src/data/og-mirror.json
+          git diff --cached --quiet || (git commit -m "Mirror social preview images from Squarespace (og:image)" && git push)

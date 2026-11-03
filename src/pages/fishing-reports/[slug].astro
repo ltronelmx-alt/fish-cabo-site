@@ -5,6 +5,9 @@ import Base from '../../layouts/Base.astro';
 import { render } from 'astro:content';
 import { published, catUrl, tagUrl } from '../../lib/reports';
 import { pictures, media } from '../../lib/media';
+import { demoteBodyH1 } from '../../lib/seo-fixes';
+// F5 — keep the article title as the only H1: any further <h1> in the imported body becomes <h2 class="as-h1">
+const demoteBodyH1Keep = (html: string) => { let first = true; return html.replace(/<h1(\s[^>]*)?>[\s\S]*?<\/h1>/g, (m) => (first ? ((first = false), m) : demoteBodyH1(m))); };
 import { SITE } from '../../data/site';
 export async function getStaticPaths() {
   const all = await published();
@@ -28,7 +31,7 @@ const mdy = d.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric',
   <section class="section bg-white o-first">
     <div class="container o-flow">
       {isHtml
-        ? <div class="rich o-html article" set:html={pictures(entry.body || '', '(min-width: 1040px) 960px, 92vw')} />
+        ? <div class="rich o-html article" set:html={pictures(demoteBodyH1Keep(entry.body || ''), '(min-width: 1040px) 960px, 92vw')} />
         : <div class="rich o-html article"><article>
             <h1>{d.title}</h1>
             {d.category && <a href={catUrl(d.category)}>{d.category}</a>}
@@ -43,6 +46,7 @@ const mdy = d.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric',
   </section>
 </Base>
 <style is:global>
+  .article > article > h2.as-h1 { font-size: clamp(26px, 2vw + 14px, 48px); max-width: 30ch; }
   .article > article > h1 { font-size: clamp(34px, 3vw + 14px, 72px); max-width: 26ch; }
   .article > article > a[href*='/category/'] { display: inline-block; margin: 8px 12px 18px 0; padding: 6px 14px; border-radius: 999px; background: var(--orange); color: var(--ink); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; }
   .article > article a[href*='author='] { display: inline-block; padding: 8px 4px; min-height: 24px; }

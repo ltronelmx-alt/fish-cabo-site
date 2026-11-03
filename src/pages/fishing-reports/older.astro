@@ -7,8 +7,11 @@ import P from '../../data/original/fishing-reports.json';
 const all = await published();
 const rest = all.slice(PER_PAGE);
 const list = rest.map(itemHtml).join('') + `<nav><a href="/fishing-reports" rel="prev">Newer Posts</a></nav>`;
+// F3 — this page is served at the original Squarespace pagination URL; its canonical is that URL, not page one
+const origHref = ((P as any).sections[2].blocks[0].html.match(/href="(\/fishing-reports\?offset=\d+)"/) || [])[1];
+const canonical = origHref ? `https://fish-cabo.com${origHref.replace(/&amp;/g, '&')}` : undefined;
 const page = { ...(P as any), sections: [P.sections[0], P.sections[1], { ...P.sections[2], blocks: [{ kind: 'html', html: list, ga: [0, 0, 0, 0], dom: 0 }] }] };
 ---
-<Base original={page} solidHeader>
+<Base original={page} solidHeader canonical={canonical}>
   <OriginalPage page={page} slug="fishing-reports" />
 </Base>

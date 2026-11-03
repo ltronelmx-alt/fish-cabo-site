@@ -59,10 +59,15 @@ try {
     if (!f.endsWith('.html')) continue;
     const path = '/fishing-reports/' + f.replace(/\.html$/, '');
     if (path === '/fishing-reports/older' || known.has(path)) continue;
-    extra.push(`<url><loc>${SITE}${path}</loc><lastmod>${statSync(join(DIST, 'fishing-reports', f)).mtime.toISOString().slice(0, 10)}</lastmod></url>`);
+    // lastmod = the post's own publication date from the CMS (never the build time)
+    let date = '';
+    try { date = (readFileSync(join('src/content/fishing-reports', f.replace(/\.html$/, '.md')), 'utf8').match(/^date:\s*["']?(\d{4}-\d{2}-\d{2})/m) || [])[1] || ''; } catch {}
+    extra.push(`<url><loc>${SITE}${path}</loc>${date ? `<lastmod>${date}</lastmod>` : ''}</url>`);
   }
 } catch {}
-const sitemap = extra.length ? orig.replace('</urlset>', extra.join('') + '</urlset>') : orig;
+// F7 — /cabo-fishing is a duplicate of the homepage and canonicalises to "/": list the canonical homepage URL instead
+const fixed = orig.replace(`<loc>${SITE}/cabo-fishing</loc>`, `<loc>${SITE}/</loc>`);
+const sitemap = extra.length ? fixed.replace('</urlset>', extra.join('') + '</urlset>') : fixed;
 const pages = [...known];
 writeFileSync(join(DIST, 'sitemap.xml'), sitemap);
 

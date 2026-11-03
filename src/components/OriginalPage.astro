@@ -8,6 +8,7 @@ import LatestLog from './LatestLog.astro';
 import ContactForm from './ContactForm.astro';
 import { byH2, type Page, type Block } from '../lib/original';
 import { pictures, media } from '../lib/media';
+import { videoH1 } from '../lib/seo-fixes';
 import { SITE } from '../data/site';
 
 interface Props { page: Page & { videos?: string[] }; slug: string }
@@ -24,6 +25,8 @@ const first = S[0];
 const heroImgBlock = first && !first.bg ? first.blocks.find((b) => b.kind === 'img') : undefined;
 const isHero = !!first && hasH1(first) && (!!first.bg || !!heroImgBlock);
 let codeIdx = 0;
+// F4 — video item pages had no H1: the video title (first H2 of the item) becomes the H1
+const isVideoItem = slug.startsWith('cabo-fishing-videos/v/') && !S.some((sec) => sec.blocks.some((b) => /<h1[\s>]/.test(b.html || '')));
 // hero photo placed as a content block: the section takes the photo's own proportions, so the whole photo shows
 const heroM = heroImgBlock?.path ? media(heroImgBlock.path) : null;
 const heroAr = heroM ? `${heroM.width} / ${heroM.height}` : '';
@@ -102,7 +105,7 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
             return <div class="rich" set:html={pictures(html)} />;
           }
           // gallery / item lists / collection items (articles, videos, listings)
-          return <div class:list={['rich o-html', b.kind === 'gallery' && 'o-gallery-html']} set:html={pictures(b.html || '', '(min-width: 900px) 33vw, 92vw')} />;
+          return <div class:list={['rich o-html', b.kind === 'gallery' && 'o-gallery-html']} set:html={pictures(isVideoItem ? videoH1(b.html || '') : (b.html || ''), '(min-width: 900px) 33vw, 92vw')} />;
         })}
         {si === 0 && page.videos && page.videos.length > 0 && page.videos.map((id) => (
           <div class="o-video media"><iframe src={`https://www.youtube.com/embed/${id}?feature=oembed`} title="YouTube video" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
@@ -257,8 +260,8 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
   .o-html:not(.article) > article > .meta + .meta { display: none; }
   .o-html:not(.article) > article > .meta a { padding: 5px 12px; border-radius: 999px; background: var(--orange); color: var(--ink); font-weight: 700; text-decoration: none; text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; }
   .o-html:not(.article) > article > .meta span { text-transform: uppercase; }
-  .o-html:not(.article) > article > h1 { font-size: clamp(19px, 0.5vw + 15px, 24px); line-height: 1.15; margin-top: 16px; }
-  .o-html:not(.article) > article > h1 a { text-decoration: none; }
+  .o-html:not(.article) > article > h2 { font-size: clamp(19px, 0.5vw + 15px, 24px); line-height: 1.15; margin-top: 16px; }
+  .o-html:not(.article) > article > h2 a { text-decoration: none; }
   .o-html:not(.article) > article > p { font-size: 0.92em; }
   .o-html:not(.article) > article > a:last-child { margin-top: auto; align-self: flex-start; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; text-decoration-color: var(--orange); text-underline-offset: 5px; }
   .o-stripe-row { align-items: center; }

@@ -5,6 +5,7 @@ import Footer from '../components/Footer.astro';
 import Chat from '../components/Chat.astro';
 import { SITE } from '../data/site';
 import { media } from '../lib/media';
+import { fixHead } from '../lib/seo-fixes';
 
 interface Props {
   // SEO: either the ORIGINAL Squarespace head tags (verbatim) or a minimal title/description (404 only).
@@ -12,8 +13,11 @@ interface Props {
   title?: string;
   description?: string;
   solidHeader?: boolean; // page without a photo hero: header is solid from the start
+  canonical?: string; // override (paginated archive only)
 }
-const { original, title, description, solidHeader = false } = Astro.props;
+const { original, title, description, solidHeader = false, canonical } = Astro.props;
+const head = original ? fixHead(original.head, { canonical }) : [];
+const bodyLd = original ? fixHead(original.bodyLd) : [];
 // Safety: every build is "staging" (noindex) unless SITE_ENV=production is set explicitly.
 const isProd = import.meta.env.PUBLIC_SITE_ENV === 'production';
 const beacon = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
@@ -23,7 +27,7 @@ const beacon = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    {original ? <Fragment set:html={original.head.join('\n')} /> : <><title>{title}</title><meta name="description" content={description} /></>}
+    {original ? <Fragment set:html={head.join('\n')} /> : <><title>{title}</title><meta name="description" content={description} /></>}
     {!isProd && <meta name="robots" content="noindex, nofollow" />}
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="preload" href="/fonts/syne-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
@@ -38,7 +42,7 @@ const beacon = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
     </main>
     <Footer />
     <Chat />
-    {original && original.bodyLd.length > 0 && <Fragment set:html={original.bodyLd.join('\n')} />}
+    {bodyLd.length > 0 && <Fragment set:html={bodyLd.join('\n')} />}
     {beacon && <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon={JSON.stringify({ token: beacon })}></script>}
     <script>
       // Commercial-action tracking: records clicks only (never claims a booking was completed).

@@ -293,3 +293,8 @@ main picture > img, main .media > img { margin-inline: auto; }
 .hero .hero-img, .o-hero .o-hero-bg img, .banner .banner-img img, .o-paymethods img, .o-small-logo img { max-width: 100% !important; }
 .article img:not([style]) { max-width: min(100%, 960px); margin-inline: auto; }
 .article img[style] { width: 100%; }
+
+/* Semantic heading fixes (one H1 per page): same look as before */
+h2.as-h1 { font-size: var(--fs-h1); line-height: 0.98; letter-spacing: -0.035em; }
+h1.as-h2 { font-size: var(--fs-h2); line-height: 1.02; letter-spacing: -0.03em; }
+.o-html:not(.article) > article > h2.as-h1 { font-size: clamp(19px, 0.5vw + 15px, 24px); line-height: 1.15; letter-spacing: -0.01em; }
