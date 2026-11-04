@@ -1,5 +1,5 @@
 // Cloudflare Worker: serves the static site (Workers Static Assets) and handles the dynamic routes.
-// Only /api/* and /fishing-reports?offset=… run this code; every page is a pre-rendered file.
+// Every request passes here first (needed for the staging password); pages themselves are pre-rendered files.
 export interface Env {
   ASSETS: Fetcher;
   EVENTS?: AnalyticsEngineDataset; // optional: anonymous click counts
@@ -7,9 +7,22 @@ export interface Env {
   RESEND_API_KEY?: string; // optional email provider (requires owner approval)
   CONTACT_TO?: string; // destination address for contact messages
   CONTACT_FROM?: string;
+  STAGING_PASSWORD?: string; // secret: password-protects the *.workers.dev staging site only (never fish-cabo.com)
 }
 const TEST_TURNSTILE_SECRET = '1x0000000000000000000000000000000AA';
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+// Staging lock: only on *.workers.dev and only once the STAGING_PASSWORD secret exists. Any user name, that password.
+async function stagingLocked(request: Request, env: Env): Promise<Response | null> {
+  const host = new URL(request.url).hostname;
+  if (!env.STAGING_PASSWORD || !host.endsWith('.workers.dev')) return null;
+  const h = request.headers.get('authorization') || '';
+  let pass = '';
+  try { pass = h.startsWith('Basic ') ? atob(h.slice(6)).split(':').slice(1).join(':') : ''; } catch {}
+  const enc = new TextEncoder();
+  const [a, b] = await Promise.all([crypto.subtle.digest('SHA-256', enc.encode(pass)), crypto.subtle.digest('SHA-256', enc.encode(env.STAGING_PASSWORD))]);
+  if (crypto.subtle.timingSafeEqual(a, b)) return null;
+  return new Response('Staging site — password required', { status: 401, headers: { 'www-authenticate': 'Basic realm="Exotic Fish Cabo staging", charset="UTF-8"', 'x-robots-tag': 'noindex, nofollow', 'cache-control': 'no-store' } });
+}
 const ALLOWED_EVENTS = /^[a-z0-9_-]{2,80}$/;
 
 async function contact(request: Request, env: Env) {
@@ -45,6 +58,8 @@ async function contact(request: Request, env: Env) {
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    const locked = await stagingLocked(request, env);
+    if (locked) return locked;
     const url = new URL(request.url);
     if (url.pathname === '/api/contact') return contact(request, env);
     if (url.pathname === '/api/event') {
