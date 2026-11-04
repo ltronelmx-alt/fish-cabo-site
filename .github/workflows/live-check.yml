@@ -1,0 +1,31 @@
+# Manual smoke test of the LIVE site (read-only, sends nothing). Actions → "Live check" → Run workflow.
+name: Live check
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check fish-cabo.com
+        run: |
+          set -u; S=https://fish-cabo.com; fail=0
+          t() { got=$(curl -s -o /dev/null -w "%{http_code} %{redirect_url}" "$2"); case "$got" in $3*) echo "OK   $1: $got";; *) echo "FAIL $1: $got (expected $3)"; fail=1;; esac; }
+          t "home" "$S/" "200"
+          t "contact" "$S/contact" "200"
+          t "boat page" "$S/fishing-boats/23ft-panga" "200"
+          t "fishing reports" "$S/fishing-reports" "200"
+          t "chat script" "$S/js/efc-chat.js" "200"
+          t "sitemap" "$S/sitemap.xml" "200"
+          t "robots" "$S/robots.txt" "200"
+          t "404 page" "$S/this-page-does-not-exist" "404"
+          t "301 old URL" "$S/san-jose-del-cabo-fishing-charters" "301 https://fish-cabo.com/fishing-charters"
+          t "www → apex" "https://www.fish-cabo.com/contact" "301 https://fish-cabo.com/contact"
+          t "publish-notify without token" "$S/api/publish-notify" "405"
+          img=$(curl -s "$S/" | grep -o '/media/[^" ]*\.webp' | head -1); t "image $img" "$S$img" "200"
+          curl -s "$S/robots.txt" | grep -q "Allow: /" && echo "OK   robots allows indexing" || { echo "FAIL robots"; fail=1; }
+          curl -s "$S/" | grep -qi 'name="robots" content="noindex' && { echo "FAIL homepage noindex"; fail=1; } || echo "OK   homepage indexable"
+          curl -s "$S/deploy-info.json?t=$(date +%s)" | jq -c '{commit, mode, branch}'
+          exit $fail
