@@ -1,14 +1,111 @@
 {
+  "_readme": "Static, manually verified 5-star reviews. Update procedure: docs/REVIEWS-QUARTERLY-UPDATE.md. Only rating 5 is ever displayed. 'text' is a short verbatim EXCERPT (opening sentence(s)); the card links to the full review on the platform.",
   "google": {
-    "source": "Google Business Profile API (accounts.locations.reviews.list)",
-    "fetchedAt": null,
+    "verifiedAt": "2026-11-04",
+    "listingUrl": "https://www.google.com/maps/place/Exotic+Fish+Cabo/@23.0600625,-109.6706875,17z/data=!4m6!3m5!1s0x86af50aeb0005895:0xc39faa176af51459!8m2!3d23.0600625!4d-109.6706875!16s%2Fg%2F11c0pj78pt",
     "allReviewsUrl": "https://g.page/r/CVkU9WoXqp_DEBM",
-    "items": []
+    "items": [
+      {
+        "id": "g-101640265681105381514",
+        "author": "A B",
+        "authorMeta": "Local Guide",
+        "rating": 5,
+        "text": "Hell of a trip… With in 15 mins of leaving the marina we were pulling in bonito. … Good conversation, organized and productive fishing made a perfect trip.",
+        "date": "2026-05",
+        "dateLabel": "2026",
+        "url": "https://www.google.com/maps/reviews/data=!4m5!14m4!1m3!1m2!1s101640265681105381514!2s0x86af50aeb0005895:0xc39faa176af51459"
+      },
+      {
+        "id": "g-105099981144725820527",
+        "author": "Agnes xE Benitez",
+        "rating": 5,
+        "text": "I’ve been a loyal client of Exotic for over 15 years… An excursion with Exotic is always pure joy: impeccable vibes, effortless elegance, and, of course, fish… an abundance of fish!",
+        "date": "2026-04",
+        "dateLabel": "2026",
+        "url": "https://www.google.com/maps/reviews/data=!4m5!14m4!1m3!1m2!1s105099981144725820527!2s0x86af50aeb0005895:0xc39faa176af51459"
+      },
+      {
+        "id": "g-116314337626315953153",
+        "author": "Robert Saykally",
+        "rating": 5,
+        "text": "Like always a great day on the water!!",
+        "date": "2026-04",
+        "dateLabel": "2026",
+        "url": "https://www.google.com/maps/reviews/data=!4m5!14m4!1m3!1m2!1s116314337626315953153!2s0x86af50aeb0005895:0xc39faa176af51459"
+      },
+      {
+        "id": "g-100588830157678318690",
+        "author": "Chloe Turner",
+        "rating": 5,
+        "text": "Had the BEST TIME!!! He works hard to put you on the roosters! I caught a massive 70 + pounder in ten minutes…",
+        "date": "2026-02",
+        "dateLabel": "2026",
+        "url": "https://www.google.com/maps/reviews/data=!4m5!14m4!1m3!1m2!1s100588830157678318690!2s0x86af50aeb0005895:0xc39faa176af51459"
+      },
+      {
+        "id": "g-105135065874815552692",
+        "author": "Matt Stanford",
+        "rating": 5,
+        "text": "We had an incredible time fishing with Exotic!! … It was pretty much non stop action and ended up being such a great day to remember for me and my kids.",
+        "date": "2026-01",
+        "dateLabel": "2026",
+        "url": "https://www.google.com/maps/reviews/data=!4m5!14m4!1m3!1m2!1s105135065874815552692!2s0x86af50aeb0005895:0xc39faa176af51459"
+      }
+    ]
   },
   "tripadvisor": {
-    "source": "Tripadvisor Content API (location/9569970/reviews)",
-    "fetchedAt": null,
+    "verifiedAt": "2026-11-04",
     "allReviewsUrl": "https://www.tripadvisor.com/Attraction_Review-g152516-d9569970-Reviews-Exotic_Fish_Cabo_Sportfishing_Charter-San_Jose_del_Cabo_Los_Cabos_Baja_California.html",
-    "items": []
+    "items": [
+      {
+        "id": "ta-1073477935",
+        "author": "Stella M",
+        "authorMeta": "Los Angeles, California",
+        "rating": 5,
+        "title": "Had an incredible morning",
+        "text": "Had an incredible morning out with Exotic Fish Cabo! We landed 3 beautiful 60 lb tuna and even hooked into a striped marlin.",
+        "date": "2026-08-16",
+        "url": "https://www.tripadvisor.com/ShowUserReviews-g152516-d9569970-r1073477935-Exotic_Fish_Cabo_Sportfishing_Charter-San_Jose_del_Cabo_Los_Cabos_Baja_Californ.html"
+      },
+      {
+        "id": "ta-1055459421",
+        "author": "Agnès B",
+        "authorMeta": "Deux-Montagnes, Canada",
+        "rating": 5,
+        "title": "Exotic Fish Cabo experience",
+        "text": "I’ve been a loyal client of Exotic for over 15 years… An excursion with Exotic is always pure joy: impeccable vibes, effortless elegance, and, of course, fish… an abundance of fish!",
+        "date": "2026-04-05",
+        "url": "https://www.tripadvisor.com/ShowUserReviews-g152516-d9569970-r1055459421-Exotic_Fish_Cabo_Sportfishing_Charter-San_Jose_del_Cabo_Los_Cabos_Baja_Californ.html"
+      },
+      {
+        "id": "ta-1037958271",
+        "author": "crypton A",
+        "rating": 5,
+        "title": "HUGE yellowfin tuna",
+        "text": "I just had the best morning fishing with Exotic Fish Cabo! We caught a bunch of yellowfin tuna, including a HUGE one that my daughter managed to reel in all by herself…",
+        "date": "2025-11-06",
+        "url": "https://www.tripadvisor.com/ShowUserReviews-g152516-d9569970-r1037958271-Exotic_Fish_Cabo_Sportfishing_Charter-San_Jose_del_Cabo_Los_Cabos_Baja_Californ.html"
+      },
+      {
+        "id": "ta-1025742240",
+        "author": "Alhuero",
+        "authorMeta": "La Mirada, California",
+        "rating": 5,
+        "title": "Sunday Morning Catch!",
+        "text": "They knew we were all inexperienced fisherman and they basically took care of everything except reeling in the fish! We caugt 4 Yellow fin tuna…",
+        "date": "2025-08-20",
+        "url": "https://www.tripadvisor.com/ShowUserReviews-g152516-d9569970-r1025742240-Exotic_Fish_Cabo_Sportfishing_Charter-San_Jose_del_Cabo_Los_Cabos_Baja_Californ.html"
+      },
+      {
+        "id": "ta-1017994206",
+        "author": "Cabo Casita Keeper",
+        "authorMeta": "San Jose del Cabo, Mexico",
+        "rating": 5,
+        "title": "Marlins and tuna in the same morning",
+        "text": "Marlins and tuna in the same morning... unheard of! … NEVER disappointed and always plenty of catches.",
+        "date": "2025-07-13",
+        "url": "https://www.tripadvisor.com/ShowUserReviews-g152516-d9569970-r1017994206-Exotic_Fish_Cabo_Sportfishing_Charter-San_Jose_del_Cabo_Los_Cabos_Baja_Californ.html"
+      }
+    ]
   }
 }

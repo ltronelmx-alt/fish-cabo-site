@@ -10,7 +10,7 @@ const isProd = process.env.PUBLIC_SITE_ENV === 'production';
 
 const csp = [
   "default-src 'self'",
-  "img-src 'self' data: https://i.ytimg.com https://www.tripadvisor.com",
+  "img-src 'self' data: https://i.ytimg.com",
   "script-src 'self' https://static.cloudflareinsights.com https://challenges.cloudflare.com",
   "connect-src 'self' https://cloudflareinsights.com",
   "style-src 'self' 'unsafe-inline'",

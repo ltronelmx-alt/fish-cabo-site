@@ -1,6 +1,6 @@
 ---
 // Google & Tripadvisor review carousels (homepage, before the final booking CTA).
-// Data: src/data/reviews.json, written ONLY by scripts/fetch-reviews.mjs from the official APIs.
+// Data: src/data/reviews.json — static, manually verified 5-star reviews (docs/REVIEWS-QUARTERLY-UPDATE.md).
 // Nothing is rendered for a platform that has no genuine review; the whole section is omitted if both are empty.
 // No review/rating structured data is emitted (self-serving review markup is not allowed by Google).
 // REVIEWS_FIXTURE=<file> (local test builds only) swaps in clearly labelled demo data.
@@ -9,9 +9,9 @@ import real from '../data/reviews.json';
 
 type Item = {
   id: string; author: string; authorMeta?: string; rating: number; title?: string;
-  text: string; date: string; url?: string; ratingImage?: string;
+  text: string; date: string; dateLabel?: string; url?: string; ratingImage?: string;
 };
-type Platform = { allReviewsUrl: string; fetchedAt: string | null; items: Item[] };
+type Platform = { allReviewsUrl: string; items: Item[] };
 
 const fixture = process.env.REVIEWS_FIXTURE;
 const data: { google: Platform; tripadvisor: Platform } = fixture ? JSON.parse(readFileSync(fixture, 'utf8')) : real;
@@ -47,7 +47,7 @@ const platforms = (['google', 'tripadvisor'] as const)
           <div class="rv-head">
             <p class="rv-brand">
               <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" class="rv-logo"><path d={ICON[p.key]} /></svg>
-              <span><strong>{META[p.key].label}</strong><small>5-star reviews from {META[p.key].name}</small></span>
+              <span><strong>{META[p.key].label}</strong><small>Selected 5-star reviews · excerpts</small></span>
             </p>
             <div class="rv-ctrl">
               <button type="button" class="rv-btn" data-prev aria-label={`Previous ${META[p.key].name} review`}>
@@ -80,7 +80,7 @@ const platforms = (['google', 'tripadvisor'] as const)
                           ? <img src={r.ratingImage} alt="5 of 5 bubbles" width="80" height="14" loading="lazy" decoding="async" />
                           : <span class="rv-bubbles" role="img" aria-label="5 of 5 bubbles">{[0, 1, 2, 3, 4].map(() => <i />)}</span>)
                       : <span class="rv-stars" role="img" aria-label="5 out of 5 stars">★★★★★</span>}
-                    <time datetime={r.date}>{month(r.date)}</time>
+                    <time datetime={r.date}>{r.dateLabel ?? month(r.date)}</time>
                   </div>
                   {r.title && <p class="rv-title">{r.title}</p>}
                   <blockquote class="rv-text" cite={r.url}><p>{r.text}</p></blockquote>

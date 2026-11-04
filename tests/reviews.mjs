@@ -4,7 +4,7 @@
 import { createRequire } from 'module';
 const { chromium } = createRequire(import.meta.url)('playwright');
 import { mkdirSync } from 'node:fs';
-import { mapGoogle, mapTripadvisor } from '../scripts/fetch-reviews.mjs';
+import { readFileSync } from 'node:fs';
 
 const BASE = process.argv[2]?.startsWith('http') ? process.argv[2] : 'http://127.0.0.1:8787';
 const SMALL = process.argv.includes('--small');
@@ -13,29 +13,18 @@ const t = (name, ok, info = '') => { results.push(ok); console.log(`${ok ? 'PASS
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 mkdirSync('/tmp/shots', { recursive: true });
 
-// ---- 1. data mapping (pure functions of the sync script, API-shaped inputs) ----
+// ---- 1. data file integrity (static, manually verified) ----
 {
-  const g = mapGoogle([
-    { reviewId: 'a', starRating: 'FIVE', reviewer: { displayName: 'Ana Maria Lopez' }, comment: 'Great day', createTime: '2026-05-01T00:00:00Z' },
-    { reviewId: 'b', starRating: 'FOUR', reviewer: { displayName: 'X' }, comment: 'ok', createTime: '2026-09-01T00:00:00Z' },
-    { reviewId: 'c', starRating: 'FIVE', reviewer: { displayName: 'Bob' }, comment: '', createTime: '2026-09-01T00:00:00Z' },
-    { reviewId: 'd', starRating: 'FIVE', reviewer: { isAnonymous: true }, comment: '(Translated by Google) Super\n\n(Original)\nGenial', createTime: '2026-08-01T00:00:00Z' },
-    ...[1, 2, 3, 4, 5].map((i) => ({ reviewId: 'e' + i, starRating: 'FIVE', reviewer: { displayName: 'P' + i }, comment: 'x', createTime: `2026-0${i}-15T00:00:00Z` })),
-  ]);
-  t('sync: Google keeps only FIVE stars with text, max 5', g.length === 5 && g.every((r) => r.rating === 5 && r.text) && !g.some((r) => r.id === 'b' || r.id === 'c'));
-  t('sync: Google newest first', g.every((r, i) => i === 0 || Date.parse(g[i - 1].date) >= Date.parse(r.date)), g.map((r) => r.date.slice(0, 7)).join(','));
-  t('sync: Google translated review keeps the original text, anonymous name', g.find((r) => r.id === 'd')?.text === 'Genial' && g.find((r) => r.id === 'd')?.author === 'Google user');
-  const a = mapGoogle([{ reviewId: 'a', starRating: 'FIVE', reviewer: { displayName: 'Ana Maria Lopez' }, comment: 'Great', createTime: '2026-05-01T00:00:00Z' }]);
-  t('sync: Google display name shortened ("Ana L.")', a[0].author === 'Ana L.');
-  const ta = mapTripadvisor([
-    { id: 1, rating: 5, title: 'T', text: 'Good', published_date: '2026-10-01T00:00:00Z', url: 'https://www.tripadvisor.com/x', user: { username: 'u1', user_location: { name: 'Texas' } } },
-    { id: 2, rating: 4, text: 'meh', published_date: '2026-10-02T00:00:00Z', user: { username: 'u2' } },
-    { id: 3, rating: 5, text: 'Nice', published_date: '2026-10-03T00:00:00Z', user: { username: 'u3' } },
-  ]);
-  t('sync: Tripadvisor keeps only rating 5, newest first, keeps review URL', ta.length === 2 && ta[0].id === '3' && ta[1].url === 'https://www.tripadvisor.com/x' && ta[1].authorMeta === 'Texas');
-  t('sync: empty API answer gives empty list (no simulated data)', mapGoogle([]).length === 0 && mapTripadvisor([]).length === 0);
+  const D = JSON.parse(readFileSync(new URL('../src/data/reviews.json', import.meta.url)));
+  for (const k of ['google', 'tripadvisor']) {
+    const it = D[k].items;
+    t(`data: ${k} has exactly 5 reviews`, it.length === 5);
+    t(`data: ${k} every rating is exactly 5`, it.every((r) => r.rating === 5));
+    t(`data: ${k} newest first`, it.every((r, i) => i === 0 || r.date <= it[i - 1].date), it.map((r) => r.date).join(','));
+    t(`data: ${k} every review has author, text, date and its own source URL`, it.every((r) => r.author && r.text && r.date && /^https:\/\/www\.(google|tripadvisor)\.com\//.test(r.url)));
+    t(`data: ${k} ids unique`, new Set(it.map((r) => r.id)).size === it.length);
+  }
 }
-
 const browser = await chromium.launch();
 const errors = [];
 async function open(opts = {}) {
@@ -65,7 +54,7 @@ if (SMALL) {
   t('placed immediately before the final section with the "Book Now" CTA (FAQ)', /Frequently Asked Questions/.test(next) && /Book Now/.test(next));
   t('two independent carousels (Google, Tripadvisor)', (await p.locator('.rv-google').count()) === 1 && (await p.locator('.rv-tripadvisor').count()) === 1);
   t('5 real cards each', (await p.locator('.rv-google .rv-card:not(.rv-clone)').count()) === 5 && (await p.locator('.rv-tripadvisor .rv-card:not(.rv-clone)').count()) === 5);
-  t('non-5-star review never displayed', !(await p.content()).includes('MUST NOT APPEAR'));
+  t('non-5-star reviews never displayed', !/MUST NOT APPEAR|SCAM|horrible experience|scammer/i.test(await p.content()));
   const ld = await p.$$eval('script[type="application/ld+json"]', (s) => s.map((x) => x.textContent).join(' '));
   t('no review / aggregateRating structured data', !/"(Review|AggregateRating)"|reviewRating|aggregateRating/i.test(ld));
   const clones = await p.$$eval('.rv-clone', (c) => c.every((x) => x.getAttribute('aria-hidden') === 'true' && x.hasAttribute('inert')));
@@ -132,16 +121,10 @@ if (SMALL) {
   const hidden = await p.$$eval('.rv-google .rv-card:not(.rv-clone)', (c) => c.map((x) => x.hasAttribute('inert')));
   t('off-screen real slides are inert (tab order = visible cards only)', hidden.filter((x) => !x).length === 3, JSON.stringify(hidden));
 
-  // ---- 5. read more ----
-  const more = p.locator('.rv-tripadvisor .rv-card:not(.rv-clone)').nth(1).locator('.rv-more');
-  t('"Read more" shown only for long review', (await more.isVisible()) && (await p.locator('.rv-tripadvisor .rv-card:not(.rv-clone)').nth(0).locator('.rv-more').isHidden()));
-  await p.evaluate(() => window.__efcReviews[1].root.querySelector('[data-play]').click()); // stop TA autoplay so the card stays put
-  const hBefore = (await more.locator('xpath=..').boundingBox()).height;
-  await more.click({ force: true }); await sleep(200);
-  const hAfter = (await more.locator('xpath=..').boundingBox()).height;
-  t('"Read more" expands the full text (aria-expanded=true)', hAfter > hBefore && (await more.getAttribute('aria-expanded')) === 'true', `${Math.round(hBefore)}→${Math.round(hAfter)}`);
-  await more.click({ force: true });
-
+  // ---- 5. source links ----
+  const own = await p.$$eval('.rv-card:not(.rv-clone) .rv-link', (a) => a.map((x) => x.href));
+  t('every card links to its own original review', own.length === 10 && new Set(own).size === 10 && own.every((h) => /google\.com\/maps\/reviews|tripadvisor\.com\/ShowUserReviews/.test(h)));
+  await p.evaluate(() => window.scrollTo(0, 0)); await p.locator('.rv-intro').scrollIntoViewIfNeeded(); await sleep(300);
   await p.locator('.rv-section').screenshot({ path: '/tmp/shots/reviews-1440.png' });
   await ctx.close();
 
