@@ -8,7 +8,10 @@
     "binding": "ASSETS",
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page",
-    "run_worker_first": true
+    // Free plan: only pages and /api go through the Worker (staging lock, redirects, www → apex, forms).
+    // Images, fonts, scripts and styles are served directly as static assets: free, unlimited, never counted
+    // in the 100,000 requests/day Worker limit.
+    "run_worker_first": ["/*", "!/media/*", "!/_astro/*", "!/fonts/*", "!/og/*", "!/js/*", "!/cms/*", "!/favicon.ico"]
   },
   "observability": { "enabled": true },
   // Enable after creating the dataset (free): uncomment to store click counts.
