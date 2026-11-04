@@ -23,6 +23,10 @@ async function stagingLocked(request: Request, env: Env): Promise<Response | nul
   if (crypto.subtle.timingSafeEqual(a, b)) return null;
   return new Response('Staging site — password required', { status: 401, headers: { 'www-authenticate': 'Basic realm="Exotic Fish Cabo staging", charset="UTF-8"', 'x-robots-tag': 'noindex, nofollow', 'cache-control': 'no-store' } });
 }
+// Staging (*.workers.dev) always uses Cloudflare's public TEST secret (always passes) so the form can be tested;
+// fish-cabo.com uses the real TURNSTILE_SECRET. The real secret must be re-checked before going live.
+const turnstileSecret = (request: Request, env: Env) =>
+  new URL(request.url).hostname.endsWith('.workers.dev') ? TEST_TURNSTILE_SECRET : env.TURNSTILE_SECRET || TEST_TURNSTILE_SECRET;
 const ALLOWED_EVENTS = /^[a-z0-9_-]{2,80}$/;
 
 async function contact(request: Request, env: Env) {
@@ -43,7 +47,7 @@ async function contact(request: Request, env: Env) {
   // Cloudflare Turnstile verification
   const token = String(fd.get('cf-turnstile-response') ?? '');
   const ver = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-    method: 'POST', body: new URLSearchParams({ secret: env.TURNSTILE_SECRET || TEST_TURNSTILE_SECRET, response: token, remoteip: request.headers.get('cf-connecting-ip') || '' }),
+    method: 'POST', body: new URLSearchParams({ secret: turnstileSecret(request, env), response: token, remoteip: request.headers.get('cf-connecting-ip') || '' }),
   }).then((r) => r.json() as Promise<{ success: boolean; 'error-codes'?: string[] }>).catch(() => ({ success: false, 'error-codes': ['siteverify-unreachable'] }));
   if (!ver.success) {
     const codes = ver['error-codes'] || [];
