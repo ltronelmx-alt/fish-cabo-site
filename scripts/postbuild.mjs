@@ -104,7 +104,10 @@ const fixedImg = fixed.replace(/<image:loc>https?:\/\/images\.squarespace-cdn\.c
   const k = mkeyS(p); const e = manifestS[k];
   return e ? `<image:loc>${SITE}/media/${k}-${e.widths.at(-1)}.webp</image:loc>` : m;
 });
-const sitemap = extra.length ? fixedImg.replace('</urlset>', extra.join('') + '</urlset>') : fixedImg;
+// Images removed from the pages at the owner's request (src/data/removed-images.json) are removed from the image sitemap too
+const removedImgs = JSON.parse(readFileSync('src/data/removed-images.json', 'utf8')).paths.map((p) => p.split('/')[0]);
+const cleanImg = removedImgs.reduce((x, id) => x.replace(new RegExp(`\\s*<image:image>\\s*<image:loc>[^<]*${id}[^<]*</image:loc>[\\s\\S]*?</image:image>`, 'g'), ''), fixedImg);
+const sitemap = extra.length ? cleanImg.replace('</urlset>', extra.join('') + '</urlset>') : cleanImg;
 const pages = [...known];
 writeFileSync(join(DIST, 'sitemap.xml'), sitemap);
 

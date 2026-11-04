@@ -2,9 +2,12 @@
 // Original image (verbatim alt text), self-hosted responsive files.
 import Img from './Img.astro';
 import { fixAlt } from '../lib/media';
+import REMOVED from '../data/removed-images.json';
 interface Props { block: { path?: string; alt?: string; link?: string | null }; sizes?: string; class?: string; priority?: boolean; style?: string }
 const { block, sizes = '100vw', class: cls, priority, style } = Astro.props;
 const img = { src: block.path!, alt: fixAlt(block.path || '', block.alt ?? '') };
+const removed = REMOVED.paths.includes(block.path || ''); // owner-removed images: render nothing
 ---
-{block.link ? <a href={block.link} class:list={['media', cls]} style={style}><Img {...img} sizes={sizes} priority={priority} /></a>
+{!removed && (<>{block.link ? <a href={block.link} class:list={['media', cls]} style={style}><Img {...img} sizes={sizes} priority={priority} /></a>
             : <div class:list={['media', cls]} style={style}><Img {...img} sizes={sizes} priority={priority} /></div>}
+</>)}

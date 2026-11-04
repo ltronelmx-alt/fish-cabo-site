@@ -299,3 +299,7 @@ h2.as-h1 { font-size: var(--fs-h1); line-height: 0.98; letter-spacing: -0.035em;
 h1.as-h2 { font-size: var(--fs-h2); line-height: 1.02; letter-spacing: -0.03em; }
 .o-html:not(.article) > article > h2.as-h1 { font-size: clamp(19px, 0.5vw + 15px, 24px); line-height: 1.15; letter-spacing: -0.01em; }
 .o-html article > h2.as-h1::before, .article > article > h2.as-h1::before { display: none !important; }
+
+/* Marlin photo (home / cabo-fishing): the frame hugs the photo — no white side bands, rounded corners, same shadow */
+.media:has(img[src*="panga-for-marlin"]) { width: min(100%, 1000px); max-width: 100%; margin-inline: auto; display: block; }
+.media:has(img[src*="panga-for-marlin"]) img { display: block; width: 100% !important; max-width: 100% !important; border-radius: var(--radius); }

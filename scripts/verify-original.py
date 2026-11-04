@@ -1,5 +1,5 @@
 # Verifies the new pages keep the ORIGINAL text, headings, links, alt texts, head tags and JSON-LD.
-import re, sys
+import json, re, sys
 from bs4 import BeautifulSoup
 import glob, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -13,6 +13,10 @@ ok = True
 for o, n in PAIRS:
     A = BeautifulSoup(fix_html(open(f'/home/claude/export/site/pages/{o}.html').read()), 'lxml')
     fix_soup(A, o)
+    # Owner-removed images (src/data/removed-images.json): removed from the original side too
+    for pth in json.load(open('src/data/removed-images.json'))['paths']:
+        for im in A.select(f'img[src*="{pth.split("/")[0]}"], img[data-src*="{pth.split("/")[0]}"]'):
+            (im.find_parent(['figure']) or im).decompose()
     B = BeautifulSoup(open(f'dist/{n}.html').read(), 'lxml') if os.path.exists(f'dist/{n}.html') else None
     if not os.path.exists(f'dist/{n}.html'): ok = False; print(f'MISSING ROUTE {o}'); continue
     a = A.select_one('article#page-regions') or A.select_one('main'); b = B.select_one('main')

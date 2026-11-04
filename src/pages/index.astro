@@ -56,7 +56,7 @@ const c4 = byH2(txt(s4)[0].html!); // areas · different · fish
   <!-- Section 5 -->
   <section class="section bg-white">
     <div class="container split top">
-      <OImg block={img(s5)[0]} class="ratio-4x3 sticky reveal" sizes="(min-width: 900px) 46vw, 92vw" />
+      <OImg block={img(s5)[0]} class="ratio-4x3 sticky reveal" sizes="(min-width: 1090px) 1000px, 92vw" />
       <Rich html={txt(s5)[0].html!} class="reveal" />
     </div>
   </section>
@@ -96,7 +96,7 @@ const c4 = byH2(txt(s4)[0].html!); // areas · different · fish
   .s4grid { display: grid; grid-template-columns: minmax(0, 1fr); column-gap: clamp(32px, 6vw, 96px); align-items: start; }
   .s4a { grid-column: 1; grid-row: 1; }
   .s4img { grid-column: 1; grid-row: 2; margin-top: 40px; }
-  .s4btn { grid-column: 1; grid-row: 3; align-self: start; }
+  .s4btn { grid-column: 1; grid-row: 3; align-self: start; position: relative; z-index: 2; margin-bottom: 24px; }
   .s4b { grid-column: 1; grid-row: 4; }
   .s4c { grid-column: 1; grid-row: 5; }
   .band { position: relative; margin-top: var(--section-pad); padding-block: var(--section-pad); }
