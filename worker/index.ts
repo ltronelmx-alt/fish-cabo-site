@@ -57,7 +57,11 @@ async function contact(request: Request, env: Env) {
     return json({ ok: false, error: 'Verification failed. Please try again.', ...dbg }, 403);
   }
   // Delivery: only when an approved provider is configured; otherwise TEST MODE (nothing sent, nothing stored).
-  if (!env.RESEND_API_KEY || !env.CONTACT_TO) return json({ ok: true, test: true });
+  if (!env.RESEND_API_KEY || !env.CONTACT_TO) {
+    // staging: test mode (nothing sent). fish-cabo.com: never pretend a request was sent when no email is configured
+    if (new URL(request.url).hostname.endsWith('.workers.dev')) return json({ ok: true, test: true });
+    return json({ ok: false, error: 'The form is temporarily unavailable. Please contact us on WhatsApp +52 624 122 3506 or at contact@fish-cabo.com.' }, 503);
+  }
   const text = Object.entries(data).map(([k, v]) => `${k}: ${v}`).join('\n');
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST', headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
