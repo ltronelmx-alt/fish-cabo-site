@@ -14,7 +14,10 @@
 
 ## B. Remaining owner actions (blockers for cut-over)
 1. ~~Contact email delivery~~: **done and tested 2026-11-03.** Resend (free) is set up, with Worker secrets `RESEND_API_KEY` and `CONTACT_TO=contact@fish-cabo.com`. A real test inquiry was received. Sender: `onboarding@resend.dev`, which delivers only to the Resend account address (contact@fish-cabo.com); that is enough here. *Optional, owner approval needed:* verify fish-cabo.com in Resend (DNS records) to send from an @fish-cabo.com address.
-2. **Turnstile.** The site key `0x4AAAAAAFyrH2-R96GEy7AN` (Invisible; hostnames fish-cabo.com + workers.dev) is installed. Staging intentionally uses Cloudflare's test secret. **Before cut-over:** set the real `TURNSTILE_SECRET` Worker secret (use the Copy button; the last attempt returned `invalid-input-secret`), then test a submission on fish-cabo.com. *Blocker.*
+2. ~~Turnstile~~: **done 2026-11-03.**
+   - Real site key `0x4AAAAAAFyrH2-R96GEy7AN` (Invisible; hostnames fish-cabo.com + workers.dev).
+   - Real `TURNSTILE_SECRET` Worker secret set.
+   - A test submission on staging returned success with the real secret.
 3. ~~Staging protection~~: **done.** Password lock (Worker secret `STAGING_PASSWORD`, only on *.workers.dev). Cloudflare Access was not used because it requires a card on file.
 4. **CMS publish test.** Log in at `/admin` with your own GitHub token, publish one test report, check the page, sitemap and listing, then delete it.
 5. ~~PayPal~~: **intentional (owner, 2026-11-03).** PayPal is temporarily unavailable. The buttons are kept as on Squarespace, and customers are told directly. Not a blocker.
