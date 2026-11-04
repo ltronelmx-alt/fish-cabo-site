@@ -25,8 +25,7 @@ async function stagingLocked(request: Request, env: Env): Promise<Response | nul
 }
 // Staging (*.workers.dev) always uses Cloudflare's public TEST secret (always passes) so the form can be tested;
 // fish-cabo.com uses the real TURNSTILE_SECRET. The real secret must be re-checked before going live.
-const turnstileSecret = (request: Request, env: Env) =>
-  new URL(request.url).hostname.endsWith('.workers.dev') ? TEST_TURNSTILE_SECRET : env.TURNSTILE_SECRET || TEST_TURNSTILE_SECRET;
+const turnstileSecret = (_request: Request, env: Env) => env.TURNSTILE_SECRET || TEST_TURNSTILE_SECRET;
 const ALLOWED_EVENTS = /^[a-z0-9_-]{2,80}$/;
 
 async function contact(request: Request, env: Env) {
@@ -48,7 +47,8 @@ async function contact(request: Request, env: Env) {
   const token = String(fd.get('cf-turnstile-response') ?? '');
   // Staging (*.workers.dev) is already behind the staging password: the anti-bot check only runs on the real domain.
   const isStaging = new URL(request.url).hostname.endsWith('.workers.dev');
-  const ver = isStaging ? { success: true, 'error-codes': [] as string[] } : await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+  // staging: verify with the real secret once it is set (to test it before launch); without it, skip
+  const ver = isStaging && !env.TURNSTILE_SECRET ? { success: true, 'error-codes': [] as string[] } : await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
     method: 'POST', body: new URLSearchParams({ secret: turnstileSecret(request, env), response: token, remoteip: request.headers.get('cf-connecting-ip') || '' }),
   }).then((r) => r.json() as Promise<{ success: boolean; 'error-codes'?: string[] }>).catch(() => ({ success: false, 'error-codes': ['siteverify-unreachable'] }));
   if (!ver.success) {
