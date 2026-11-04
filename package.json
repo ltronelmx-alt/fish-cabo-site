@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "astro dev",
-    "build": "node scripts/images.mjs && astro build && node scripts/postbuild.mjs",
-    "build:prod": "node scripts/images.mjs && PUBLIC_SITE_ENV=production astro build && PUBLIC_SITE_ENV=production node scripts/postbuild.mjs",
+    "build": "node scripts/check-reports.mjs && node scripts/images.mjs && astro build && node scripts/postbuild.mjs",
+    "build:prod": "node scripts/check-reports.mjs && node scripts/images.mjs && PUBLIC_SITE_ENV=production astro build && PUBLIC_SITE_ENV=production node scripts/postbuild.mjs",
     "preview": "npm run build && wrangler dev",
     "deploy": "npm run build && wrangler deploy"
   },

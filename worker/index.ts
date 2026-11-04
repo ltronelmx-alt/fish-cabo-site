@@ -7,9 +7,11 @@ export interface Env {
   RESEND_API_KEY?: string; // optional email provider (requires owner approval)
   CONTACT_TO?: string; // destination address for contact messages
   CONTACT_FROM?: string;
+  NOTIFY_TEST_JWKS?: string; // local tests only (ignored unless the request host is 127.0.0.1/localhost)
   STAGING_PASSWORD?: string; // secret: password-protects the *.workers.dev staging site only (never fish-cabo.com)
 }
 import REDIRECTS from '../src/data/redirects.json';
+import { publishNotify } from './notify';
 const TEST_TURNSTILE_SECRET = '1x0000000000000000000000000000000AA';
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
 const STAGING_OPEN_UNTIL = Date.parse('2026-11-04T16:55:00Z'); // = 2026-11-04 09:55 Mazatlán (post-deploy verification window)
@@ -106,6 +108,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
     if (locked) return locked;
     const url = new URL(request.url);
     if (url.pathname === '/api/contact') return contact(request, env);
+    if (url.pathname === '/api/publish-notify') return publishNotify(request, env);
     if (url.pathname === '/api/event') {
       if (request.method !== 'POST') return new Response(null, { status: 405 });
       try {

@@ -36,6 +36,10 @@ ${isProd ? '' : '  X-Robots-Tag: noindex, nofollow\n'}
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store
 
+/deploy-info.json
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
+
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
 
@@ -109,3 +113,24 @@ writeFileSync(
   isProd ? `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n` : 'User-agent: *\nDisallow: /\n'
 );
 console.log(`postbuild: ${pages.length} pages, mode=${isProd ? 'PRODUCTION' : 'staging (noindex)'}`);
+
+// Deployment proof for the publish-notification workflow: which commit this build comes from, in which mode,
+// and which Fishing Reports it contains. Not linked, not in the sitemap, served noindex + no-store.
+import { execSync } from 'node:child_process';
+const ciBranch = process.env.WORKERS_CI_BRANCH || '';
+// Safety: a Cloudflare build of `main` must be a production build (`npm run build:prod`). A staging build there
+// would publish noindex pages on fish-cabo.com, so it fails here and Cloudflare keeps the current live version.
+if (ciBranch === 'main' && !isProd) {
+  console.error('postbuild: Cloudflare build of main without PUBLIC_SITE_ENV=production — use `npm run build:prod`. Build stopped.');
+  process.exit(1);
+}
+let commit = process.env.WORKERS_CI_COMMIT_SHA || '';
+if (!commit) { try { commit = execSync('git rev-parse HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch {} }
+const reportsDir = 'src/content/fishing-reports';
+const reportsInfo = readdirSync(reportsDir).filter((f) => f.endsWith('.md')).map((f) => {
+  const src = readFileSync(join(reportsDir, f), 'utf8');
+  const get = (k) => ((src.match(new RegExp(`^${k}:\\s*(.*)$`, 'm')) || [])[1] || '').trim().replace(/^["']|["']$/g, '');
+  return { slug: f.replace(/\.md$/, ''), title: get('title'), date: get('date').slice(0, 10), category: get('category'), draft: /^draft:\s*true\s*$/m.test(src) };
+}).filter((r) => !r.draft).map(({ draft, ...r }) => r).sort((a, b) => b.date.localeCompare(a.date));
+writeFileSync(join(DIST, 'deploy-info.json'), JSON.stringify({ commit, branch: ciBranch || null, mode: isProd ? 'production' : 'staging', builtAt: new Date().toISOString(), reports: reportsInfo }, null, 1));
+console.log(`postbuild: deploy-info.json commit=${commit.slice(0, 7) || '?'} reports=${reportsInfo.length}`);

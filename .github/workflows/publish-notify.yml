@@ -1,0 +1,115 @@
+# Fishing Log publication check + email to contact@fish-cabo.com.
+# Cloudflare Workers Builds deploys every push to main (build command: npm run build:prod).
+# This workflow does NOT deploy anything: it waits until the production site serves the pushed commit,
+# verifies every NEW article is really online, then asks the site's Worker to send the email.
+#  - success email  → only after: deployed commit confirmed + article page 200 with its title + in sitemap + in listing,
+#                     re-checked again by the Worker inside the running deployment.
+#  - failure alert  → "NOT published" email (never a success email) if the deployment does not appear in time.
+# Authentication: GitHub OIDC token (no secret to configure).
+name: Publish notification
+on:
+  push:
+    branches: [main]
+    paths: ['src/content/fishing-reports/**']
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: 'TEST: existing published article slug to verify (sends a [TEST] email, publishes nothing)'
+        required: true
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: publish-notify-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Find newly published articles
+        id: find
+        env:
+          BEFORE: ${{ github.event.before }}
+          TEST_SLUG: ${{ inputs.slug }}
+        run: |
+          set -euo pipefail
+          if [ -n "${TEST_SLUG:-}" ]; then echo "slugs=$TEST_SLUG" >> "$GITHUB_OUTPUT"; echo "test=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          if [ -z "${BEFORE:-}" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then BEFORE=$(git rev-parse HEAD~1); fi
+          slugs=""
+          for f in $(git diff --name-only --diff-filter=AM "$BEFORE" HEAD -- 'src/content/fishing-reports/*.md'); do
+            grep -qE '^draft:\s*true\s*$' "$f" && continue                        # still a draft: not published
+            if git cat-file -e "$BEFORE:$f" 2>/dev/null && ! git show "$BEFORE:$f" | grep -qE '^draft:\s*true\s*$'; then
+              continue                                                             # already public before: an edit, not a new publication
+            fi
+            slugs="$slugs $(basename "$f" .md)"
+          done
+          slugs=$(echo $slugs | xargs)
+          echo "New published articles: ${slugs:-none}"
+          echo "slugs=$slugs" >> "$GITHUB_OUTPUT"; echo "test=false" >> "$GITHUB_OUTPUT"
+      - name: Wait for the production deployment and verify the articles
+        id: verify
+        if: steps.find.outputs.slugs != ''
+        env:
+          SLUGS: ${{ steps.find.outputs.slugs }}
+        run: |
+          set -uo pipefail
+          SITE=https://fish-cabo.com
+          deployed=""
+          for i in $(seq 1 50); do                                    # up to ~25 minutes
+            deployed=$(curl -fsS -H 'cache-control: no-cache' "$SITE/deploy-info.json?t=$(date +%s)" | jq -r '.mode + " " + .commit' || true)
+            mode=${deployed%% *}; commit=${deployed#* }
+            if [ "$mode" = "production" ] && [ -n "$commit" ] && git merge-base --is-ancestor "$GITHUB_SHA" "$commit" 2>/dev/null; then break; fi
+            echo "waiting for deployment of ${GITHUB_SHA::7} (live: ${commit::7} $mode) …"; commit=""; sleep 30
+          done
+          if [ -z "$commit" ]; then echo "reason=Cloudflare did not deploy commit ${GITHUB_SHA::7} within 25 minutes (build failed or still queued — see Cloudflare > Workers > fish-cabo > Builds)" >> "$GITHUB_OUTPUT"; exit 1; fi
+          echo "deployed=$commit" >> "$GITHUB_OUTPUT"
+          sitemap=$(curl -fsS "$SITE/sitemap.xml?t=$(date +%s)")
+          listing=$(curl -fsS "$SITE/fishing-reports?t=$(date +%s)")
+          info=$(curl -fsS "$SITE/deploy-info.json?t=$(date +%s)")
+          for s in $SLUGS; do
+            title=$(echo "$info" | jq -r --arg s "$s" '.reports[] | select(.slug==$s) | .title')
+            page=$(curl -fsS -w '\n%{http_code}' "$SITE/fishing-reports/$s?t=$(date +%s)") || true
+            code=$(echo "$page" | tail -1)
+            problems=""
+            [ -n "$title" ] || problems="$problems not-in-build"
+            [ "$code" = "200" ] || problems="$problems http-$code"
+            echo "$page" | python3 -c 'import html,sys; print(html.unescape(sys.stdin.read()))' | grep -qF "$title" || problems="$problems title-missing"
+            echo "$page" | python3 -c 'import re,sys; u=sys.argv[1]; t=sys.stdin.read(); sys.exit(0 if any(re.search(r"href=\"%s\"" % re.escape(u), m) for m in re.findall(r"<link[^>]*rel=\"canonical\"[^>]*>", t)) else 1)' "$SITE/fishing-reports/$s" || problems="$problems canonical"
+            echo "$page" | grep -qi 'name="robots" content="noindex' && problems="$problems noindex"
+            echo "$sitemap" | grep -qF "<loc>$SITE/fishing-reports/$s</loc>" || problems="$problems not-in-sitemap"
+            echo "$listing" | grep -qF "/fishing-reports/$s" || problems="$problems not-in-listing"
+            if [ -n "$problems" ]; then echo "reason=Article $s deployed but not verified:$problems" >> "$GITHUB_OUTPUT"; echo "::error::$s:$problems"; exit 1; fi
+            echo "OK $s — 200, title, canonical, indexable, sitemap, listing"
+          done
+      - name: Get GitHub identity token
+        if: always() && steps.find.outputs.slugs != ''
+        id: oidc
+        run: |
+          t=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=fish-cabo-publish-notify" | jq -r .value)
+          echo "::add-mask::$t"; echo "token=$t" >> "$GITHUB_OUTPUT"
+      - name: Send "published" email (verified deployments only)
+        if: success() && steps.find.outputs.slugs != ''
+        env:
+          TOKEN: ${{ steps.oidc.outputs.token }}
+          SLUGS: ${{ steps.find.outputs.slugs }}
+          TEST: ${{ steps.find.outputs.test }}
+          DEPLOYED: ${{ steps.verify.outputs.deployed }}
+        run: |
+          body=$(jq -n --arg s "$SLUGS" --arg c "$DEPLOYED" --arg r "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --argjson t "$TEST" \
+            '{status:"published", slugs:($s|split(" ")), commit:$c, runUrl:$r, test:$t}')
+          res=$(curl -sS -w '\n%{http_code}' -X POST https://fish-cabo.com/api/publish-notify -H "authorization: Bearer $TOKEN" -H 'content-type: application/json' -d "$body")
+          echo "$res"; [ "$(echo "$res" | tail -1)" = "200" ]
+      - name: Send "NOT published" alert
+        if: failure() && steps.find.outputs.slugs != '' && steps.oidc.outputs.token != ''
+        env:
+          TOKEN: ${{ steps.oidc.outputs.token }}
+          SLUGS: ${{ steps.find.outputs.slugs }}
+          TEST: ${{ steps.find.outputs.test }}
+          REASON: ${{ steps.verify.outputs.reason || 'verification or email step failed' }}
+        run: |
+          body=$(jq -n --arg s "$SLUGS" --arg why "$REASON" --arg r "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --argjson t "${TEST:-false}" \
+            '{status:"failed", slugs:($s|split(" ")), reason:$why, runUrl:$r, test:$t}')
+          curl -sS -X POST https://fish-cabo.com/api/publish-notify -H "authorization: Bearer $TOKEN" -H 'content-type: application/json' -d "$body"
