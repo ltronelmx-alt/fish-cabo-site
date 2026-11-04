@@ -1,0 +1,169 @@
+---
+// Google & Tripadvisor review carousels (homepage, before the final booking CTA).
+// Data: src/data/reviews.json, written ONLY by scripts/fetch-reviews.mjs from the official APIs.
+// Nothing is rendered for a platform that has no genuine review; the whole section is omitted if both are empty.
+// No review/rating structured data is emitted (self-serving review markup is not allowed by Google).
+// REVIEWS_FIXTURE=<file> (local test builds only) swaps in clearly labelled demo data.
+import { readFileSync } from 'node:fs';
+import real from '../data/reviews.json';
+
+type Item = {
+  id: string; author: string; authorMeta?: string; rating: number; title?: string;
+  text: string; date: string; url?: string; ratingImage?: string;
+};
+type Platform = { allReviewsUrl: string; fetchedAt: string | null; items: Item[] };
+
+const fixture = process.env.REVIEWS_FIXTURE;
+const data: { google: Platform; tripadvisor: Platform } = fixture ? JSON.parse(readFileSync(fixture, 'utf8')) : real;
+
+const ICON = {
+  google: 'M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z',
+  tripadvisor: 'M12.006 4.295c-2.67 0-5.338.784-7.645 2.353H0l1.963 2.135a5.997 5.997 0 0 0 4.04 10.43 5.976 5.976 0 0 0 4.075-1.6L12 19.705l1.922-2.09a5.972 5.972 0 0 0 4.072 1.598 6 6 0 0 0 6-5.998 5.982 5.982 0 0 0-1.957-4.432L24 6.648h-4.35a13.573 13.573 0 0 0-7.644-2.353zM12 6.255c1.531 0 3.063.303 4.504.903C13.943 8.138 12 10.43 12 13.1c0-2.671-1.942-4.962-4.504-5.942A11.72 11.72 0 0 1 12 6.256zM6.002 9.157a4.059 4.059 0 1 1 0 8.118 4.059 4.059 0 0 1 0-8.118zm11.992.002a4.057 4.057 0 1 1 .003 8.115 4.057 4.057 0 0 1-.003-8.115zm-11.992 1.93a2.128 2.128 0 0 0 0 4.256 2.128 2.128 0 0 0 0-4.256zm11.992 0a2.128 2.128 0 0 0 0 4.256 2.128 2.128 0 0 0 0-4.256z',
+};
+const META = {
+  google: { name: 'Google', label: 'Google reviews', read: 'Read on Google', all: 'See all Google reviews' },
+  tripadvisor: { name: 'Tripadvisor', label: 'Tripadvisor reviews', read: 'Read on Tripadvisor', all: 'See all Tripadvisor reviews' },
+} as const;
+
+const COLORS = ['#1a73e8', '#e8710a', '#188038', '#a142f4', '#d93025', '#12863f', '#c5221f', '#185abc'];
+const color = (s: string) => COLORS[[...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) % COLORS.length];
+const initial = (s: string) => ([...s.trim()][0] ?? '?').toUpperCase();
+const month = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+
+const platforms = (['google', 'tripadvisor'] as const)
+  .map((key) => ({ key, ...data[key], items: (data[key]?.items ?? []).filter((r) => r.rating === 5 && r.text?.trim()).slice(0, 5) }))
+  .filter((p) => p.items.length > 0);
+---
+{platforms.length > 0 && (
+  <section class="section rv-section" aria-labelledby="rv-h" data-nosnippet>
+    <div class="container">
+      {fixture && <p class="rv-demo" role="note">DEMO DATA — local test build only, never deployed</p>}
+      <div class="rv-intro">
+        <h2 id="rv-h">Real Fishing Experiences. Real <span class="rv-nw">5-Star</span> Reviews.</h2>
+        <p class="rv-sub">See what our guests say about their fishing adventures with Exotic Fish Cabo.</p>
+      </div>
+      {platforms.map((p) => (
+        <div class={`rv-car rv-${p.key}`} data-rv role="region" aria-roledescription="carousel" aria-label={META[p.key].label}>
+          <div class="rv-head">
+            <p class="rv-brand">
+              <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" class="rv-logo"><path d={ICON[p.key]} /></svg>
+              <span><strong>{META[p.key].label}</strong><small>5-star reviews from {META[p.key].name}</small></span>
+            </p>
+            <div class="rv-ctrl">
+              <button type="button" class="rv-btn" data-prev aria-label={`Previous ${META[p.key].name} review`}>
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+              </button>
+              <button type="button" class="rv-btn" data-play aria-label={`Pause ${META[p.key].name} reviews`} aria-pressed="false">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" class="i-pause"><path d="M8 5v14M16 5v14" /></svg>
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" class="i-play"><path d="M8 5l11 7-11 7z" /></svg>
+              </button>
+              <button type="button" class="rv-btn" data-next aria-label={`Next ${META[p.key].name} review`}>
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
+              </button>
+            </div>
+          </div>
+          <div class="rv-viewport" tabindex="0" aria-label={`${META[p.key].label}, use arrow keys to browse`}>
+            <div class="rv-track">
+              {p.items.map((r, i) => (
+                <div class="rv-card" role="group" aria-roledescription="slide" aria-label={`${i + 1} of ${p.items.length}`}>
+                  <div class="rv-top">
+                    <span class="rv-av" style={`background:${color(r.author)}`} aria-hidden="true">{initial(r.author)}</span>
+                    <span class="rv-who">
+                      <span class="rv-name">{r.author}</span>
+                      {r.authorMeta && <span class="rv-meta">{r.authorMeta}</span>}
+                    </span>
+                    <svg viewBox="0 0 24 24" width="22" height="22" class="rv-plat" role="img" aria-label={META[p.key].name}><path d={ICON[p.key]} /></svg>
+                  </div>
+                  <div class="rv-rate">
+                    {p.key === 'tripadvisor'
+                      ? (r.ratingImage
+                          ? <img src={r.ratingImage} alt="5 of 5 bubbles" width="80" height="14" loading="lazy" decoding="async" />
+                          : <span class="rv-bubbles" role="img" aria-label="5 of 5 bubbles">{[0, 1, 2, 3, 4].map(() => <i />)}</span>)
+                      : <span class="rv-stars" role="img" aria-label="5 out of 5 stars">★★★★★</span>}
+                    <time datetime={r.date}>{month(r.date)}</time>
+                  </div>
+                  {r.title && <p class="rv-title">{r.title}</p>}
+                  <blockquote class="rv-text" cite={r.url}><p>{r.text}</p></blockquote>
+                  <button type="button" class="rv-more" hidden aria-expanded="false">Read more</button>
+                  <a class="rv-link" href={r.url ?? p.allReviewsUrl} target="_blank" rel="noopener nofollow">{META[p.key].read} →</a>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p class="rv-all"><a href={p.allReviewsUrl} target="_blank" rel="noopener nofollow">{META[p.key].all} →</a></p>
+        </div>
+      ))}
+    </div>
+    <script is:inline defer src="/js/efc-reviews.js"></script>
+  </section>
+)}
+
+<style>
+  .rv-section { --rv-gap: 20px; --rv-pv: 3; background: #f3f4f6; }
+  .rv-demo { background: #b00020; color: #fff; font: 700 12px/1 system-ui, sans-serif; letter-spacing: 0.08em; padding: 8px 12px; border-radius: 6px; display: inline-block; margin: 0 0 20px; }
+  .rv-intro { text-align: center; max-width: 760px; margin: 0 auto clamp(32px, 4vw, 52px); }
+  .rv-intro h2 { margin: 0 auto 14px; max-width: 24ch; font-size: clamp(30px, 3.6vw, 48px); }
+  .rv-nw { white-space: nowrap; }
+  .rv-car { --rv-font: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+  .rv-card, .rv-brand, .rv-all { font-family: var(--rv-font); letter-spacing: 0; }
+  .rv-intro h2::before { margin-inline: auto; }
+  .rv-sub { font-size: var(--fs-lead, 18px); line-height: 1.55; margin: 0; color: var(--ink); opacity: 0.82; }
+  .rv-car + .rv-car { margin-top: clamp(40px, 5vw, 64px); }
+  .rv-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+  .rv-brand { display: flex; align-items: center; gap: 12px; margin: 0; }
+  .rv-brand strong { display: block; font-size: 18px; line-height: 1.2; color: var(--ink); }
+  .rv-brand small { display: block; font-size: 13px; color: #5f6368; }
+  .rv-google .rv-logo, .rv-google .rv-plat { fill: #4285f4; }
+  .rv-tripadvisor .rv-logo, .rv-tripadvisor .rv-plat { fill: #00aa6c; }
+  .rv-ctrl { display: flex; gap: 8px; flex: none; }
+  .rv-btn { width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--line, #d9d9d9); background: #fff; color: var(--ink); display: grid; place-items: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+  .rv-btn:hover { border-color: var(--ink); }
+  .rv-btn[hidden], .rv-more[hidden] { display: none; }
+  .rv-btn:focus-visible, .rv-viewport:focus-visible, .rv-more:focus-visible, .rv-link:focus-visible { outline: 3px solid #1a73e8; outline-offset: 2px; }
+  .rv-btn svg { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .rv-btn .i-play { fill: currentColor; stroke: none; }
+  .rv-btn .i-play, .rv-btn[aria-pressed='true'] .i-pause { display: none; }
+  .rv-btn[aria-pressed='true'] .i-play { display: block; }
+  .rv-section:not(.rv-on) .rv-ctrl { display: none; }
+
+  .rv-viewport { overflow-x: auto; scroll-snap-type: x mandatory; border-radius: 16px; padding: 4px; margin: -4px; }
+  .rv-on .rv-viewport { overflow: hidden; touch-action: pan-y; }
+  .rv-track { margin: 0; padding: 0; display: flex; gap: var(--rv-gap); }
+  .rv-on .rv-track { transition: transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1); will-change: transform; }
+  .rv-card {
+    flex: 0 0 calc((100% - (var(--rv-pv) - 1) * var(--rv-gap)) / var(--rv-pv));
+    scroll-snap-align: start; margin: 0; background: #fff; border: 1px solid #e6e6e6; border-radius: 14px;
+    padding: 22px 22px 18px; display: flex; flex-direction: column; box-shadow: 0 1px 2px rgb(0 0 0 / 0.04); min-width: 0;
+  }
+  .rv-top { display: flex; align-items: center; gap: 12px; }
+  .rv-av { flex: none; width: 40px; height: 40px; border-radius: 50%; color: #fff; display: grid; place-items: center; font: 600 17px/1 system-ui, sans-serif; }
+  .rv-who { min-width: 0; flex: 1; }
+  .rv-name { display: block; font-weight: 700; font-size: 16px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rv-meta { display: block; font-size: 13px; color: #5f6368; }
+  .rv-plat { flex: none; align-self: flex-start; }
+  .rv-rate { display: flex; align-items: center; gap: 10px; margin: 14px 0 10px; font-size: 14px; color: #5f6368; }
+  .rv-stars { color: #fbbc04; letter-spacing: 2px; font-size: 17px; line-height: 1; }
+  .rv-bubbles { display: inline-flex; gap: 3px; }
+  .rv-bubbles i { width: 14px; height: 14px; border-radius: 50%; background: #00aa6c; display: block; }
+  .rv-title { font-weight: 700; font-size: 17px; line-height: 1.3; color: var(--ink); margin: 0 0 8px; }
+  .rv-text { margin: 0; }
+  .rv-text p { margin: 0; font-size: 15px; line-height: 1.62; color: #2b2b2b; display: -webkit-box; -webkit-line-clamp: 7; -webkit-box-orient: vertical; overflow: hidden; }
+  .rv-card.open .rv-text p { -webkit-line-clamp: unset; display: block; }
+  .rv-more { font-family: inherit; align-self: flex-start; background: none; border: 0; padding: 6px 0; margin-top: 4px; font-weight: 600; font-size: 14px; color: var(--ink); text-decoration: underline; cursor: pointer; }
+  .rv-link { margin-top: auto; padding-top: 14px; border-top: 1px solid #eee; font-weight: 600; font-size: 14px; text-decoration: none; }
+  .rv-text + .rv-link, .rv-more + .rv-link { margin-top: auto; }
+  .rv-card .rv-text { margin-bottom: 16px; }
+  .rv-google .rv-link, .rv-google .rv-all a { color: #1558b0; }
+  .rv-tripadvisor .rv-link, .rv-tripadvisor .rv-all a { color: #00804f; }
+  .rv-all { margin: 16px 0 0; text-align: right; font-weight: 600; font-size: 15px; }
+  .rv-all a { text-decoration: none; }
+  .rv-all a:hover, .rv-link:hover { text-decoration: underline; }
+
+  @media (max-width: 1100px) { .rv-section { --rv-pv: 2; } }
+  @media (max-width: 680px) {
+    .rv-section { --rv-pv: 1; --rv-gap: 14px; }
+    .rv-head { flex-wrap: wrap; }
+    .rv-all { text-align: left; }
+  }
+  @media (prefers-reduced-motion: reduce) { .rv-on .rv-track { transition: none; } }
+</style>

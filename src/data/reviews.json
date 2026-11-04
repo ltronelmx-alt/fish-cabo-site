@@ -1,0 +1,14 @@
+{
+  "google": {
+    "source": "Google Business Profile API (accounts.locations.reviews.list)",
+    "fetchedAt": null,
+    "allReviewsUrl": "https://g.page/r/CVkU9WoXqp_DEBM",
+    "items": []
+  },
+  "tripadvisor": {
+    "source": "Tripadvisor Content API (location/9569970/reviews)",
+    "fetchedAt": null,
+    "allReviewsUrl": "https://www.tripadvisor.com/Attraction_Review-g152516-d9569970-Reviews-Exotic_Fish_Cabo_Sportfishing_Charter-San_Jose_del_Cabo_Los_Cabos_Baja_California.html",
+    "items": []
+  }
+}
