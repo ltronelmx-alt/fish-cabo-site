@@ -68,6 +68,7 @@ const I18N = {
     notIncludedList: "• Licence de pêche\n• Appâts vivants\n• Nourriture\n• Nettoyage du poisson\n• Pourboire de l'équipage : 10-20 % est d'usage",
     bookingTitle: "📅 Pour réserver",
     bookingSteps: "1️⃣ Choisissez votre date\n2️⃣ 3/4 de journée (6 h) ou journée complète (8 h)\n3️⃣ Nombre de pêcheurs (1-10)\n4️⃣ Choisissez votre bateau et payez l'acompte en ligne, ou écrivez-nous",
+    paypalYes: "Oui.",
     paymentTitle: "💳 Paiement de l'acompte",
     paymentDesc: "Sur chaque page bateau :\n• Stripe (carte, Apple Pay, Google Pay) — 6 % de frais\n• Wise — sans frais\nPour organiser un paiement par PayPal, contactez notre équipe sur WhatsApp.",
     cancelTitle: "📄 Annulation",
@@ -135,6 +136,7 @@ const I18N = {
     notIncludedList: "• Fishing license\n• Live bait\n• Food\n• Fish cleaning\n• Crew tip: 10-20% is customary",
     bookingTitle: "📅 To book your charter",
     bookingSteps: "1️⃣ Choose your date\n2️⃣ 3/4 day (6 hours) or full day (8 hours)\n3️⃣ Number of anglers (1-10)\n4️⃣ Pick your boat and pay the deposit online, or message us",
+    paypalYes: "Yes.",
     paymentTitle: "💳 Deposit payment",
     paymentDesc: "On each boat page:\n• Stripe (card, Apple Pay, Google Pay) — 6% fee\n• Wise — no fee\nFor PayPal payment arrangements, please contact our team via WhatsApp.",
     cancelTitle: "📄 Cancellations",
@@ -202,6 +204,7 @@ const I18N = {
     notIncludedList: "• Licencia de pesca\n• Carnada viva\n• Comida\n• Limpieza del pescado\n• Propina para la tripulación: se acostumbra 10-20%",
     bookingTitle: "📅 Para reservar",
     bookingSteps: "1️⃣ Elige tu fecha\n2️⃣ 3/4 de día (6 horas) o día completo (8 horas)\n3️⃣ Número de pescadores (1-10)\n4️⃣ Elige tu bote y paga el depósito en línea, o escríbenos",
+    paypalYes: "Sí.",
     paymentTitle: "💳 Pago del depósito",
     paymentDesc: "En la página de cada bote:\n• Stripe (tarjeta, Apple Pay, Google Pay) — 6% de comisión\n• Wise — sin comisión\nPara organizar un pago mediante PayPal, contacta con nuestro equipo por WhatsApp.",
     cancelTitle: "📄 Cancelaciones",
@@ -310,6 +313,7 @@ const RESPONSES = {
   welcome: (t) => ({ text: t.welcome, actions: [A.link('📋 ' + t.packagesLabel, '/fishing-charters'), A.link('🐟 ' + t.seasonsLabel, '/fishing-calendar'), A.book(t), A.wa(t)] }),
   price: (t) => ({ text: `${t.priceTitle}\n\n${t.halfDay}\n${t.halfDayDesc}\n\n${t.fullDay}\n${t.fullDayDesc}\n\n${t.priceNote}\n✅ ${t.privateNote}\n✅ ${t.included}`, actions: [A.link('🚤 ' + t.boatsLabel, '/fishing-boats'), A.book(t)] }),
   included: (t) => ({ text: `${t.includedTitle}${t.sep}\n${t.includedList}\n\n${t.notIncludedTitle}${t.sep}\n${t.notIncludedList}`, actions: [A.book(t), A.wa(t)] }),
+  paypal: (t) => ({ text: t.paypalYes, actions: [] }), // owner: "Can I pay with PayPal?" → "Yes." — nothing else
   payment: (t) => ({ text: `${t.paymentTitle}\n\n${t.paymentDesc}`, actions: [A.link('🚤 ' + t.boatsLabel, '/fishing-boats'), A.wa(t)] }),
   cancel: (t) => ({ text: `${t.cancelTitle}\n\n${t.cancelDesc}`, actions: [A.link('📄 ' + t.termsLabel, '/terms-conditions'), A.wa(t)] }),
   booking: (t) => ({ text: `${t.bookingTitle}${t.sep}\n\n${t.bookingSteps}\n\n${t.privateNote}`, actions: [A.link('🚤 ' + t.boatsLabel, '/fishing-boats'), A.book(t), A.wa(t)] }),
@@ -330,6 +334,7 @@ const RESPONSES = {
 const W = (re, flags = 'u') => new RegExp('(?<![\\p{L}\\p{N}])(?:' + re.source.replace(/^\\b\(/, '(').replace(/\)\\b$/, ')').replace(/\\w\*/g, '[\\p{L}\\p{N}]*') + ')(?![\\p{L}\\p{N}])', flags);
 // Order matters: the most specific topics first. Word boundaries avoid false matches (e.g. "hi" inside "fishing").
 const RULES = [
+  ['paypal', /\b(paypal|pay pal)\b/],
   ['price', /\b(prix|tarifs?|co[uû]ts?|combien|cost|costs|price|prices|pricing|rates?|how much|cheap|expensive|cher|precios?|cu[aá]nto|cuesta|barato|caro|tarifa)\b/],
   ['cancel', /\b(cancel|cancell?ation|refund|annul\w*|rembours\w*|cancela\w*|reembols\w*|devoluci[oó]n)\b/],
   ['payment', /\b(pay|payment|deposit|stripe|wise|paypal|card|payer|paiement|acompte|carte|pagar|pago|dep[oó]sito|tarjeta|anticipo)\b/],

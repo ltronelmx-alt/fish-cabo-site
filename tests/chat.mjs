@@ -92,7 +92,13 @@ for (const l of langs) {
   const NEED = { en: /contact our team via WhatsApp/, fr: /contactez notre équipe sur WhatsApp/, es: /contacta con nuestro equipo por WhatsApp/ };
   for (const l of langs) {
     const p = await page('en-US'); await open(p); await p.click('#btn-' + l);
-    for (const q of QP[l]) {
+    const YES = { en: 'Yes.', fr: 'Oui.', es: 'Sí.' };
+    const pq = QP[l][0];
+    const ptxt = await ask(p, pq);
+    const pbody = ptxt.replace(/\s*\d{1,2}:\d{2}\s*$/, '').trim(); // strip the message time
+    const plinks = await p.locator('#efc-messages .efc-bot').last().locator('a').count();
+    rec('PayPal', `${l.toUpperCase()} "${pq}" → exactly "${YES[l]}" (owner rule), no link`, pbody === YES[l] && plinks === 0, JSON.stringify(pbody));
+    for (const q of QP[l].slice(1)) {
       const txt = await ask(p, q);
       const links = await p.locator('#efc-messages .efc-bot').last().locator('a').evaluateAll((a) => a.map((x) => x.href));
       const wa = await waText(p);
