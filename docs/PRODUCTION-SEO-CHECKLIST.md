@@ -13,9 +13,9 @@
 - [x] Staging noindex active (robots Disallow, X-Robots-Tag, meta robots).
 
 ## B. Remaining owner actions (blockers for cut-over)
-1. **Contact email delivery.** Choose Resend (free tier, API key as a Worker secret) or Cloudflare Email Routing (needs the domain on Cloudflare). Then send a **real** test inquiry and confirm it arrives. *Blocker.*
+1. ~~Contact email delivery~~: **done and tested 2026-11-03.** Resend (free) is set up, with Worker secrets `RESEND_API_KEY` and `CONTACT_TO=contact@fish-cabo.com`. A real test inquiry was received. Sender: `onboarding@resend.dev`, which delivers only to the Resend account address (contact@fish-cabo.com); that is enough here. *Optional, owner approval needed:* verify fish-cabo.com in Resend (DNS records) to send from an @fish-cabo.com address.
 2. **Turnstile.** The site key `0x4AAAAAAFyrH2-R96GEy7AN` (Invisible; hostnames fish-cabo.com + workers.dev) is installed. Staging intentionally uses Cloudflare's test secret. **Before cut-over:** set the real `TURNSTILE_SECRET` Worker secret (use the Copy button; the last attempt returned `invalid-input-secret`), then test a submission on fish-cabo.com. *Blocker.*
-3. **Cloudflare Access** on the workers.dev URL (Settings → Domains & Routes → Enable Cloudflare Access).
+3. ~~Staging protection~~: **done.** Password lock (Worker secret `STAGING_PASSWORD`, only on *.workers.dev). Cloudflare Access was not used because it requires a card on file.
 4. **CMS publish test.** Log in at `/admin` with your own GitHub token, publish one test report, check the page, sitemap and listing, then delete it.
 5. ~~PayPal~~: **intentional (owner, 2026-11-03).** PayPal is temporarily unavailable. The buttons are kept as on Squarespace, and customers are told directly. Not a blocker.
 6. **Coordinates.** Confirm which marina point to publish in JSON-LD: 23.0600625, −109.6706875 (current schema) or 23.060275, −109.670677 (GPS buttons). They are ≈24 m apart.
