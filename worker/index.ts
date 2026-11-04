@@ -11,7 +11,7 @@ export interface Env {
 }
 const TEST_TURNSTILE_SECRET = '1x0000000000000000000000000000000AA';
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
-const STAGING_OPEN_UNTIL = Date.parse('2026-11-04T02:20:00Z'); // = 2026-11-03 19:20 Mazatlán (CMS access test)
+const STAGING_OPEN_UNTIL = Date.parse('2026-11-04T16:55:00Z'); // = 2026-11-04 09:55 Mazatlán (post-deploy verification window)
 // Staging lock: only on *.workers.dev and only once the STAGING_PASSWORD secret exists. Any user name, that password.
 async function stagingLocked(request: Request, env: Env): Promise<Response | null> {
   const host = new URL(request.url).hostname;
@@ -87,10 +87,11 @@ export default {
 } satisfies ExportedHandler<Env>;
 
 async function handle(request: Request, env: Env): Promise<Response> {
-    const locked = await stagingLocked(request, env);
-    if (locked) return locked;
+    // robots.txt on *.workers.dev is public (no password) so crawlers read "Disallow: /"
     if (new URL(request.url).hostname.endsWith('.workers.dev') && new URL(request.url).pathname === '/robots.txt')
       return new Response('User-agent: *\nDisallow: /\n', { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } });
+    const locked = await stagingLocked(request, env);
+    if (locked) return locked;
     const url = new URL(request.url);
     if (url.pathname === '/api/contact') return contact(request, env);
     if (url.pathname === '/api/event') {
