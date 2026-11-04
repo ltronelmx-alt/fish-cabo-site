@@ -4,6 +4,7 @@ import json, re, os
 from urllib.parse import unquote_plus
 HERE = os.path.dirname(os.path.abspath(__file__))
 MAN = json.load(open(os.path.join(HERE, '..', 'src', 'data', 'media-manifest.json')))
+ALTS = {k: v for k, v in json.load(open(os.path.join(HERE, '..', 'src', 'data', 'alt-fixes.json'))).items() if not k.startswith('_')}
 OG = json.load(open(os.path.join(HERE, '..', 'src', 'data', 'og-mirror.json')))
 SITE = 'https://fish-cabo.com'
 CDN = re.compile(r'(?:https?:)?//images\.squarespace-cdn\.com/content/v1/6911316472567617bebc28b5/([^"?\s)]+)(?:\?[^"\s)]*)?')
@@ -46,8 +47,10 @@ def fix_head_tag(t, fb=None, used=None):
     if re.search(r'og:image|twitter:image|itemprop="image"|thumbnailUrl|application/ld\+json', t):
         t = CDN.sub(_img, t)  # F6
         t = re.sub(r'(?:https?:)?//static1\.squarespace\.com/[^"\s]+', _og, t)  # F6b
-        if fb and re.search(r'property="og:image"|name="twitter:image"', t) and 'static1.squarespace.com' in t:
-            t = re.sub(r'content="[^"]*"', f'content="{fb[0]}"', t, count=1); used.append(1)  # F6c
+        if fb and re.search(r'property="og:image"|name="twitter:image"|itemprop="(?:image|thumbnailUrl)"', t) and 'static1.squarespace.com' in t:
+            og = bool(re.search(r'og:image|twitter:image', t))
+            t = re.sub(r'content="[^"]*"', f'content="{fb[0]}"', t, count=1)  # F6c
+            if og: used.append(1)
     return t
 
 def fix_soup(soup, slug):
@@ -62,6 +65,11 @@ def fix_soup(soup, slug):
         for m in soup.head.find_all('meta', attrs={'property': 'og:image:width'}): m['content'] = str(fb[1])
         for m in soup.head.find_all('meta', attrs={'property': 'og:image:height'}): m['content'] = str(fb[2])
     main = soup.select_one('article#page-regions') or soup.select_one('main') or soup
+    for im in soup.find_all('img'):  # A1
+        if im.get('alt', None) == '':
+            src = ' '.join(str(im.get(a, '')) for a in ('src', 'data-src', 'data-image', 'srcset'))
+            hit = next((v for k, v in ALTS.items() if k in src), None)
+            if hit: im['alt'] = hit
     if slug.startswith('cabo-fishing-videos/v/') and not main.find('h1'):
         h = main.find('h2')
         if h: h.name = 'h1'  # F4

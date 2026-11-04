@@ -12,8 +12,24 @@ st, _, sm = get('/sitemap.xml')
 queue = ['/', '/cabo-fishing', '/fishing-reports/older', '/this-page-does-not-exist'] + [urllib.parse.unquote(u.replace(SITE, '')) or '/' for u in re.findall(r'<loc>([^<]+)</loc>', sm.decode())]
 seen, rows, inlinks = set(), [], collections.Counter()
 z = zipfile.ZipFile('docs/crawl/html.zip', 'w', zipfile.ZIP_DEFLATED)
-for extra in ['/robots.txt', '/sitemap.xml', '/_headers']:
-    s, h, b = get(extra); z.writestr('raw' + extra + ('' if '.' in extra else '.txt'), b)
+for extra in ['/robots.txt', '/sitemap.xml']:
+    s, h, b = get(extra); z.writestr('raw' + extra, b)
+# _headers is Cloudflare configuration, not a served file (requesting it returns the 404 page): export the file itself
+z.writestr('raw/_headers.txt', open('dist/_headers', 'rb').read())
+# plus the ACTUAL HTTP response headers for representative resources
+samples = ['/', '/fishing-boats/23ft-panga', '/fishing-reports?offset=1784496649612', '/admin/', '/robots.txt', '/sitemap.xml',
+           '/js/efc-chat.js', '/fonts/syne-latin-700-normal.woff2', '/this-page-does-not-exist']
+import os
+for d in ('media', 'og'):
+    f = next((x for x in sorted(os.listdir('dist/' + d)) if '.' in x), None) if os.path.isdir('dist/' + d) else None
+    if d == 'media': f = next((os.path.join(r, x)[len('dist'):] for r, _, fs in os.walk('dist/media') for x in fs), None)
+    elif f: f = '/og/' + f
+    if f: samples.append(f)
+txt = ''
+for sp in samples:
+    s, h, b = get(urllib.parse.quote(sp, safe='/?=&'))
+    txt += f'### {sp}\nHTTP {s}\n' + ''.join(f'{k}: {v}\n' for k, v in h.items()) + '\n'
+z.writestr('raw/response-headers.txt', txt)
 while queue:
     p = queue.pop(0)
     if p in seen: continue

@@ -52,8 +52,8 @@ export function fixHead(tags: string[], opts: { canonical?: string; fallback?: {
       if (/og:image|twitter:image|itemprop="image"|thumbnailUrl|application\/ld\+json/.test(t)) {
         t = localImage(t);
         t = t.replace(/(?:https?:)?\/\/static1\.squarespace\.com\/[^"\s]+/g, (u) => mirroredOg(u.startsWith('//') ? 'https:' + u : u));
-        if (/property="og:image"|name="twitter:image"/.test(t) && /static1\.squarespace\.com/.test(t) && opts.fallback) {
-          t = t.replace(/content="[^"]*"/, `content="${opts.fallback.url}"`); usedFallback = true;
+        if (/property="og:image"|name="twitter:image"|itemprop="(?:image|thumbnailUrl)"/.test(t) && /static1\.squarespace\.com/.test(t) && opts.fallback) {
+          t = t.replace(/content="[^"]*"/, `content="${opts.fallback.url}"`); if (/og:image|twitter:image/.test(t)) usedFallback = true;
         }
       }
       return t;

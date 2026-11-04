@@ -21,12 +21,15 @@ export function media(src: string): ({ width: number; height: number; widths: nu
 /** Rewrite original <img alt=".." data-path=".."> tags into responsive self-hosted <picture> (alt kept verbatim). */
 /** Display cap: never wider than the file itself (no blurry upscaling) and never taller than 85% of the screen. Proportions kept. */
 export const capStyle = (w: number, h: number) => `max-width:min(100%,${w}px,calc(85vh * ${w} / ${h}))`;
+import altFixes from '../data/alt-fixes.json';
+/** A1 — documented alt text for meaningful images whose original alt is empty */
+export const fixAlt = (path: string, alt: string) => alt || Object.entries(altFixes as Record<string, string>).find(([k]) => !k.startsWith('_') && path.includes(k))?.[1] || '';
 export function pictures(html: string, sizes = '(min-width: 1000px) 50vw, 92vw') {
   let n = 0;
   html = html.replace(/<img([^>]*?)\sdata-ext="([^"]+)"([^>]*)\/?>/g, (_m, a, src, b) => `<img${a}${b.replace(/\/$/, '')} src="${src}" loading="lazy" decoding="async"/>`);
   return html.replace(/<img([^>]*?)\sdata-path="([^"]+)"([^>]*)\/?>/g, (_m, a, p, b) => {
     const attrs = a + b;
-    const alt = (attrs.match(/alt="([^"]*)"/) || [, ''])[1];
+    const alt = fixAlt(p, (attrs.match(/alt="([^"]*)"/) || [, ''])[1]);
     const m = media(p.replace(/&amp;/g, '&'));
     const lazy = n++ > 0 ? 'lazy' : 'eager';
     if (!m) return `<img alt="${alt}" src="https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/${p}" loading="${lazy}" decoding="async"/>`;

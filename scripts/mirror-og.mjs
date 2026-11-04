@@ -11,6 +11,16 @@ const walk = (d) => { for (const f of readdirSync(d)) { const p = join(d, f); st
 roots.forEach(walk);
 const urls = new Set();
 for (const f of files) for (const m of readFileSync(f, 'utf8').matchAll(/(?:https?:)?\/\/static1\.squarespace\.com\/[^"\s\\)]+/g)) urls.add(m[0].startsWith('//') ? 'https:' + m[0] : m[0].replace(/^http:/, 'https:'));
+// also: images.squarespace-cdn.com files that are NOT already self-hosted in public/media (e.g. Brooke.webp, the author avatar)
+const manifest = JSON.parse(readFileSync('src/data/media-manifest.json', 'utf8'));
+const mkey = (p) => { const d = decodeURIComponent(p.replace(/\+/g, ' ')).replace(/\/$/, ''); const [id, ...r] = d.split('/'); return `${id}/${r.join('/').replace(/\.[a-z0-9]+$/i, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`; };
+const extraRoots = [...files, 'src/lib/reports.ts', 'src/components/Img.astro'];
+for (const f of files) {
+  const t = readFileSync(f, 'utf8');
+  for (const m of t.matchAll(/https:\/\/images\.squarespace-cdn\.com\/content\/v2\/namespaces\/memberAccountAvatars\/[^"\s\\)]+/g)) urls.add(m[0]);
+  for (const m of t.matchAll(/"thumbnail":\s*\{"src":\s*"([^"]+)"/g)) if (!manifest[mkey(m[1])]) urls.add(`https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/${m[1]}`);
+  for (const m of t.matchAll(/data-path=\\?"([^"\\]+)\\?"/g)) if (!manifest[mkey(m[1])]) urls.add(`https://images.squarespace-cdn.com/content/v1/6911316472567617bebc28b5/${m[1]}`);
+}
 mkdirSync('public/og', { recursive: true });
 const mapPath = 'src/data/og-mirror.json';
 const map = existsSync(mapPath) ? JSON.parse(readFileSync(mapPath, 'utf8')) : {};

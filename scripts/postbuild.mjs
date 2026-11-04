@@ -45,10 +45,36 @@ ${isProd ? '' : '  X-Robots-Tag: noindex, nofollow\n'}
 /media/*
   Cache-Control: public, max-age=31536000, immutable
 
+/og/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/js/*
+  Cache-Control: public, max-age=86400
+
 /favicon.ico
   Cache-Control: public, max-age=86400
 `;
 writeFileSync(join(DIST, '_headers'), headers);
+
+// F10 — any image still referenced on a Squarespace host (body images such as Brooke.webp or the author avatar) is
+// served from the byte-for-byte copy made by .github/workflows/mirror-og.yml, when that copy exists.
+{
+  const mirror = JSON.parse(readFileSync('src/data/og-mirror.json', 'utf8'));
+  const walkH = (d) => readdirSync(d).flatMap((f) => { const p = join(d, f); return statSync(p).isDirectory() ? walkH(p) : p.endsWith('.html') ? [p] : []; });
+  let n = 0;
+  for (const f of walkH(DIST)) {
+    const html = readFileSync(f, 'utf8');
+    const out = html.replace(/(src="|content=")?((?:https?:)?\/\/(?:static1\.squarespace\.com|images\.squarespace-cdn\.com)\/[^"\s)]+)/g, (m, attr, url) => {
+      const key = url.replace(/^https?:/, '').split('?')[0];
+      const local = mirror[key];
+      if (!local) return m;
+      n++;
+      return (attr || '') + (attr === 'src="' ? local : SITE + local);
+    });
+    if (out !== html) writeFileSync(f, out);
+  }
+  console.log(`postbuild: ${n} Squarespace-hosted image references replaced by self-hosted copies`);
+}
 
 // Sitemap: the ORIGINAL Squarespace sitemap (same URLs, same lastmod), plus Fishing Reports created later in the CMS.
 const orig = readFileSync('src/data/original-sitemap.xml', 'utf8');
@@ -67,7 +93,14 @@ try {
 } catch {}
 // F7 — /cabo-fishing is a duplicate of the homepage and canonicalises to "/": list the canonical homepage URL instead
 const fixed = orig.replace(`<loc>${SITE}/cabo-fishing</loc>`, `<loc>${SITE}/</loc>`);
-const sitemap = extra.length ? fixed.replace('</urlset>', extra.join('') + '</urlset>') : fixed;
+// F9 — sitemap <image:loc>: the exact same files, self-hosted (all 102 references have a local copy in /media)
+const manifestS = JSON.parse(readFileSync('src/data/media-manifest.json', 'utf8'));
+const mkeyS = (p) => { const d = decodeURIComponent(p.replace(/\+/g, ' ')).replace(/\/$/, ''); const [id, ...r] = d.split('/'); return `${id}/${r.join('/').replace(/\.[a-z0-9]+$/i, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`; };
+const fixedImg = fixed.replace(/<image:loc>https?:\/\/images\.squarespace-cdn\.com\/content\/v1\/6911316472567617bebc28b5\/([^<?]+)(?:\?[^<]*)?<\/image:loc>/g, (m, p) => {
+  const k = mkeyS(p); const e = manifestS[k];
+  return e ? `<image:loc>${SITE}/media/${k}-${e.widths.at(-1)}.webp</image:loc>` : m;
+});
+const sitemap = extra.length ? fixedImg.replace('</urlset>', extra.join('') + '</urlset>') : fixedImg;
 const pages = [...known];
 writeFileSync(join(DIST, 'sitemap.xml'), sitemap);
 
