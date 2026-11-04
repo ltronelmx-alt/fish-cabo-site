@@ -1,0 +1,14 @@
+{
+ "_doc": "Permanent (301) redirects for old URLs reported 404 by Google Search Console (Coverage drilldown 2026-11-04). Their content no longer exists (not in the Squarespace export nor in the CMS); each points to the closest equivalent page. Applied by worker/index.ts on fish-cabo.com and www.fish-cabo.com (single hop).",
+ "/fishing-reports/african-pompano-fishing-san-jose-del-cabo-xa4hg": "/fish-species",
+ "/fishing-reports/giant-roosta-fishing-san-jose-del-cabo-7sgpw": "/roosterfish-fishing-cabo",
+ "/fishing-reports/roosterfish-sun-fishing-san-jose-del-cabo": "/roosterfish-fishing-cabo",
+ "/fishing-reports/gordo-banks-fishing-san-jose-del-cabo-mraem": "/gordo-banks-fishing",
+ "/fishing-reports/giant-rooster-fishing-san-jose-del-cabo-5ggth": "/roosterfish-fishing-cabo",
+ "/san-jose-del-cabo-fishing-charters": "/fishing-charters",
+ "/contact-san-jose-del-cabo-fishing-charters-sport-fishing-cabo-exotic-fish-cabo": "/contact",
+ "/fish-species-in-san-jose-del-cabo": "/fish-species",
+ "/tournaments-fishing-san-jose-del-cabo": "/cabo-fishing-tournaments",
+ "/fish-species-fishing-trophy-marlin-exotic-fish-cabo": "/marlin-fishing-cabo",
+ "/san-jose-del-cabo-fishing-reports-fishing-reports-cabo": "/fishing-reports"
+}

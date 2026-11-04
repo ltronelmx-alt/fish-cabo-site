@@ -9,6 +9,7 @@ export interface Env {
   CONTACT_FROM?: string;
   STAGING_PASSWORD?: string; // secret: password-protects the *.workers.dev staging site only (never fish-cabo.com)
 }
+import REDIRECTS from '../src/data/redirects.json';
 const TEST_TURNSTILE_SECRET = '1x0000000000000000000000000000000AA';
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
 const STAGING_OPEN_UNTIL = Date.parse('2026-11-04T16:55:00Z'); // = 2026-11-04 09:55 Mazatlán (post-deploy verification window)
@@ -87,6 +88,17 @@ export default {
 } satisfies ExportedHandler<Env>;
 
 async function handle(request: Request, env: Env): Promise<Response> {
+    // Canonical host + old URLs: one permanent redirect, never a chain (www → apex and old path → new path together)
+    {
+      const u = new URL(request.url);
+      const path = u.pathname.length > 1 ? u.pathname.replace(/\/+$/, '') : u.pathname;
+      const target = (REDIRECTS as Record<string, string>)[path];
+      const isWww = u.hostname === 'www.fish-cabo.com';
+      if (target && !path.startsWith('/_')) {
+        return new Response(null, { status: 301, headers: { location: `https://fish-cabo.com${target}`, 'cache-control': 'public, max-age=86400' } });
+      }
+      if (isWww) return new Response(null, { status: 301, headers: { location: `https://fish-cabo.com${u.pathname}${u.search}`, 'cache-control': 'public, max-age=86400' } });
+    }
     // robots.txt on *.workers.dev is public (no password) so crawlers read "Disallow: /"
     if (new URL(request.url).hostname.endsWith('.workers.dev') && new URL(request.url).pathname === '/robots.txt')
       return new Response('User-agent: *\nDisallow: /\n', { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } });
