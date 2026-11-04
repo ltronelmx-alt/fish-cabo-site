@@ -76,11 +76,11 @@ jobs:
             problems=""
             [ -n "$title" ] || problems="$problems not-in-build"
             [ "$code" = "200" ] || problems="$problems http-$code"
-            echo "$page" | python3 -c 'import html,sys; print(html.unescape(sys.stdin.read()))' | grep -qF "$title" || problems="$problems title-missing"
-            echo "$page" | python3 -c 'import re,sys; u=sys.argv[1]; t=sys.stdin.read(); sys.exit(0 if any(re.search(r"href=\"%s\"" % re.escape(u), m) for m in re.findall(r"<link[^>]*rel=\"canonical\"[^>]*>", t)) else 1)' "$SITE/fishing-reports/$s" || problems="$problems canonical"
-            echo "$page" | grep -qi 'name="robots" content="noindex' && problems="$problems noindex"
-            echo "$sitemap" | grep -qF "<loc>$SITE/fishing-reports/$s</loc>" || problems="$problems not-in-sitemap"
-            echo "$listing" | grep -qF "/fishing-reports/$s" || problems="$problems not-in-listing"
+            python3 -c 'import html,sys; sys.exit(0 if sys.argv[1] in html.unescape(sys.stdin.read()) else 1)' "$title" <<< "$page" || problems="$problems title-missing"
+            python3 -c 'import re,sys; u=sys.argv[1]; t=sys.stdin.read(); sys.exit(0 if any(re.search(r"href=\"%s\"" % re.escape(u), m) for m in re.findall(r"<link[^>]*rel=\"canonical\"[^>]*>", t)) else 1)' "$SITE/fishing-reports/$s" <<< "$page" || problems="$problems canonical"
+            grep -qi 'name="robots" content="noindex' <<< "$page" && problems="$problems noindex"
+            grep -qF "<loc>$SITE/fishing-reports/$s</loc>" <<< "$sitemap" || problems="$problems not-in-sitemap"
+            grep -qF "/fishing-reports/$s" <<< "$listing" || problems="$problems not-in-listing"
             if [ -n "$problems" ]; then echo "reason=Article $s deployed but not verified:$problems" >> "$GITHUB_OUTPUT"; echo "::error::$s:$problems"; exit 1; fi
             echo "OK $s — 200, title, canonical, indexable, sitemap, listing"
           done
