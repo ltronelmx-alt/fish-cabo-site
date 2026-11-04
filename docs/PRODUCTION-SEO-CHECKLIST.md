@@ -17,7 +17,7 @@
 2. **Turnstile.** The site key `0x4AAAAAAFyrH2-R96GEy7AN` (Invisible; hostnames fish-cabo.com + workers.dev) is installed. Staging intentionally uses Cloudflare's test secret. **Before cut-over:** set the real `TURNSTILE_SECRET` Worker secret (use the Copy button; the last attempt returned `invalid-input-secret`), then test a submission on fish-cabo.com. *Blocker.*
 3. **Cloudflare Access** on the workers.dev URL (Settings → Domains & Routes → Enable Cloudflare Access).
 4. **CMS publish test.** Log in at `/admin` with your own GitHub token, publish one test report, check the page, sitemap and listing, then delete it.
-5. **PayPal.** The PayPal links on the 10 boat pages are empty (same as on Squarespace). Provide the links or remove the buttons.
+5. ~~PayPal~~: **intentional (owner, 2026-11-03).** PayPal is temporarily unavailable. The buttons are kept as on Squarespace, and customers are told directly. Not a blocker.
 6. **Coordinates.** Confirm which marina point to publish in JSON-LD: 23.0600625, −109.6706875 (current schema) or 23.060275, −109.670677 (GPS buttons). They are ≈24 m apart.
 7. **Video page text.** It names a boat and a captain (`/cabo-fishing-videos/v/can-tv-fishing-show-1`). Keep or remove.
 8. **Production build command at cut-over:** `npm run build:prod`, which sets `PUBLIC_SITE_ENV=production`.

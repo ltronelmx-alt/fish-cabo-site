@@ -72,7 +72,7 @@ There are 101 production routes:
 | Production config | `robots.txt` = `Allow: /` + sitemap; no X-Robots-Tag except `/admin/*`; canonicals on `https://fish-cabo.com`; 0 references to workers.dev | Verified |
 | Needs validation | JSON-LD geo 23.0600625, −109.6706875 vs owner GPS 23.060275, −109.670677 (≈24 m apart, same marina) | **Not changed.** Both points are inside Puerto Los Cabos Marina. Owner to confirm which point to publish |
 | Owner decision | Existing video page text names a boat and a captain (`/cabo-fishing-videos/v/can-tv-fishing-show-1`) | **Not changed** (original indexed content). Owner to decide whether to remove |
-| Owner decision | Empty PayPal links (10 boat pages); "Stipe" label typo (31ft) | Not changed |
+| Owner decision | Empty PayPal links (10 boat pages): **intentional, PayPal temporarily unavailable (owner)**; "Stipe" label typo (31ft) | Not changed |
 
 ## 5. Before / after table
 
