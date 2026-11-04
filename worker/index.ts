@@ -11,7 +11,7 @@ export interface Env {
 }
 const TEST_TURNSTILE_SECRET = '1x0000000000000000000000000000000AA';
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
-const STAGING_OPEN_UNTIL = Date.parse('2026-11-04T01:35:00Z'); // = 2026-11-03 18:35 Mazatlán
+const STAGING_OPEN_UNTIL = Date.parse('2026-11-04T01:50:00Z'); // = 2026-11-03 18:50 Mazatlán
 // Staging lock: only on *.workers.dev and only once the STAGING_PASSWORD secret exists. Any user name, that password.
 async function stagingLocked(request: Request, env: Env): Promise<Response | null> {
   const host = new URL(request.url).hostname;
