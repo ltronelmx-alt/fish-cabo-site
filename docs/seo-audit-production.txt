@@ -1,0 +1,17 @@
+pages analysed: 101 · sitemap URLs: 80 · distinct internal link targets: 99
+
+## duplicate title (2)
+  - San Jose del Cabo Fishing Charters | Marlin, Tuna & Dorado Trips ×2: /cabo-fishing, /
+  - Cabo Fishing Reports | Recent Catches in San Jose del Cabo ×2: /fishing-reports, /fishing-reports/older
+
+## indexable page not in sitemap (3)
+  - /fishing-reports/tag/jigging
+  - /privacy-policy
+  - /terms-conditions
+
+## business entities (type, name, @id) × pages
+   ('"LocalBusiness"', 'Exotic Fish Cabo', 'https://fish-cabo.com/#business') 84
+
+## og/twitter images on external hosts {}
+
+## pages with no internal link pointing to them (excluding /) ['/cabo-fishing', '/fishing-reports/older']

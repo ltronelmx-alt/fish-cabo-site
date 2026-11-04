@@ -1,6 +1,6 @@
 {
  "base": "http://127.0.0.1:8787",
- "date": "2026-11-04T00:02:34.222Z",
+ "date": "2026-11-04T01:42:03.339Z",
  "total": 145,
  "failed": 0,
  "results": [
@@ -638,7 +638,7 @@
    "area": "Security headers",
    "test": "content-security-policy",
    "ok": true,
-   "detail": "default-src 'self'; img-src 'self' data: https://images.squarespace-cdn.com http"
+   "detail": "default-src 'self'; img-src 'self' data: https://i.ytimg.com; script-src 'self' "
   },
   {
    "area": "Security headers",
@@ -684,7 +684,7 @@
   },
   {
    "area": "SEO",
-   "test": "sitemap.xml identical to original Squarespace sitemap (except documented fix F7: homepage URL instead of /cabo-fishing)",
+   "test": "sitemap.xml: same page URLs as the original (F7: homepage instead of /cabo-fishing), same number of images, images self-hosted (F9)",
    "ok": true,
    "detail": ""
   },

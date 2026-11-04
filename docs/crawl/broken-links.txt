@@ -1,0 +1,4 @@
+Production build, 2026-11-03.
+Local assets referenced by all pages, og/twitter/JSON-LD and the sitemap: 898 checked, 0 not returning 200
+Internal page links: every internal link on every page was followed by the crawl (crawl.csv): 102 pages return 200; the only 404 is the deliberate test URL /this-page-does-not-exist.
+External image hosts left: i.ytimg.com only (YouTube video thumbnails on the video pages; YouTube-hosted by design).

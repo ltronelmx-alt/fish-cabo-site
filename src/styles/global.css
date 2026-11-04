@@ -298,3 +298,4 @@ main picture > img, main .media > img { margin-inline: auto; }
 h2.as-h1 { font-size: var(--fs-h1); line-height: 0.98; letter-spacing: -0.035em; }
 h1.as-h2 { font-size: var(--fs-h2); line-height: 1.02; letter-spacing: -0.03em; }
 .o-html:not(.article) > article > h2.as-h1 { font-size: clamp(19px, 0.5vw + 15px, 24px); line-height: 1.15; letter-spacing: -0.01em; }
+.o-html article > h2.as-h1::before, .article > article > h2.as-h1::before { display: none !important; }

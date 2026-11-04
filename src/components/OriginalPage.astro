@@ -248,22 +248,22 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
   .rich ul > li:has(> picture) p > a:only-child { display: inline-flex; min-height: 48px; align-items: center; padding: 12px 20px; border: 1.5px solid var(--ink); border-radius: var(--radius-sm); text-decoration: none; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
   .rich ul > li:has(> picture) p > a:only-child:hover { background: var(--ink); color: var(--white); }
   /* Fishing Reports listing → grid of post cards (CSS only, same markup) */
-  .o-html:not(.article):has(> article) { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: clamp(18px, 2vw, 32px); align-items: start; }
-  .o-html:not(.article):has(> article) > nav { grid-column: 1 / -1; }
-  .o-html:not(.article) > article { display: flex; flex-direction: column; background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); padding: 0 0 22px; overflow: hidden; }
-  .bg-white .o-html:not(.article) > article { background: var(--sand); border-color: transparent; }
-  .o-html:not(.article) > article > a:first-child { display: block; }
-  .o-html:not(.article) > article > a:first-child picture { margin: 0; }
-  .o-html:not(.article) > article > a:first-child img { border-radius: 0; width: 100%; }
-  .o-html:not(.article) > article > :not(a:first-child) { margin-inline: 22px; }
-  .o-html:not(.article) > article > .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 18px; font-size: 12px; letter-spacing: 0.04em; color: var(--muted); }
-  .o-html:not(.article) > article > .meta + .meta { display: none; }
-  .o-html:not(.article) > article > .meta a { padding: 5px 12px; border-radius: 999px; background: var(--orange); color: var(--ink); font-weight: 700; text-decoration: none; text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; }
-  .o-html:not(.article) > article > .meta span { text-transform: uppercase; }
-  .o-html:not(.article) > article > h2 { font-size: clamp(19px, 0.5vw + 15px, 24px); line-height: 1.15; margin-top: 16px; }
-  .o-html:not(.article) > article > h2 a { text-decoration: none; }
-  .o-html:not(.article) > article > p { font-size: 0.92em; }
-  .o-html:not(.article) > article > a:last-child { margin-top: auto; align-self: flex-start; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; text-decoration-color: var(--orange); text-underline-offset: 5px; }
+  .o-html:not(.article):has(> article > h2.as-h1) { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: clamp(18px, 2vw, 32px); align-items: start; }
+  .o-html:not(.article):has(> article > h2.as-h1) > nav { grid-column: 1 / -1; }
+  .o-html:not(.article) > article:has(> h2.as-h1) { display: flex; flex-direction: column; background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); padding: 0 0 22px; overflow: hidden; }
+  .bg-white .o-html:not(.article) > article:has(> h2.as-h1) { background: var(--sand); border-color: transparent; }
+  .o-html:not(.article) > article:has(> h2.as-h1) > a:first-child { display: block; }
+  .o-html:not(.article) > article:has(> h2.as-h1) > a:first-child picture { margin: 0; }
+  .o-html:not(.article) > article:has(> h2.as-h1) > a:first-child img { border-radius: 0; width: 100%; }
+  .o-html:not(.article) > article:has(> h2.as-h1) > :not(a:first-child) { margin-inline: 22px; }
+  .o-html:not(.article) > article:has(> h2.as-h1) > .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 18px; font-size: 12px; letter-spacing: 0.04em; color: var(--muted); }
+  .o-html:not(.article) > article:has(> h2.as-h1) > .meta + .meta { display: none; }
+  .o-html:not(.article) > article:has(> h2.as-h1) > .meta a { padding: 5px 12px; border-radius: 999px; background: var(--orange); color: var(--ink); font-weight: 700; text-decoration: none; text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; }
+  .o-html:not(.article) > article:has(> h2.as-h1) > .meta span { text-transform: uppercase; }
+  .o-html:not(.article) > article:has(> h2.as-h1) > h2 { font-size: clamp(19px, 0.5vw + 15px, 24px); line-height: 1.15; margin-top: 16px; }
+  .o-html:not(.article) > article:has(> h2.as-h1) > h2 a { text-decoration: none; }
+  .o-html:not(.article) > article:has(> h2.as-h1) > p { font-size: 0.92em; }
+  .o-html:not(.article) > article:has(> h2.as-h1) > a:last-child { margin-top: auto; align-self: flex-start; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; text-decoration-color: var(--orange); text-underline-offset: 5px; }
   .o-stripe-row { align-items: center; }
   .o-stripe-row .o-paymethods { width: auto; max-width: min(240px, 60vw); box-shadow: none !important; background: transparent !important; border-radius: 6px; }
   .o-stripe-row .o-paymethods img { height: 26px !important; width: auto !important; }
