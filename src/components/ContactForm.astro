@@ -2,7 +2,7 @@
 // Replaces the Squarespace form block. Same fields, labels, options and button text as the original form.
 // Submits to the Worker (/api/contact): validation + Cloudflare Turnstile. No data is stored.
 import form from '../data/contact-form.json';
-const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY || '1x00000000000000000000BB'; // Cloudflare's public TEST key (always passes, invisible: no widget box shown)
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY || '0x4AAAAAAFyrH2-R96GEy7AN'; // real Turnstile site key (public; Invisible mode; hostnames fish-cabo.com + staging workers.dev)
 const id = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 ---
 <form class="cform card" id="contact-form" method="post" action="/api/contact" novalidate>
