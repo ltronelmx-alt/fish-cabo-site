@@ -13,5 +13,7 @@
   "observability": { "enabled": true },
   // Enable after creating the dataset (free): uncomment to store click counts.
   // "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "fishcabo_events" }],
-  "vars": { "SITE_ENV": "staging" }
+  // Production configuration. Staging isolation does not depend on this value: on *.workers.dev the Worker
+  // always adds X-Robots-Tag noindex, serves robots.txt "Disallow: /" and applies the STAGING_PASSWORD lock.
+  "vars": { "SITE_ENV": "production" }
 }

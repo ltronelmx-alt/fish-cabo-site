@@ -77,8 +77,20 @@ async function contact(request: Request, env: Env) {
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    const res = await handle(request, env);
+    // *.workers.dev is never indexable, whatever the build mode (production builds carry no noindex of their own)
+    if (!new URL(request.url).hostname.endsWith('.workers.dev')) return res;
+    const h = new Headers(res.headers);
+    h.set('X-Robots-Tag', 'noindex, nofollow');
+    return new Response(res.body, { status: res.status, statusText: res.statusText, headers: h });
+  },
+} satisfies ExportedHandler<Env>;
+
+async function handle(request: Request, env: Env): Promise<Response> {
     const locked = await stagingLocked(request, env);
     if (locked) return locked;
+    if (new URL(request.url).hostname.endsWith('.workers.dev') && new URL(request.url).pathname === '/robots.txt')
+      return new Response('User-agent: *\nDisallow: /\n', { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } });
     const url = new URL(request.url);
     if (url.pathname === '/api/contact') return contact(request, env);
     if (url.pathname === '/api/event') {
@@ -97,5 +109,4 @@ export default {
       return new Response(r.body, r);
     }
     return env.ASSETS.fetch(request);
-  },
-} satisfies ExportedHandler<Env>;
+}
