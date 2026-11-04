@@ -1,0 +1,117 @@
+{
+ "_comment": "DEMO FIXTURE for automated tests only \u2014 not real reviews, never copied into src/data/reviews.json",
+ "google": {
+  "allReviewsUrl": "https://g.page/r/CVkU9WoXqp_DEBM",
+  "fetchedAt": "2026-11-04T00:00:00Z",
+  "items": [
+   {
+    "id": "demo-google-0",
+    "author": "Demo Guest A",
+    "authorMeta": "Google review",
+    "rating": 5,
+    "text": "DEMO TEXT 1. Placeholder review used only for automated layout and carousel tests.",
+    "date": "2026-10-01T12:00:00Z",
+    "url": "https://example.com/demo-review"
+   },
+   {
+    "id": "demo-google-1",
+    "author": "Demo Guest B",
+    "authorMeta": "Google review",
+    "rating": 5,
+    "text": "DEMO TEXT. This is placeholder text used only to test the layout of a long review card, line clamping and the Read more button. This is placeholder text used only to test the layout of a long review card, line clamping and the Read more button. This is placeholder text used only to test the layout of a long review card, line clamping and the Read more button. This is placeholder text used only to test the layout of a long review card, line clamping and the Read more button. This is placeholder text used only to test the layout of a long review card, line clamping and the Read more button. This is placeholder text used only to test the layout of a long review card, line clamping and the Read more button. ",
+    "date": "2026-09-02T12:00:00Z",
+    "url": "https://example.com/demo-review"
+   },
+   {
+    "id": "demo-google-2",
+    "author": "Demo Guest C",
+    "authorMeta": "Google review",
+    "rating": 5,
+    "text": "DEMO TEXT 3. Placeholder review used only for automated layout and carousel tests.",
+    "date": "2026-08-03T12:00:00Z",
+    "url": "https://example.com/demo-review"
+   },
+   {
+    "id": "demo-google-3",
+    "author": "Demo Guest D",
+    "authorMeta": "Google review",
+    "rating": 5,
+    "text": "DEMO TEXT 4. Placeholder review used only for automated layout and carousel tests.",
+    "date": "2026-07-04T12:00:00Z",
+    "url": "https://example.com/demo-review"
+   },
+   {
+    "id": "demo-google-4",
+    "author": "Demo Guest E",
+    "authorMeta": "Google review",
+    "rating": 5,
+    "text": "DEMO TEXT 5. Placeholder review used only for automated layout and carousel tests.",
+    "date": "2026-06-05T12:00:00Z",
+    "url": "https://example.com/demo-review"
+   },
+   {
+    "id": "demo-4star",
+    "author": "Demo Four",
+    "rating": 4,
+    "text": "MUST NOT APPEAR",
+    "date": "2026-10-30T00:00:00Z"
+   }
+  ]
+ },
+ "tripadvisor": {
+  "allReviewsUrl": "https://www.tripadvisor.com/Attraction_Review-g152516-d9569970-Reviews-Exotic_Fish_Cabo_Sportfishing_Charter-San_Jose_del_Cabo_Los_Cabos_Baja_California.html",
+  "fetchedAt": "2026-11-04T00:00:00Z",
+  "items": [
+   {
+    "id": "demo-tripadvisor-0",
+    "author": "Demo Guest A",
+    "authorMeta": "Demo location",
+    "rating": 5,
+    "title": "Demo review title 1",
+    "text": "DEMO TEXT 1. Placeholder review used only for automated layout and carousel tests.",
+    "date": "2026-10-01T12:00:00Z",
+    "url": "https://example.com/demo-review"
+   },
+   {
+    "id": "demo-tripadvisor-1",
+    "author": "Demo Guest B",
+    "authorMeta": "Demo location",
+    "rating": 5,
+    "title": "Demo review title 2",
+    "text": "DEMO TEXT. This is placeholder text used only to test the layout of a long review card, line clamping and the Read more button. This is placeholder text used only to test the layout of a long review card, line clamping and the Read more button. This is placeholder text used only to test the layout of a long review card, line clamping and the Read more button. This is placeholder text used only to test the layout of a long review card, line clamping and the Read more button. This is placeholder text used only to test the layout of a long review card, line clamping and the Read more button. This is placeholder text used only to test the layout of a long review card, line clamping and the Read more button. ",
+    "date": "2026-09-02T12:00:00Z",
+    "url": "https://example.com/demo-review"
+   },
+   {
+    "id": "demo-tripadvisor-2",
+    "author": "Demo Guest C",
+    "authorMeta": "Demo location",
+    "rating": 5,
+    "title": "Demo review title 3",
+    "text": "DEMO TEXT 3. Placeholder review used only for automated layout and carousel tests.",
+    "date": "2026-08-03T12:00:00Z",
+    "url": "https://example.com/demo-review"
+   },
+   {
+    "id": "demo-tripadvisor-3",
+    "author": "Demo Guest D",
+    "authorMeta": "Demo location",
+    "rating": 5,
+    "title": "Demo review title 4",
+    "text": "DEMO TEXT 4. Placeholder review used only for automated layout and carousel tests.",
+    "date": "2026-07-04T12:00:00Z",
+    "url": "https://example.com/demo-review"
+   },
+   {
+    "id": "demo-tripadvisor-4",
+    "author": "Demo Guest E",
+    "authorMeta": "Demo location",
+    "rating": 5,
+    "title": "Demo review title 5",
+    "text": "DEMO TEXT 5. Placeholder review used only for automated layout and carousel tests.",
+    "date": "2026-06-05T12:00:00Z",
+    "url": "https://example.com/demo-review"
+   }
+  ]
+ }
+}

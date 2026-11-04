@@ -7,6 +7,7 @@ import Rich from '../components/Rich.astro';
 import OImg from '../components/OImg.astro';
 import OBtn from '../components/OBtn.astro';
 import LatestLog from '../components/LatestLog.astro';
+import Reviews from '../components/Reviews.astro';
 import { PAGES, byH2 } from '../lib/original';
 
 const P = PAGES.home;
@@ -59,6 +60,9 @@ const c4 = byH2(txt(s4)[0].html!); // areas · different · fish
       <Rich html={txt(s5)[0].html!} class="reveal" />
     </div>
   </section>
+
+  <!-- Google & Tripadvisor reviews (rendered only when genuine reviews exist in src/data/reviews.json) -->
+  <Reviews />
 
   <!-- Section 6: FAQ (original DOM order: image, text, buttons) -->
   <section class="section bg-sand">

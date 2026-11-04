@@ -1,0 +1,31 @@
+{
+ "google": {
+  "allReviewsUrl": "https://g.page/r/CVkU9WoXqp_DEBM",
+  "fetchedAt": null,
+  "items": [
+   {
+    "id": "demo-google-0",
+    "author": "Demo Guest A",
+    "authorMeta": "Google review",
+    "rating": 5,
+    "text": "DEMO TEXT 1. Placeholder review used only for automated layout and carousel tests.",
+    "date": "2026-10-01T12:00:00Z",
+    "url": "https://example.com/demo-review"
+   },
+   {
+    "id": "demo-google-1",
+    "author": "Demo Guest B",
+    "authorMeta": "Google review",
+    "rating": 5,
+    "text": "DEMO TEXT. This is placeholder text used only to test the layout of a long review card, line clamping and the Read more button. This is placeholder text used only to test the layout of a long review card, line clamping and the Read more button. This is placeholder text used only to test the layout of a long review card, line clamping and the Read more button. This is placeholder text used only to test the layout of a long review card, line clamping and the Read more button. This is placeholder text used only to test the layout of a long review card, line clamping and the Read more button. This is placeholder text used only to test the layout of a long review card, line clamping and the Read more button. ",
+    "date": "2026-09-02T12:00:00Z",
+    "url": "https://example.com/demo-review"
+   }
+  ]
+ },
+ "tripadvisor": {
+  "allReviewsUrl": "x",
+  "fetchedAt": null,
+  "items": []
+ }
+}

@@ -30,7 +30,7 @@ for (const w of widths) {
       const B = els.map(box);
       const name = (e) => `${e.tagName.toLowerCase()}${e.className && typeof e.className === 'string' ? '.' + e.className.trim().split(/\s+/).slice(0, 2).join('.') : ''} "${(e.innerText || e.alt || '').trim().slice(0, 40)}"`;
       // content outside the viewport horizontally
-      els.forEach((e, i) => { if (B[i].r > vw + 2 || B[i].x < -2) issues.push(`outside viewport: ${name(e)} [${Math.round(B[i].x)}–${Math.round(B[i].r)}]`); });
+      els.forEach((e, i) => { if (!e.closest('.rv-viewport') && (B[i].r > vw + 2 || B[i].x < -2)) issues.push(`outside viewport: ${name(e)} [${Math.round(B[i].x)}–${Math.round(B[i].r)}]`); });
       // pairwise overlaps between unrelated boxes (images inside the hero are backgrounds by design)
       const leaf = els.filter((e) => /^(A|IMG|H1|H2|H3|H4|P|FORM)$/.test(e.tagName));
       const LB = leaf.map(box);
