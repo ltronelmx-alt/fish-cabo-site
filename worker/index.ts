@@ -44,8 +44,14 @@ async function contact(request: Request, env: Env) {
   const token = String(fd.get('cf-turnstile-response') ?? '');
   const ver = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
     method: 'POST', body: new URLSearchParams({ secret: env.TURNSTILE_SECRET || TEST_TURNSTILE_SECRET, response: token, remoteip: request.headers.get('cf-connecting-ip') || '' }),
-  }).then((r) => r.json() as Promise<{ success: boolean }>).catch(() => ({ success: false }));
-  if (!ver.success) return json({ ok: false, error: 'Verification failed. Please try again.' }, 403);
+  }).then((r) => r.json() as Promise<{ success: boolean; 'error-codes'?: string[] }>).catch(() => ({ success: false, 'error-codes': ['siteverify-unreachable'] }));
+  if (!ver.success) {
+    const codes = ver['error-codes'] || [];
+    console.log('turnstile failed', JSON.stringify({ codes, tokenLength: token.length })); // no personal data logged
+    // staging only: show Cloudflare's error codes to help diagnose the configuration
+    const dbg = new URL(request.url).hostname.endsWith('.workers.dev') ? { codes, tokenLength: token.length } : {};
+    return json({ ok: false, error: 'Verification failed. Please try again.', ...dbg }, 403);
+  }
   // Delivery: only when an approved provider is configured; otherwise TEST MODE (nothing sent, nothing stored).
   if (!env.RESEND_API_KEY || !env.CONTACT_TO) return json({ ok: true, test: true });
   const text = Object.entries(data).map(([k, v]) => `${k}: ${v}`).join('\n');

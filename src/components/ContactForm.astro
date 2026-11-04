@@ -48,7 +48,7 @@ const id = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^
         f.reset(); (window as any).turnstile?.reset?.();
         if (msg) msg.textContent = data.test ? 'Thank you! (staging test mode — no email was sent)' : 'Thank you!';
         navigator.sendBeacon?.('/api/event', new Blob([JSON.stringify({ event: 'contact_sent', page: location.pathname })], { type: 'application/json' }));
-      } else if (msg) msg.textContent = data.error || 'Sorry, the message could not be sent. Please try again or contact us on WhatsApp.';
+      } else if (msg) msg.textContent = (data.error || 'Sorry, the message could not be sent. Please try again or contact us on WhatsApp.') + (data.codes ? ` [${data.codes.join(', ') || 'no code'} · token ${data.tokenLength}]` : '');
     } catch { if (msg) msg.textContent = 'Network error. Please try again or contact us on WhatsApp.'; }
     btn.disabled = false;
   });
@@ -58,7 +58,6 @@ const id = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^
   .cform:hover { transform: none; }
   .cf-lbl { display: block; }
   .cf-lbl .req { color: var(--orange); }
-  .cf-turnstile:empty { display: none; }
   .cf-row { display: grid; gap: 8px; font-size: 14px; font-weight: 700; color: var(--ink); border: 0; padding: 0; margin: 0; }
   .cf-row.two { grid-template-columns: 1fr 1fr; column-gap: 14px; }
   .cf-row.two legend { grid-column: 1 / -1; padding: 0; margin-bottom: 8px; }
