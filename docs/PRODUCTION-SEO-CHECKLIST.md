@@ -14,7 +14,7 @@
 
 ## B. Remaining owner actions (blockers for cut-over)
 1. **Contact email delivery.** Choose Resend (free tier, API key as a Worker secret) or Cloudflare Email Routing (needs the domain on Cloudflare). Then send a **real** test inquiry and confirm it arrives. *Blocker.*
-2. **Turnstile.** Create a site key in Invisible mode, set `PUBLIC_TURNSTILE_SITEKEY` (build variable) and the `TURNSTILE_SECRET` Worker secret, and test. *Blocker.*
+2. **Turnstile.** The site key `0x4AAAAAAFyrH2-R96GEy7AN` (Invisible; hostnames fish-cabo.com + workers.dev) is installed. Staging intentionally uses Cloudflare's test secret. **Before cut-over:** set the real `TURNSTILE_SECRET` Worker secret (use the Copy button; the last attempt returned `invalid-input-secret`), then test a submission on fish-cabo.com. *Blocker.*
 3. **Cloudflare Access** on the workers.dev URL (Settings → Domains & Routes → Enable Cloudflare Access).
 4. **CMS publish test.** Log in at `/admin` with your own GitHub token, publish one test report, check the page, sitemap and listing, then delete it.
 5. **PayPal.** The PayPal links on the 10 boat pages are empty (same as on Squarespace). Provide the links or remove the buttons.
