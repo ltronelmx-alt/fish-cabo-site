@@ -1,515 +1,496 @@
-/* Original Exotic Fish Cabo chat assistant (verbatim from fish-cabo.com), plus CSP-safe event wiring at the end. */
+/* Exotic Fish Cabo chat assistant — original fish-cabo.com assistant (same look, same flows), audited 2026-11-04.
+   Changes vs the original are listed in CHATBOT-WHATSAPP-FINAL-AUDIT.md. Original kept in git history (see rollback). */
+(function () {
+'use strict';
 
 // ============================================
-// CONFIGURATION
+// CONFIGURATION (owner-confirmed business number — do not change without approval)
 // ============================================
-const WHATSAPP_NUMBER = "+526241223506"; //
+const WHATSAPP_NUMBER = "+526241223506";
+const REVIEWS_URL = "https://g.page/r/CVkU9WoXqp_DEBM";
+const MAX_INPUT = 500;
 
 // ============================================
-// BASE DE CONNAISSANCES MULTILINGUE
+// MULTILINGUAL KNOWLEDGE BASE (facts aligned with the website: /fishing-charters, /fishing-boats, /cabo-fishing-faq, /contact, /terms-conditions)
 // ============================================
 const I18N = {
   fr: {
-    welcome: `👋 ¡Hola ! Bienvenue chez **Exotic Fish Cabo** !\n\nJe suis votre assistant pour planifier votre journée de pêche à San José del Cabo. 🎣\n\nQue puis-je faire pour vous ?`,
+    welcome: `👋 Bonjour ! Bienvenue chez **Exotic Fish Cabo** !\n\nJe suis votre assistant pour planifier votre journée de pêche à San José del Cabo. 🎣\n\nQue puis-je faire pour vous ?`,
     placeholder: "Posez votre question...",
+    inputLabel: "Votre message",
+    sendLabel: "Envoyer",
+    closeLabel: "Fermer le chat",
+    windowLabel: "Assistant de pêche Exotic Fish Cabo",
     online: "🎣 Assistant de pêche • En ligne",
     bookLabel: "Réserver maintenant",
     packagesLabel: "Nos forfaits",
     seasonsLabel: "Poissons & Saisons",
+    calendarLabel: "Calendrier de pêche",
+    boatsLabel: "Voir les bateaux",
+    termsLabel: "Conditions générales",
+    reviewsLabel: "Avis Google",
     whatsappLabel: "WhatsApp direct",
-    whatsappPre: "Bonjour Exotic Fish Cabo ! J'ai une question complémentaire depuis votre site web : ",
+    youSaid: "Vous",
     unknown1: `🤔 Je ne suis pas sûr de comprendre. Essayez :\n\n• "Quels sont les prix ?"\n• "Quels poissons en ce moment ?"\n• "C'est bon pour les débutants ?"\n• "Comment réserver ?"`,
     unknown2: `🤔 Je n'ai pas la réponse précise dans ma base de connaissances.\n\nLaissez-moi vous mettre en contact avec notre équipe :`,
-    thanks: `🙏 De rien !\n\nN'oubliez pas : la pêche à Los Cabos est **toute l'année**. Réservez tôt en haute saison ! 🎣`,
+    tooLong: "✂️ Message un peu long : je n'ai gardé que les 500 premiers caractères.",
+    thanks: `🙏 De rien !\n\nN'oubliez pas : la pêche à Los Cabos se pratique **toute l'année**. Réservez tôt en haute saison ! 🎣`,
     priceTitle: "💰 Nos forfaits privés",
-    halfDay: "🕕 3/4 Journée (6h) — À partir de 350 USD",
-    halfDayDesc: "Pêche mixte inshore/offshore, idéal pour familles",
-    fullDay: "🕗 Journée Complète (8h) — À partir de 600 USD",
-    fullDayDesc: "Offshore sérieux pour pêcheurs expérimentés",
-    privateNote: "Tous nos charters sont 100% privés",
-    included: "Matériel, équipage bilingue et sécurité inclus",
+    halfDay: "🕕 3/4 de journée (6 h) — À partir de 350 USD par bateau (1-2 personnes, bateaux sélectionnés)",
+    halfDayDesc: "Pêche côtière, intermédiaire ou au large selon les conditions — idéal pour familles et débutants",
+    fullDay: "🕗 Journée complète (8 h) — À partir de 600 USD par bateau",
+    fullDayDesc: "Plus de temps au large pour les espèces pélagiques",
+    priceNote: "Le prix final dépend du bateau, du nombre de personnes et de la durée.",
+    privateNote: "Tous nos charters sont 100 % privés",
+    included: "Capitaine et équipage, cannes, moulinets et matériel de base inclus",
     fishTitle: "🐟 Nos cibles principales",
     marlin: "Marlin — Action forte en haute saison",
-    tuna: "Thon & Dorado — Excellents quand conditions alignées",
+    tuna: "Thon & Dorado — Excellents quand les conditions sont réunies",
     wahoo: "Wahoo — Frappes puissantes en saison",
-    rooster: "Roosterfish — Pêche inshore excitante",
-    grouper: "Grouper & autres espèces côtières",
-    calendarHint: "Consultez notre Fishing Calendar sur le site !",
+    rooster: "Roosterfish — Pêche côtière à vue, très excitante",
+    grouper: "Mérou & autres espèces de fond",
+    calendarHint: "Consultez notre calendrier de pêche sur le site ! Aucune prise n'est garantie.",
     seasonTitle: "📆 Pêche toute l'année !",
-    seasonText: "Chaque saison a ses stars. Les courants chauds et bancs (Gordo Banks, Iman Bank) créent des conditions exceptionnelles.",
+    seasonText: "Chaque saison a ses stars. Les courants et les bancs (Gordo Banks, Iman Bank) créent de belles opportunités selon les conditions.",
     boatTitle: "🚤 Notre flotte",
-    boatDesc: "De 1 à 10 invités. Center consoles rapides et sportfishers spacieux.",
-    boatFeat1: "Ombre et sièges confortables",
-    boatFeat2: "Équipement sécurité complet",
-    boatFeat3: "Matériel haut de gamme",
-    boatFeat4: "Coques rapides = plus de pêche !",
-    familyTitle: "👨‍👩‍👧‍👦 Parfait pour familles !",
-    familyDesc: "Équipage patient, zones calmes, espèces faciles. Beaucoup disent que c'est le highlight de leurs vacances !",
+    boatDesc: "10 bateaux privés, de 1 à 10 personnes selon le bateau : pangas, center consoles, catamarans et sportfishers.",
+    boatFeat1: "Le prix varie selon le bateau et le nombre de personnes",
+    boatFeat2: "Ombre, sièges et toilettes selon le bateau",
+    boatFeat3: "Équipement de sécurité à bord",
+    boatFeat4: "Nous vous aidons à choisir le bateau adapté",
+    familyTitle: "👨‍👩‍👧‍👦 Familles et débutants bienvenus !",
+    familyDesc: "Aucune expérience nécessaire : l'équipage explique le matériel et les techniques. Le 3/4 de journée (6 h) est souvent le meilleur choix avec des enfants. Indiquez-nous leur âge pour vérifier le bateau et l'équipement de sécurité.",
     locationTitle: "📍 Puerto Los Cabos Marina",
-    locationDesc: "San José del Cabo. Accessible depuis tous les hôtels. Départ direct vers Gordo Banks et Iman Bank.",
+    locationDesc: "Tous nos départs se font de la marina Puerto Los Cabos, à San José del Cabo — pas de la marina de Cabo San Lucas. Départ habituel vers 6h30. Les clients logés à Cabo San Lucas sont les bienvenus.",
     includedTitle: "✅ Inclus dans tous les charters",
-    includedList: "• Matériel de pêche haut de gamme\n• Équipement sécurité complet\n• Équipage professionnel bilingue\n• Bateau privé rapide",
-    notIncludedTitle: "❓ Non inclus",
-    notIncludedList: "• Licence de pêche mexicaine\n• Pourboire crew (15-20%)\n• Nourriture/boissons (selon bateau)",
+    includedList: "• Capitaine et équipage locaux\n• Cannes, moulinets et matériel de base\n• Eau en bouteille et sodas\n• Bateau privé pour votre groupe",
+    notIncludedTitle: "❓ Selon le charter (à confirmer avant de réserver)",
+    notIncludedList: "• Licence de pêche\n• Appâts vivants\n• Nourriture\n• Nettoyage du poisson\n• Pourboire de l'équipage : 10-20 % est d'usage",
     bookingTitle: "📅 Pour réserver",
-    bookingSteps: "1️⃣ Choisissez votre date\n2️⃣ 3/4 journée ou journée complète\n3️⃣ Nombre de pêcheurs (1-10)",
-    reviewsTitle: "⭐ Excellentes évaluations",
-    reviewsDesc: "Clients qui reviennent année après année. Points forts : connaissance locale, équipage sympa, bateaux propres.",
+    bookingSteps: "1️⃣ Choisissez votre date\n2️⃣ 3/4 de journée (6 h) ou journée complète (8 h)\n3️⃣ Nombre de pêcheurs (1-10)\n4️⃣ Choisissez votre bateau et payez l'acompte en ligne, ou écrivez-nous",
+    paymentTitle: "💳 Paiement de l'acompte",
+    paymentDesc: "Sur chaque page bateau :\n• Stripe (carte, Apple Pay, Google Pay) — 6 % de frais\n• Wise — sans frais\nPayPal est momentanément indisponible.",
+    cancelTitle: "📄 Annulation",
+    cancelDesc: "Selon nos conditions générales, l'acompte n'est pas remboursé en cas d'annulation de votre part, d'absence, de mauvais temps ou de mauvaise pêche. Pour toute question, écrivez-nous avant de réserver.",
+    reviewsTitle: "⭐ Avis clients",
+    reviewsDesc: "Lisez les avis de nos clients sur Google et Tripadvisor.",
     contactTitle: "📞 Nous contacter",
-    contactDesc: "💬 WhatsApp : le plus rapide\n📧 Email : via formulaire\n🌐 www.fish-cabo.com",
-    hello: `👋 ¡Hola ! Je suis l'assistant d'**Exotic Fish Cabo**. Comment puis-je vous aider ?\n\n• 💰 Prix et forfaits\n• 🐟 Poissons et saisons\n• 🚤 Bateaux\n• 👨‍👩‍👧‍👦 Familles et débutants\n• 📅 Réservations`
+    contactDesc: "💬 WhatsApp : +52 624 122 3506 (le plus rapide)\n📧 contact@fish-cabo.com\n📝 Formulaire sur la page Contact",
+    hello: `👋 Bonjour ! Je suis l'assistant d'**Exotic Fish Cabo**. Comment puis-je vous aider ?\n\n• 💰 Prix et forfaits\n• 🐟 Poissons et saisons\n• 🚤 Bateaux\n• 👨‍👩‍👧‍👦 Familles et débutants\n• 📅 Réservations`,
+    wa: { intro: "Bonjour Exotic Fish Cabo ! J'ai une question depuis votre site web.", question: "Ma question", charter: "Charter", date: "Date", guests: "Personnes", general: "Je voudrais des informations sur vos charters de pêche.", h6: "3/4 de journée (6 h)", h8: "Journée complète (8 h)" },
+    sep: " :"
   },
-  
+
   en: {
     welcome: `👋 Hi! Welcome to **Exotic Fish Cabo**!\n\nI'm your assistant to help plan your fishing day in San José del Cabo. 🎣\n\nWhat can I do for you?`,
     placeholder: "Ask your question...",
+    inputLabel: "Your message",
+    sendLabel: "Send",
+    closeLabel: "Close chat",
+    windowLabel: "Exotic Fish Cabo fishing assistant",
     online: "🎣 Fishing Assistant • Online",
     bookLabel: "Book Now",
     packagesLabel: "Our Packages",
     seasonsLabel: "Fish & Seasons",
+    calendarLabel: "Fishing Calendar",
+    boatsLabel: "See the boats",
+    termsLabel: "Terms & Conditions",
+    reviewsLabel: "Google reviews",
     whatsappLabel: "WhatsApp",
-    whatsappPre: "Hello Exotic Fish Cabo! I have a question from your website: ",
+    youSaid: "You",
     unknown1: `🤔 I'm not sure I understand. Try asking:\n\n• "What are the prices?"\n• "What fish are biting now?"\n• "Is it good for beginners?"\n• "How do I book?"`,
     unknown2: `🤔 I don't have the exact answer in my knowledge base.\n\nLet me connect you directly with our team:`,
+    tooLong: "✂️ That message was long: I kept the first 500 characters.",
     thanks: `🙏 You're welcome!\n\nRemember: fishing in Los Cabos is **year-round**. Book early for peak season! 🎣`,
     priceTitle: "💰 Our Private Packages",
-    halfDay: "🕕 3/4 Day (6 hours) — From 350 USD",
-    halfDayDesc: "Mixed inshore/offshore, perfect for families",
-    fullDay: "🕗 Full Day (8 hours) — From 600 USD",
-    fullDayDesc: "Serious offshore fishing for experienced anglers",
+    halfDay: "🕕 3/4 Day (6 hours) — From 350 USD per boat (1-2 guests, selected boats)",
+    halfDayDesc: "Inshore, midshore or offshore depending on conditions — great for families and beginners",
+    fullDay: "🕗 Full Day (8 hours) — From 600 USD per boat",
+    fullDayDesc: "More time offshore for pelagic species",
+    priceNote: "Final price depends on the boat, group size and trip duration.",
     privateNote: "All our charters are 100% private",
-    included: "Gear, bilingual crew & safety included",
+    included: "Captain & crew, rods, reels and basic tackle included",
     fishTitle: "🐟 Our Main Targets",
     marlin: "Marlin — Strong action in peak season",
     tuna: "Tuna & Dorado — Excellent when conditions align",
     wahoo: "Wahoo — Powerful strikes in season",
     rooster: "Roosterfish — Exciting inshore sight-fishing",
-    grouper: "Grouper & other inshore species",
-    calendarHint: "Check our Fishing Calendar on the website!",
+    grouper: "Grouper & other bottom species",
+    calendarHint: "Check our Fishing Calendar on the website! No catch is ever guaranteed.",
     seasonTitle: "📆 Fishing all year round!",
-    seasonText: "Every season has its stars. Warm currents and banks (Gordo Banks, Iman Bank) create exceptional conditions.",
+    seasonText: "Every season has its stars. Currents and banks (Gordo Banks, Iman Bank) create great opportunities when conditions allow.",
     boatTitle: "🚤 Our Fleet",
-    boatDesc: "From 1 to 10 guests. Fast center consoles and spacious sportfishers.",
-    boatFeat1: "Shade and comfortable seating",
-    boatFeat2: "Full safety equipment",
-    boatFeat3: "Top-quality tackle",
-    boatFeat4: "Fast hulls = more fishing time!",
-    familyTitle: "👨‍👩‍👧‍👦 Perfect for families!",
-    familyDesc: "Patient crew, calm areas, easy-to-handle species. Many say it's the highlight of their vacation!",
+    boatDesc: "10 private boats for 1 to 10 guests depending on the boat: pangas, center consoles, catamarans and sportfishers.",
+    boatFeat1: "Price varies by boat and group size",
+    boatFeat2: "Shade, seating and restroom depending on the boat",
+    boatFeat3: "Safety equipment on board",
+    boatFeat4: "We help you choose the right boat",
+    familyTitle: "👨‍👩‍👧‍👦 Families & beginners welcome!",
+    familyDesc: "No experience needed: the crew explains the gear and techniques. The 3/4 day (6 hours) is often the best choice with children. Tell us their ages so we can confirm the boat and safety equipment.",
     locationTitle: "📍 Puerto Los Cabos Marina",
-    locationDesc: "San José del Cabo. Accessible from all hotels. Direct departure to Gordo Banks and Iman Bank.",
+    locationDesc: "All our trips depart from Puerto Los Cabos Marina in San José del Cabo — not from Cabo San Lucas Marina. Usual departure around 6:30 AM. Guests staying in Cabo San Lucas are welcome.",
     includedTitle: "✅ Included in all charters",
-    includedList: "• Top-quality fishing tackle\n• Full safety equipment\n• Professional bilingual crew\n• Private fast boat",
-    notIncludedTitle: "❓ Not included",
-    notIncludedList: "• Mexican fishing license\n• Crew tip (15-20% recommended)\n• Food/drinks (varies by boat)",
+    includedList: "• Local captain and crew\n• Rods, reels and basic tackle\n• Bottled water and soft drinks\n• A private boat for your group",
+    notIncludedTitle: "❓ Varies by charter (confirm before booking)",
+    notIncludedList: "• Fishing license\n• Live bait\n• Food\n• Fish cleaning\n• Crew tip: 10-20% is customary",
     bookingTitle: "📅 To book your charter",
-    bookingSteps: "1️⃣ Choose your date\n2️⃣ Half day or full day\n3️⃣ Number of anglers (1-10)",
-    reviewsTitle: "⭐ Excellent reviews",
-    reviewsDesc: "Guests return year after year. Highlights: local knowledge, friendly crew, clean boats.",
+    bookingSteps: "1️⃣ Choose your date\n2️⃣ 3/4 day (6 hours) or full day (8 hours)\n3️⃣ Number of anglers (1-10)\n4️⃣ Pick your boat and pay the deposit online, or message us",
+    paymentTitle: "💳 Deposit payment",
+    paymentDesc: "On each boat page:\n• Stripe (card, Apple Pay, Google Pay) — 6% fee\n• Wise — no fee\nPayPal is temporarily unavailable.",
+    cancelTitle: "📄 Cancellations",
+    cancelDesc: "Under our Terms & Conditions, deposits are not refunded for cancellations by the guest, no-shows, bad weather or poor fishing. If you have questions, message us before booking.",
+    reviewsTitle: "⭐ Guest reviews",
+    reviewsDesc: "Read what our guests say on Google and Tripadvisor.",
     contactTitle: "📞 Contact us",
-    contactDesc: "💬 WhatsApp: fastest response\n📧 Email: via contact form\n🌐 www.fish-cabo.com",
-    hello: `👋 Hi! I'm **Exotic Fish Cabo**'s assistant. How can I help you?\n\n• 💰 Prices & packages\n• 🐟 Fish & seasons\n• 🚤 Boats\n• 👨‍👩‍👧‍👦 Families & beginners\n• 📅 Bookings`
+    contactDesc: "💬 WhatsApp: +52 624 122 3506 (fastest)\n📧 contact@fish-cabo.com\n📝 Form on the Contact page",
+    hello: `👋 Hi! I'm **Exotic Fish Cabo**'s assistant. How can I help you?\n\n• 💰 Prices & packages\n• 🐟 Fish & seasons\n• 🚤 Boats\n• 👨‍👩‍👧‍👦 Families & beginners\n• 📅 Bookings`,
+    wa: { intro: "Hello Exotic Fish Cabo! I have a question from your website.", question: "My question", charter: "Charter", date: "Date", guests: "Guests", general: "I would like information about your fishing charters.", h6: "3/4 day (6 hours)", h8: "Full day (8 hours)" },
+    sep: ":"
   },
-  
+
   es: {
     welcome: `👋 ¡Hola! ¡Bienvenido a **Exotic Fish Cabo**!\n\nSoy tu asistente para planificar tu día de pesca en San José del Cabo. 🎣\n\n¿En qué puedo ayudarte?`,
     placeholder: "Haz tu pregunta...",
+    inputLabel: "Tu mensaje",
+    sendLabel: "Enviar",
+    closeLabel: "Cerrar el chat",
+    windowLabel: "Asistente de pesca de Exotic Fish Cabo",
     online: "🎣 Asistente de pesca • En línea",
     bookLabel: "Reservar ahora",
     packagesLabel: "Nuestros paquetes",
     seasonsLabel: "Peces y temporadas",
+    calendarLabel: "Calendario de pesca",
+    boatsLabel: "Ver los botes",
+    termsLabel: "Términos y condiciones",
+    reviewsLabel: "Reseñas en Google",
     whatsappLabel: "WhatsApp",
-    whatsappPre: "¡Hola Exotic Fish Cabo! Tengo una pregunta desde su sitio web: ",
+    youSaid: "Tú",
     unknown1: `🤔 No estoy seguro de entender. Intenta:\n\n• "¿Cuáles son los precios?"\n• "¿Qué peces hay ahora?"\n• "¿Es bueno para principiantes?"\n• "¿Cómo reservo?"`,
     unknown2: `🤔 No tengo la respuesta exacta en mi base de conocimientos.\n\nDéjame conectarte directamente con nuestro equipo:`,
+    tooLong: "✂️ Tu mensaje era largo: conservé los primeros 500 caracteres.",
     thanks: `🙏 ¡De nada!\n\nRecuerda: la pesca en Los Cabos es **todo el año**. ¡Reserva temprano en temporada alta! 🎣`,
     priceTitle: "💰 Nuestros paquetes privados",
-    halfDay: "🕕 3/4 Día (6 horas) — Desde 350 USD",
-    halfDayDesc: "Pesca mixta inshore/offshore, perfecto para familias",
-    fullDay: "🕗 Día completo (8 horas) — Desde 600 USD",
-    fullDayDesc: "Pesca offshore seria para pescadores experimentados",
+    halfDay: "🕕 3/4 de día (6 horas) — Desde 350 USD por bote (1-2 personas, botes seleccionados)",
+    halfDayDesc: "Pesca costera, media o de altura según las condiciones — ideal para familias y principiantes",
+    fullDay: "🕗 Día completo (8 horas) — Desde 600 USD por bote",
+    fullDayDesc: "Más tiempo mar adentro para especies pelágicas",
+    priceNote: "El precio final depende del bote, el número de personas y la duración.",
     privateNote: "Todos nuestros charters son 100% privados",
-    included: "Equipo, crew bilingüe y seguridad incluidos",
+    included: "Capitán y tripulación, cañas, carretes y aparejos básicos incluidos",
     fishTitle: "🐟 Nuestros objetivos principales",
-    marlin: "Marlin — Acción fuerte en temporada alta",
-    tuna: "Atún & Dorado — Excelentes cuando se alinean condiciones",
-    wahoo: "Wahoo — Golpes poderosos en temporada",
-    rooster: "Roosterfish — Pesca inshore emocionante",
-    grouper: "Mero y otras especies costeras",
-    calendarHint: "¡Consulta nuestro Fishing Calendar en el sitio!",
+    marlin: "Marlín — Mucha acción en temporada alta",
+    tuna: "Atún y Dorado — Excelentes cuando las condiciones se alinean",
+    wahoo: "Wahoo — Ataques potentes en temporada",
+    rooster: "Pez gallo (roosterfish) — Pesca costera a la vista, muy emocionante",
+    grouper: "Mero y otras especies de fondo",
+    calendarHint: "¡Consulta nuestro calendario de pesca en el sitio! Ninguna captura está garantizada.",
     seasonTitle: "📆 ¡Pesca todo el año!",
-    seasonText: "Cada temporada tiene sus estrellas. Las corrientes cálidas y bancos (Gordo Banks, Iman Bank) crean condiciones excepcionales.",
+    seasonText: "Cada temporada tiene sus estrellas. Las corrientes y los bancos (Gordo Banks, Iman Bank) ofrecen grandes oportunidades según las condiciones.",
     boatTitle: "🚤 Nuestra flota",
-    boatDesc: "De 1 a 10 invitados. Center consoles rápidos y sportfishers espaciosos.",
-    boatFeat1: "Sombra y asientos cómodos",
-    boatFeat2: "Equipo de seguridad completo",
-    boatFeat3: "Equipo de pesca de alta gama",
-    boatFeat4: "Casco rápido = ¡más tiempo pescando!",
-    familyTitle: "👨‍👩‍👧‍👦 ¡Perfecto para familias!",
-    familyDesc: "Tripulación paciente, zonas tranquilas, especies fáciles. ¡Muchos dicen que es lo mejor de sus vacaciones!",
+    boatDesc: "10 botes privados de 1 a 10 personas según el bote: pangas, center consoles, catamaranes y sportfishers.",
+    boatFeat1: "El precio varía según el bote y el número de personas",
+    boatFeat2: "Sombra, asientos y baño según el bote",
+    boatFeat3: "Equipo de seguridad a bordo",
+    boatFeat4: "Te ayudamos a elegir el bote adecuado",
+    familyTitle: "👨‍👩‍👧‍👦 ¡Familias y principiantes bienvenidos!",
+    familyDesc: "No se necesita experiencia: la tripulación explica el equipo y las técnicas. El 3/4 de día (6 horas) suele ser la mejor opción con niños. Indícanos sus edades para confirmar el bote y el equipo de seguridad.",
     locationTitle: "📍 Marina Puerto Los Cabos",
-    locationDesc: "San José del Cabo. Accesible desde todos los hoteles. Salida directa a Gordo Banks e Iman Bank.",
+    locationDesc: "Todas nuestras salidas son desde la Marina Puerto Los Cabos, en San José del Cabo — no desde la marina de Cabo San Lucas. Salida habitual alrededor de las 6:30 AM. Si te hospedas en Cabo San Lucas, eres bienvenido.",
     includedTitle: "✅ Incluido en todos los charters",
-    includedList: "• Equipo de pesca de alta gama\n• Equipo de seguridad completo\n• Tripulación profesional bilingüe\n• Bote privado rápido",
-    notIncludedTitle: "❓ No incluido",
-    notIncludedList: "• Licencia de pesca mexicana\n• Propina crew (15-20% recomendado)\n• Comida/bebidas (varía por bote)",
+    includedList: "• Capitán y tripulación locales\n• Cañas, carretes y aparejos básicos\n• Agua embotellada y refrescos\n• Bote privado para tu grupo",
+    notIncludedTitle: "❓ Según el charter (confirmar antes de reservar)",
+    notIncludedList: "• Licencia de pesca\n• Carnada viva\n• Comida\n• Limpieza del pescado\n• Propina para la tripulación: se acostumbra 10-20%",
     bookingTitle: "📅 Para reservar",
-    bookingSteps: "1️⃣ Elige tu fecha\n2️⃣ Medio día o día completo\n3️⃣ Número de pescadores (1-10)",
-    reviewsTitle: "⭐ Excelentes evaluaciones",
-    reviewsDesc: "Clientes que regresan año tras año. Destacan: conocimiento local, tripulación amigable, botes limpios.",
+    bookingSteps: "1️⃣ Elige tu fecha\n2️⃣ 3/4 de día (6 horas) o día completo (8 horas)\n3️⃣ Número de pescadores (1-10)\n4️⃣ Elige tu bote y paga el depósito en línea, o escríbenos",
+    paymentTitle: "💳 Pago del depósito",
+    paymentDesc: "En la página de cada bote:\n• Stripe (tarjeta, Apple Pay, Google Pay) — 6% de comisión\n• Wise — sin comisión\nPayPal no está disponible por el momento.",
+    cancelTitle: "📄 Cancelaciones",
+    cancelDesc: "Según nuestros términos y condiciones, el depósito no se reembolsa por cancelación del cliente, no presentarse, mal tiempo o mala pesca. Si tienes dudas, escríbenos antes de reservar.",
+    reviewsTitle: "⭐ Opiniones de clientes",
+    reviewsDesc: "Lee lo que dicen nuestros clientes en Google y Tripadvisor.",
     contactTitle: "📞 Contáctanos",
-    contactDesc: "💬 WhatsApp: la respuesta más rápida\n📧 Email: vía formulario\n🌐 www.fish-cabo.com",
-    hello: `👋 ¡Hola! Soy el asistente de **Exotic Fish Cabo**. ¿Cómo puedo ayudarte?\n\n• 💰 Precios y paquetes\n• 🐟 Peces y temporadas\n• 🚤 Botes\n• 👨‍👩‍👧‍👦 Familias y principiantes\n• 📅 Reservas`
+    contactDesc: "💬 WhatsApp: +52 624 122 3506 (la respuesta más rápida)\n📧 contact@fish-cabo.com\n📝 Formulario en la página de Contacto",
+    hello: `👋 ¡Hola! Soy el asistente de **Exotic Fish Cabo**. ¿Cómo puedo ayudarte?\n\n• 💰 Precios y paquetes\n• 🐟 Peces y temporadas\n• 🚤 Botes\n• 👨‍👩‍👧‍👦 Familias y principiantes\n• 📅 Reservas`,
+    wa: { intro: "¡Hola Exotic Fish Cabo! Tengo una pregunta desde su sitio web.", question: "Mi pregunta", charter: "Charter", date: "Fecha", guests: "Personas", general: "Me gustaría información sobre sus charters de pesca.", h6: "3/4 de día (6 horas)", h8: "Día completo (8 horas)" },
+    sep: ":"
   }
 };
 
 // ============================================
-// DÉTECTION DE LANGUE
+// SAFE RENDERING
 // ============================================
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// Trusted predefined texts only: escape first, then **bold** and line breaks
+const fmt = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
 
+// ============================================
+// LANGUAGE DETECTION (from the visitor's own words)
+// ============================================
 function detectLanguage(text) {
-  const lower = text.toLowerCase();
-  
-  // Mots-clés espagnols
-  const esWords = /hola|qué|cuál|precio|precios|cuánto|reservar|reserva|pescar|pesca|pez|peces|barco|bote|familia|niños|dónde|cuándo|temporada|incluido|gracias|adios|buenos|buenas|como|donde|cuando|cuesta|barato|caro|marlin|atun|dorado|wahoo|rooster|mero|capacidad|personas|gente|contacto|telefono|numero|email|correo|ayuda|por favor|disculpe/;
-  
-  // Mots-clés français
-  const frWords = /bonjour|salut|quoi|quel|quelle|prix|combien|coût|tarif|réserver|réservation|pêche|poisson|bateau|famille|enfants|où|quand|saison|inclus|merci|au revoir|bonsoir|comment|coûte|cher|pas cher|marlin|thon|dorade|wahoo|rooster|grouper|capacité|personnes|contact|téléphone|numéro|email|aide|s'il vous plaît|excusez/;
-  
-  // Mots-clés anglais
-  const enWords = /hello|hi|hey|what|which|price|prices|how much|cost|book|booking|fish|fishing|boat|family|kids|children|where|when|season|included|thanks|thank|goodbye|bye|how|does|cheap|expensive|marlin|tuna|dorado|wahoo|rooster|grouper|capacity|people|guests|contact|phone|number|email|help|please|sorry/;
-  
-  let esScore = (lower.match(esWords) || []).length;
-  let frScore = (lower.match(frWords) || []).length;
-  let enScore = (lower.match(enWords) || []).length;
-  
-  // Priorité si égalité : EN > ES > FR (majorité de vos clients)
-  if (esScore > frScore && esScore > enScore) return 'es';
-  if (enScore >= frScore && enScore >= esScore) return 'en';
-  if (frScore > enScore && frScore > esScore) return 'fr';
-  
-  // Détection navigateur par défaut
-  const navLang = navigator.language || navigator.userLanguage;
-  if (navLang.startsWith('es')) return 'es';
-  if (navLang.startsWith('fr')) return 'fr';
-  return 'en'; // défaut anglais
+  const lower = ' ' + text.toLowerCase() + ' ';
+  const count = (re) => (lower.match(W(re, 'gu')) || []).length;
+  const es = count(/\b(hola|qué|que|cuál|cual|precios?|cuánto|cuanto|reservar|reserva|pescar|pesca|peces|pez|barco|bote|familia|niños|dónde|donde|cuándo|cuando|temporada|incluye|incluido|gracias|adiós|adios|buenos|buenas|cómo|como|cuesta|personas|quiero|para|con|es|hay|tienen|día|mañana)\b/g);
+  const fr = count(/\b(bonjour|salut|quoi|quel|quelle|prix|combien|coût|tarif|réserver|réservation|pêche|poisson|bateau|famille|enfants|où|quand|saison|inclus|merci|bonsoir|comment|coûte|personnes|je|vous|est|pour|avec|une|journée|demain)\b/g);
+  const en = count(/\b(hello|hi|hey|what|which|price|prices|how|much|cost|book|booking|fish|fishing|boat|family|kids|children|where|when|season|included|thanks|thank|bye|does|people|guests|the|is|are|for|with|day|tomorrow|can|do)\b/g);
+  if (es > en && es > fr) return 'es';
+  if (fr > en && fr > es) return 'fr';
+  if (en > es && en > fr) return 'en';
+  return null; // undecided: keep the current language
 }
 
 // ============================================
-// ÉTAT GLOBAL
+// STATE
 // ============================================
 let currentLang = 'en';
+let manualLang = false;      // a language chosen with EN/ES/FR overrides automatic detection
 let chatOpen = false;
 let unknownCount = 0;
 const MAX_UNKNOWN = 2;
+const history = [];          // [{who:'user', text}] | [{who:'bot', kind, ctx}] — bot messages are re-rendered on language change
+const facts = { question: '', charter: '', date: '', guests: '' };  // only what the visitor actually wrote
 
-function setLang(lang, save = true) {
+const store = {
+  get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } },
+};
+const $ = (id) => document.getElementById(id);
+
+function setLang(lang, manual) {
+  if (!I18N[lang]) return;
   currentLang = lang;
-  if (save) localStorage.setItem('efc-lang', lang);
-  
-  // Update UI
-  document.querySelectorAll('#efc-lang-selector button').forEach(btn => {
-    btn.classList.toggle('active', btn.id === `btn-${lang}`);
-  });
-  
+  if (manual) { manualLang = true; store.set('efc-lang', lang); store.set('efc-lang-manual', '1'); }
   const t = I18N[lang];
-  document.getElementById('efc-input').placeholder = t.placeholder;
-  document.getElementById('efc-status').textContent = t.online;
-  
-  // Si chat vide, montrer welcome dans la nouvelle langue
-  const msgs = document.getElementById('efc-messages');
-  if (msgs.children.length === 0 && chatOpen) {
-    showWelcome();
-  }
+  document.querySelectorAll('#efc-lang-selector button').forEach((btn) => {
+    const on = btn.id === `btn-${lang}`;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  $('efc-input').placeholder = t.placeholder;
+  $('efc-input').setAttribute('aria-label', t.inputLabel);
+  $('efc-send').setAttribute('aria-label', t.sendLabel);
+  $('efc-close').setAttribute('aria-label', t.closeLabel);
+  $('efc-chat-window').setAttribute('aria-label', t.windowLabel);
+  $('efc-status').textContent = t.online;
+  rerender();
 }
 
-function toggleChat() {
-  chatOpen = !chatOpen;
-  const win = document.getElementById('efc-chat-window');
-  const bubble = document.getElementById('efc-chat-bubble');
-  
-  if (chatOpen) {
-    win.classList.add('active');
-    bubble.style.display = 'none';
-    if (document.getElementById('efc-messages').children.length === 0) {
-      setTimeout(() => showWelcome(), 300);
-    }
-    document.getElementById('efc-input').focus();
-  } else {
-    win.classList.remove('active');
-    bubble.style.display = 'flex';
-  }
+// ============================================
+// WHATSAPP HANDOFF (only opens when the visitor clicks)
+// ============================================
+function extractFacts(text) {
+  const q = text.toLowerCase();
+  if (/\b(8\s*h|8\s*hours?|8\s*heures?|8\s*horas?|full[\s-]*day|journée complète|día completo|dia completo)\b/.test(q)) facts.charter = 'h8';
+  else if (/\b(6\s*h|6\s*hours?|6\s*heures?|6\s*horas?|3\/4|three[\s-]*quarter|half[\s-]*day|demi[\s-]*journée|medio día|medio dia)\b/.test(q)) facts.charter = 'h6';
+  const g = q.match(/\b(\d{1,2})\s*(people|persons?|guests?|adults?|anglers?|pax|personnes?|adultes?|pêcheurs?|personas?|adultos?|pescadores?)\b/);
+  if (g && +g[1] > 0 && +g[1] <= 30) facts.guests = g[1];
+  const months = 'jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre';
+  const d = text.match(new RegExp(`\\b(\\d{1,2}(?:er)?\\s*(?:de\\s+)?(?:${months})|(?:${months})\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?|\\d{1,2}[/.-]\\d{1,2}(?:[/.-]\\d{2,4})?|\\d{4}-\\d{2}-\\d{2})\\b`, 'i'));
+  if (d) facts.date = d[1];
+}
+function waLink() {
+  const t = I18N[currentLang], w = t.wa;
+  const lines = [w.intro];
+  if (facts.question) lines.push(`${w.question}${t.sep} ${facts.question.slice(0, 300)}`);
+  else lines.push(w.general);
+  if (facts.charter) lines.push(`${w.charter}${t.sep} ${w[facts.charter]}`);
+  if (facts.date) lines.push(`${w.date}${t.sep} ${facts.date}`);
+  if (facts.guests) lines.push(`${w.guests}${t.sep} ${facts.guests}`);
+  return `https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, '')}?text=${encodeURIComponent(lines.join('\n'))}`;
 }
 
+// ============================================
+// RESPONSES (kind → text + actions, rendered in the current language)
+// ============================================
+const A = {
+  book: (t) => ({ type: 'book', label: t.bookLabel, url: '/contact' }),
+  wa: (t) => ({ type: 'whatsapp', label: t.whatsappLabel }),
+  link: (label, url) => ({ type: 'link', label, url }),
+};
+const RESPONSES = {
+  welcome: (t) => ({ text: t.welcome, actions: [A.link('📋 ' + t.packagesLabel, '/fishing-charters'), A.link('🐟 ' + t.seasonsLabel, '/fishing-calendar'), A.book(t), A.wa(t)] }),
+  price: (t) => ({ text: `${t.priceTitle}\n\n${t.halfDay}\n${t.halfDayDesc}\n\n${t.fullDay}\n${t.fullDayDesc}\n\n${t.priceNote}\n✅ ${t.privateNote}\n✅ ${t.included}`, actions: [A.link('🚤 ' + t.boatsLabel, '/fishing-boats'), A.book(t)] }),
+  included: (t) => ({ text: `${t.includedTitle}${t.sep}\n${t.includedList}\n\n${t.notIncludedTitle}${t.sep}\n${t.notIncludedList}`, actions: [A.book(t), A.wa(t)] }),
+  payment: (t) => ({ text: `${t.paymentTitle}\n\n${t.paymentDesc}`, actions: [A.link('🚤 ' + t.boatsLabel, '/fishing-boats'), A.wa(t)] }),
+  cancel: (t) => ({ text: `${t.cancelTitle}\n\n${t.cancelDesc}`, actions: [A.link('📄 ' + t.termsLabel, '/terms-conditions'), A.wa(t)] }),
+  booking: (t) => ({ text: `${t.bookingTitle}${t.sep}\n\n${t.bookingSteps}\n\n${t.privateNote}`, actions: [A.link('🚤 ' + t.boatsLabel, '/fishing-boats'), A.book(t), A.wa(t)] }),
+  family: (t) => ({ text: `${t.familyTitle}\n\n${t.familyDesc}`, actions: [A.link('👨‍👩‍👧‍👦 ' + t.packagesLabel, '/family-fishing-charters-san-jose-del-cabo'), A.book(t)] }),
+  boats: (t) => ({ text: `${t.boatTitle}\n\n${t.boatDesc}\n\n✅ ${t.boatFeat1}\n✅ ${t.boatFeat2}\n✅ ${t.boatFeat3}\n✅ ${t.boatFeat4}`, actions: [A.link('🚤 ' + t.boatsLabel, '/fishing-boats'), A.book(t)] }),
+  location: (t) => ({ text: `${t.locationTitle}\n\n${t.locationDesc}`, actions: [A.book(t), A.wa(t)] }),
+  season: (t) => ({ text: `${t.seasonTitle}\n\n${t.seasonText}`, actions: [A.link('📅 ' + t.calendarLabel, '/fishing-calendar')] }),
+  fish: (t) => ({ text: `${t.fishTitle}${t.sep}\n\n🎣 ${t.marlin}\n🐠 ${t.tuna}\n⚡ ${t.wahoo}\n🌊 ${t.rooster}\n🪨 ${t.grouper}\n\n${t.calendarHint}`, actions: [A.link('📅 ' + t.calendarLabel, '/fishing-calendar')] }),
+  contact: (t) => ({ text: `${t.contactTitle}${t.sep}\n\n${t.contactDesc}`, actions: [A.book(t), A.wa(t)] }),
+  reviews: (t) => ({ text: `${t.reviewsTitle}\n\n${t.reviewsDesc}`, actions: [A.link('⭐ ' + t.reviewsLabel, REVIEWS_URL), A.book(t)] }),
+  hello: (t) => ({ text: t.hello, actions: [A.book(t)] }),
+  thanks: (t) => ({ text: t.thanks, actions: [A.book(t), A.wa(t)] }),
+  unknown1: (t) => ({ text: t.unknown1, actions: [A.wa(t), A.book(t)] }),
+  unknown2: (t) => ({ text: t.unknown2, actions: [A.wa(t), A.book(t)] }),
+  tooLong: (t) => ({ text: t.tooLong, actions: [] }),
+};
+// Unicode-aware word boundaries (JS \b treats accented letters as non-word characters: "número" would match "mero")
+const W = (re, flags = 'u') => new RegExp('(?<![\\p{L}\\p{N}])(?:' + re.source.replace(/^\\b\(/, '(').replace(/\)\\b$/, ')').replace(/\\w\*/g, '[\\p{L}\\p{N}]*') + ')(?![\\p{L}\\p{N}])', flags);
+// Order matters: the most specific topics first. Word boundaries avoid false matches (e.g. "hi" inside "fishing").
+const RULES = [
+  ['price', /\b(prix|tarifs?|co[uû]ts?|combien|cost|costs|price|prices|pricing|rates?|how much|cheap|expensive|cher|precios?|cu[aá]nto|cuesta|barato|caro|tarifa)\b/],
+  ['cancel', /\b(cancel|cancell?ation|refund|annul\w*|rembours\w*|cancela\w*|reembols\w*|devoluci[oó]n)\b/],
+  ['payment', /\b(pay|payment|deposit|stripe|wise|paypal|card|payer|paiement|acompte|carte|pagar|pago|dep[oó]sito|tarjeta|anticipo)\b/],
+  ['included', /\b(inclus\w*|include[sd]?|including|equipment|tackle|gear|mat[eé]riel|[eé]quipement|nourriture|food|drinks?|boissons?|licen[cs]es?|pourboires?|tips?|gratuit(y|ies)|bait|app[aâ]ts?|incluye|incluido|equipo|comida|bebidas?|licencias?|propinas?|carnada)\b/],
+  ['booking', /\b(book|booking|reserve|reservation|r[eé]server|r[eé]servation|disponibilit[eé]s?|availability|available|reservar|reserva|disponibilidad|fechas?)\b/],
+  ['family', /\b(famil(y|ies|le|les|ia)|enfants?|kids?|children|child|d[eé]butants?|beginners?|first time|premi[eè]re fois|novices?|ni[nñ]os?|principiantes?|primera vez)\b/],
+  ['location', /\b(o[uù]|where|location|d[eé]parts?|partez|partir|depart\w*|marina|puerto|meeting|rendez-vous|adresse|address|d[oó]nde|ubicaci[oó]n|salida|direcci[oó]n|cabo san lucas)\b/],
+  ['boats', /\b(bateaux?|boats?|navires?|capacity|capacit[eé]|guests|barcos?|botes?|capacidad|cu[aá]ntas personas|combien de personnes|how many people)\b/],
+  ['season', /\b(saisons?|calendrier|calendar|months?|mois|meilleure? p[eé]riode|best time|temporadas?|calendario|mes(es)?|mejor [eé]poca|[eé]poca)\b/],
+  ['fish', /\b(poissons?|fish(es)?|catch|esp[eè]ces?|species|marl[ií]n|thon|tuna|dorad[eo]|mahi|wahoo|rooster\w*|pez|peces|at[uú]n|mero|grouper|m[eé]rou|pez gallo)\b/],
+  ['contact', /\b(contact\w*|e-?mail|t[eé]l[eé]phone|phone|appeler|call|num[eé]ro|number|tel[eé]fono|llamar|correo|whatsapp)\b/],
+  ['reviews', /\b(avis|reviews?|reputation|r[eé]putation|tripadvisor|feedback|opini[oó]n(es)?|rese[nñ]as?|evaluaciones)\b/],
+  ['hello', /\b(bonjour|salut|hello|hi|hey|hola|buenos d[ií]as|buenas)\b/],
+  ['thanks', /\b(merci|thanks?|thank you|au revoir|bye|gracias|adi[oó]s|hasta luego)\b/],
+];
+function findKind(input) {
+  const q = ' ' + input.toLowerCase() + ' ';
+  for (const [kind, re] of RULES) if (W(re).test(q)) return kind;
+  return null;
+}
+
+// ============================================
+// RENDERING
+// ============================================
 function getTime() {
   const now = new Date();
-  return now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  return now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
 }
-
-function addMessage(text, isUser = false, actions = []) {
-  const container = document.getElementById('efc-messages');
+function renderEntry(entry) {
   const div = document.createElement('div');
-  div.className = `efc-msg ${isUser ? 'efc-user' : 'efc-bot'}`;
-  
-  let html = text.replace(/\n/g, '<br>');
-  
-  if (actions.length > 0) {
+  if (entry.who === 'user') {
+    div.className = 'efc-msg efc-user';
+    div.innerHTML = esc(entry.text).replace(/\n/g, '<br>') + `<div class="efc-time">${esc(entry.time)}</div>`; // visitor text is always escaped
+    return div;
+  }
+  const t = I18N[currentLang];
+  const r = RESPONSES[entry.kind](t);
+  div.className = 'efc-msg efc-bot';
+  let html = fmt(r.text);
+  if (r.actions.length) {
     html += '<div class="efc-actions">';
-    actions.forEach(action => {
-      if (action.type === 'link') {
-        html += `<a href="${action.url}" class="efc-btn" target="_blank">${action.label}</a>`;
-      } else if (action.type === 'book') {
-        html += `<a href="${action.url}" class="efc-btn-primary">📅 ${action.label}</a>`;
-      } else if (action.type === 'whatsapp') {
-        const msg = I18N[currentLang].whatsappPre + action.context;
-        // wa.me exige le numéro sans "+" ni espaces
-        const waNumber = WHATSAPP_NUMBER.replace(/\D/g, '');
-        html += `<a href="https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}" class="efc-btn-primary" target="_blank">💬 ${action.label}</a>`;
-      }
-    });
+    for (const a of r.actions) {
+      if (a.type === 'link') html += `<a href="${esc(a.url)}" class="efc-btn"${/^https?:/.test(a.url) ? ' target="_blank" rel="noopener"' : ''}>${esc(a.label)}</a>`;
+      else if (a.type === 'book') html += `<a href="${esc(a.url)}" class="efc-btn-primary">📅 ${esc(a.label)}</a>`;
+      else if (a.type === 'whatsapp') html += `<a href="${esc(waLink())}" class="efc-btn-primary efc-wa" target="_blank" rel="noopener">💬 ${esc(a.label)}</a>`;
+    }
     html += '</div>';
   }
-  
-  html += `<div class="efc-time">${getTime()}</div>`;
+  html += `<div class="efc-time">${esc(entry.time)}</div>`;
   div.innerHTML = html;
-  container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
+  return div;
 }
+function rerender() {
+  const box = $('efc-messages');
+  if (!box) return;
+  box.textContent = '';
+  for (const e of history) box.appendChild(renderEntry(e));
+  box.scrollTop = box.scrollHeight;
+}
+function push(entry) {
+  entry.time = getTime();
+  history.push(entry);
+  const box = $('efc-messages');
+  box.appendChild(renderEntry(entry));
+  box.scrollTop = box.scrollHeight;
+}
+// WhatsApp links already on screen always carry the latest facts
+function refreshWaLinks() { document.querySelectorAll('#efc-messages a.efc-wa').forEach((a) => { a.href = waLink(); }); }
 
 function showTyping() {
-  const container = document.getElementById('efc-messages');
   const div = document.createElement('div');
   div.id = 'efc-typing';
   div.className = 'efc-typing';
   div.innerHTML = '<span></span><span></span><span></span>';
-  container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
-  return div;
+  $('efc-messages').appendChild(div);
+  $('efc-messages').scrollTop = $('efc-messages').scrollHeight;
 }
+function removeTyping() { const el = $('efc-typing'); if (el) el.remove(); }
 
-function removeTyping() {
-  const el = document.getElementById('efc-typing');
-  if (el) el.remove();
-}
-
-function showWelcome() {
-  const t = I18N[currentLang];
-  addMessage(t.welcome, false, [
-    {type: 'link', label: '📋 ' + t.packagesLabel, url: '/fishing-charters'},
-    {type: 'link', label: '🐟 ' + t.seasonsLabel, url: '/fishing-calendar'},
-    {type: 'book', label: t.bookLabel, url: '/contact'},
-    {type: 'whatsapp', label: t.whatsappLabel, context: 'General inquiry'}
-  ]);
-}
+function showWelcome() { push({ who: 'bot', kind: 'welcome' }); }
 
 // ============================================
-// MOTEUR DE RÉPONSE MULTILINGUE
+// OPEN / CLOSE / SEND
 // ============================================
-
-function findBestResponse(input) {
-  const q = input.toLowerCase();
-  const t = I18N[currentLang];
-  
-  // === PRIX ===
-  if (q.match(/prix|tarif|coût|combien|cost|price|cheap|cher|precio|precios|cuánto|cuesta|barato|caro/)) {
-    return {
-      text: `${t.priceTitle}\n\n${t.halfDay}\n${t.halfDayDesc}\n\n${t.fullDay}\n${t.fullDayDesc}\n\n✅ ${t.privateNote}\n✅ ${t.included}`,
-      actions: [{type: 'book', label: t.bookLabel, url: '/contact'}]
-    };
-  }
-  
-  // === RÉSERVATION ===
-  if (q.match(/book|réserver|réservation|reserve|booking|disponibilité|date|reservar|reserva|disponibilidad|fecha|cuando.*pescar/)) {
-    return {
-      text: `${t.bookingTitle} :\n\n${t.bookingSteps}\n\n${t.privateNote}`,
-      actions: [{type: 'book', label: t.bookLabel, url: '/contact'}]
-    };
-  }
-  
-  // === POISSONS ===
-  if (q.match(/poisson|fish|catch|espèce|marlin|thon|tuna|dorado|wahoo|rooster|pez|peces|pescar|atun|mero/)) {
-    return {
-      text: `${t.fishTitle} :\n\n🎣 ${t.marlin}\n🐠 ${t.tuna}\n⚡ ${t.wahoo}\n🌊 ${t.rooster}\n🪨 ${t.grouper}\n\n${t.calendarHint}`,
-      actions: [{type: 'link', label: '📅 Fishing Calendar', url: '/fishing-calendar'}]
-    };
-  }
-  
-  // === SAISONS ===
-  if (q.match(/saison|calendrier|calendar|month|mois|meilleur|best|période|temporada|calendario|mes|mejor|epoca/)) {
-    return {
-      text: `${t.seasonTitle}\n\n${t.seasonText}`,
-      actions: [{type: 'link', label: '📅 Fishing Calendar', url: '/fishing-calendar'}]
-    };
-  }
-  
-  // === BATEAUX ===
-  if (q.match(/bateau|boat|navire|capacity|capacité|combien.*personne|guest|barco|bote|capacidad|cuantas.*personas|cuantos/)) {
-    return {
-      text: `${t.boatTitle}\n\n${t.boatDesc}\n\n✅ ${t.boatFeat1}\n✅ ${t.boatFeat2}\n✅ ${t.boatFeat3}\n✅ ${t.boatFeat4}`,
-      actions: [{type: 'book', label: t.bookLabel, url: '/contact'}]
-    };
-  }
-  
-  // === FAMILLE ===
-  if (q.match(/famille|family|enfant|kid|débutant|beginner|first.*time|première|novice|familia|niños|niño|principiante|primera.*vez/)) {
-    return {
-      text: `${t.familyTitle}\n\n${t.familyDesc}`,
-      actions: [{type: 'book', label: t.bookLabel, url: '/contact'}]
-    };
-  }
-  
-  // === LOCALISATION ===
-  if (q.match(/où|where|location|départ|depart|marina|puerto|san.*jose|los.*cabos|adresse|address|donde|ubicacion|salida|direccion/)) {
-    return {
-      text: `${t.locationTitle}\n\n${t.locationDesc}`,
-      actions: [{type: 'book', label: t.bookLabel, url: '/contact'}]
-    };
-  }
-  
-  // === INCLUS ===
-  if (q.match(/inclus|included|what.*include|équipement|tackle|matériel|nourriture|food|drink|boisson|license|licence|pourboire|tip|incluido|que.*incluye|equipo|comida|bebida|licencia|propina/)) {
-    return {
-      text: `${t.includedTitle} :\n${t.includedList}\n\n${t.notIncludedTitle} :\n${t.notIncludedList}`,
-      actions: [{type: 'book', label: t.bookLabel, url: '/contact'}]
-    };
-  }
-  
-  // === CONTACT ===
-  if (q.match(/contact|email|téléphone|phone|appeler|call|numéro|number|contacto|telefono|numero|llamar|correo/)) {
-    return {
-      text: `${t.contactTitle} :\n\n${t.contactDesc}`,
-      actions: [
-        {type: 'book', label: t.bookLabel, url: '/contact'},
-        {type: 'whatsapp', label: t.whatsappLabel, context: 'Contact request'}
-      ]
-    };
-  }
-  
-  // === AVIS ===
-  if (q.match(/avis|review|reputation|tripadvisor|retour|client|feedback|opinion|opiniones|evaluaciones|resenas/)) {
-    return {
-      text: `${t.reviewsTitle}\n\n${t.reviewsDesc}`,
-      actions: [{type: 'book', label: t.bookLabel, url: '/contact'}]
-    };
-  }
-  
-  // === SALUTATIONS ===
-  if (q.match(/bonjour|salut|hello|hi|hey|hola|buenos|buenas/)) {
-    return {
-      text: t.hello,
-      actions: [{type: 'book', label: t.bookLabel, url: '/contact'}]
-    };
-  }
-  
-  // === MERCI ===
-  if (q.match(/merci|thank|thanks|au revoir|bye|gracias|adios|hasta/)) {
-    return {
-      text: t.thanks,
-      actions: [
-        {type: 'book', label: t.bookLabel, url: '/contact'},
-        {type: 'whatsapp', label: t.whatsappLabel, context: 'Follow-up from chat'}
-      ]
-    };
-  }
-  
-  return null;
-}
-
-function handleUnknown() {
-  unknownCount++;
-  const t = I18N[currentLang];
-  
-  if (unknownCount >= MAX_UNKNOWN) {
-    return {
-      text: t.unknown2,
-      actions: [
-        {type: 'whatsapp', label: t.whatsappLabel, context: 'Advanced question not handled by bot'},
-        {type: 'book', label: t.bookLabel, url: '/contact'}
-      ]
-    };
+function toggleChat(auto) {
+  chatOpen = !chatOpen;
+  const win = $('efc-chat-window'), bubble = $('efc-chat-bubble');
+  if (chatOpen) {
+    win.classList.add('active');
+    bubble.style.display = 'none';
+    bubble.setAttribute('aria-expanded', 'true');
+    if (!history.length) setTimeout(showWelcome, 300);
+    if (auto !== true) $('efc-input').focus(); // no focus steal (and no mobile keyboard) on the automatic opening
   } else {
-    return {
-      text: t.unknown1,
-      actions: [
-        {type: 'whatsapp', label: t.whatsappLabel, context: 'Question not understood by bot'},
-        {type: 'book', label: t.bookLabel, url: '/contact'}
-      ]
-    };
+    win.classList.remove('active');
+    bubble.style.display = 'flex';
+    bubble.setAttribute('aria-expanded', 'false');
+    bubble.focus();
   }
 }
-
-// ============================================
-// GESTION DES MESSAGES
-// ============================================
 
 function sendMessage() {
-  const input = document.getElementById('efc-input');
-  const text = input.value.trim();
+  const input = $('efc-input');
+  let text = input.value.replace(/\s+/g, ' ').trim();
   if (!text) return;
-  
-  // Détecter langue au premier message
-  const msgs = document.getElementById('efc-messages');
-  if (msgs.children.length === 0 || (msgs.children.length === 1 && !chatOpen)) {
-    const detected = detectLanguage(text);
-    if (detected !== currentLang) {
-      setLang(detected);
-    }
-  }
-  
-  addMessage(text, true);
+  const cut = text.length > MAX_INPUT;
+  if (cut) text = text.slice(0, MAX_INPUT);
+  // Automatic language detection on every message until the visitor picks EN/ES/FR manually
+  if (!manualLang) { const d = detectLanguage(text); if (d && d !== currentLang) setLang(d, false); }
+  push({ who: 'user', text });
   input.value = '';
-  
-  const typing = showTyping();
-  
+  facts.question = text;
+  extractFacts(text);
+  refreshWaLinks();
+  showTyping();
   setTimeout(() => {
     removeTyping();
-    const response = findBestResponse(text) || handleUnknown();
-    addMessage(response.text, false, response.actions);
+    if (cut) push({ who: 'bot', kind: 'tooLong' });
+    let kind = findKind(text);
+    if (!kind) { unknownCount++; kind = unknownCount >= MAX_UNKNOWN ? 'unknown2' : 'unknown1'; }
+    push({ who: 'bot', kind });
   }, 700 + Math.random() * 500);
 }
 
 // ============================================
 // INITIALISATION
 // ============================================
+function init() {
+  const win = $('efc-chat-window');
+  if (!win) return;
+  win.setAttribute('role', 'dialog');
+  $('efc-messages').setAttribute('aria-live', 'polite');
+  $('efc-chat-bubble').setAttribute('aria-expanded', 'false');
+  $('efc-chat-bubble').setAttribute('aria-controls', 'efc-chat-window');
+  $('efc-input').setAttribute('maxlength', String(MAX_INPUT + 200));
+  // Saved manual choice > browser language > English
+  const saved = store.get('efc-lang');
+  const nav = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+  if (saved && I18N[saved] && store.get('efc-lang-manual') === '1') { currentLang = saved; manualLang = true; }
+  else currentLang = nav.startsWith('es') ? 'es' : nav.startsWith('fr') ? 'fr' : 'en';
+  setLang(currentLang, false);
 
-// Langue sauvegardée ou détection navigateur
-const savedLang = localStorage.getItem('efc-lang');
-const navLang = navigator.language || navigator.userLanguage;
-if (savedLang) {
-  currentLang = savedLang;
-} else if (navLang.startsWith('es')) {
-  currentLang = 'es';
-} else if (navLang.startsWith('fr')) {
-  currentLang = 'fr';
-} else {
-  currentLang = 'en';
+  $('efc-chat-bubble').addEventListener('click', () => toggleChat());
+  $('efc-chat-bubble').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleChat(); } });
+  $('efc-close').addEventListener('click', () => toggleChat());
+  ['en', 'es', 'fr'].forEach((l) => { const b = $('btn-' + l); if (b) b.addEventListener('click', () => setLang(l, true)); });
+  $('efc-send').addEventListener('click', sendMessage);
+  $('efc-input').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); sendMessage(); } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && chatOpen) toggleChat(); });
+
+  // Auto-open after 50 seconds of inactivity (original behaviour)
+  let autoOpenTimer;
+  const resetAutoOpen = () => {
+    clearTimeout(autoOpenTimer);
+    autoOpenTimer = setTimeout(() => { if (!chatOpen && !history.length) toggleChat(true); }, 50000);
+  };
+  ['mousemove', 'scroll', 'click'].forEach((ev) => document.addEventListener(ev, resetAutoOpen, { passive: true }));
+  resetAutoOpen();
+
+  // test hook (read-only)
+  window.__efcChat = { get lang() { return currentLang; }, get manual() { return manualLang; }, waLink, history };
 }
-
-setLang(currentLang, false);
-
-// Auto-open après 50 secondes
-let autoOpenTimer;
-function resetAutoOpen() {
-  clearTimeout(autoOpenTimer);
-  autoOpenTimer = setTimeout(() => {
-    if (!chatOpen && document.getElementById('efc-messages').children.length === 0) {
-      toggleChat();
-    }
-  }, 50000);
-}
-document.addEventListener('mousemove', resetAutoOpen);
-document.addEventListener('scroll', resetAutoOpen);
-document.addEventListener('click', resetAutoOpen);
-resetAutoOpen();
-
-
-// ---- Cloudflare version: event wiring (replaces Squarespace inline onclick attributes; CSP-safe) ----
-(function () {
-  var $ = function (id) { return document.getElementById(id); };
-  $('efc-chat-bubble') && $('efc-chat-bubble').addEventListener('click', toggleChat);
-  $('efc-chat-bubble') && $('efc-chat-bubble').addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleChat(); } });
-  $('efc-close') && $('efc-close').addEventListener('click', toggleChat);
-  ['en', 'es', 'fr'].forEach(function (l) { var b = $('btn-' + l); b && b.addEventListener('click', function () { setLang(l); }); });
-  $('efc-send') && $('efc-send').addEventListener('click', sendMessage);
-  $('efc-input') && $('efc-input').addEventListener('keypress', function (e) { if (e.key === 'Enter') sendMessage(); });
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
