@@ -1,4 +1,7 @@
 ---
+import { createHash } from 'node:crypto';
+import { readFileSync as rfs } from 'node:fs';
+const V = createHash('sha1').update(rfs('public/js/efc-reviews.js')).digest('hex').slice(0, 8); // cache-busting version
 // Google & Tripadvisor review carousels (homepage, before the final booking CTA).
 // Data: src/data/reviews.json — static, manually verified 5-star reviews (docs/REVIEWS-QUARTERLY-UPDATE.md).
 // Nothing is rendered for a platform that has no genuine review; the whole section is omitted if both are empty.
@@ -94,7 +97,7 @@ const platforms = (['google', 'tripadvisor'] as const)
         </div>
       ))}
     </div>
-    <script is:inline defer src="/js/efc-reviews.js"></script>
+    <script is:inline defer src={`/js/efc-reviews.js?v=${V}`}></script>
   </section>
 )}
 

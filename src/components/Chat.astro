@@ -1,4 +1,7 @@
 ---
+import { createHash } from 'node:crypto';
+import { readFileSync as rfs } from 'node:fs';
+const V = createHash('sha1').update(rfs('public/js/efc-chat.js')).digest('hex').slice(0, 8); // cache-busting version
 // Original multilingual chat assistant (EN/ES/FR + WhatsApp handoff), ported verbatim from fish-cabo.com.
 import '../styles/chat.css';
 ---
@@ -27,4 +30,4 @@ import '../styles/chat.css';
 </button>
 </div>
 </div>
-<script is:inline src="/js/efc-chat.js" defer></script>
+<script is:inline src={`/js/efc-chat.js?v=${V}`} defer></script>
