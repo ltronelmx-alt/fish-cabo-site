@@ -194,3 +194,35 @@ Evidence:
 - the existing DNS records (especially email MX) are copied before the nameserver change.
 
 **Final commit:** the commit that adds this file to `main`. Its hash is given in the delivery message.
+
+## 13. Addendum 2026-11-04: production configuration fix (commits 2707418, 1abcf8d)
+
+**Problem:** `wrangler.jsonc` declared `"vars": { "SITE_ENV": "staging" }`. Every `wrangler deploy` overwrote the dashboard value (`production`).
+
+**Fix:**
+- `wrangler.jsonc` now declares `SITE_ENV: "production"`. The local dry-run reports `env.SITE_ENV ("production")`.
+- Staging isolation no longer depends on the build mode. On `*.workers.dev` hostnames the Worker always:
+  - adds `X-Robots-Tag: noindex, nofollow`;
+  - serves `robots.txt` = `Disallow: /` (readable without the password);
+  - applies the `STAGING_PASSWORD` lock.
+
+**Verification:**
+
+| Check | Host | Result |
+|---|---|---|
+| Production build, local Worker | `fish-cabo.com` | 200, **no** X-Robots-Tag, 0 meta robots, robots.txt `Allow: /` + sitemap, `?offset=` 200, `/admin/` noindex |
+| Production build, local Worker | `*.workers.dev` | 401 without password; with password 200 + `X-Robots-Tag: noindex, nofollow`; robots.txt `Disallow: /` |
+| **Live staging after deployment** (2026-11-04 ~09:37) | `fish-cabo.small-boat-4235.workers.dev` | See the details below |
+| QA (staging build) | local | 145/145 |
+| Verifier | — | 581/581 |
+
+Live staging results after deployment:
+- `/`, `/fishing-boats/23ft-panga` and `/fishing-reports?offset=…` return 200 with **no meta robots**, which shows the production build is live.
+- Every response carries `X-Robots-Tag: noindex, nofollow`.
+- Canonicals point to `https://fish-cabo.com/…`.
+- robots.txt = `Disallow: /`.
+- The sitemap has 80 URLs, all on `fish-cabo.com`.
+- `/admin/` returns 200.
+- An empty form submission is rejected (400).
+
+The password lock was open during a 20-minute verification window that closes automatically at 09:55 Mazatlán.
