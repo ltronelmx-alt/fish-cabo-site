@@ -46,7 +46,9 @@ async function contact(request: Request, env: Env) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(data.email)) return json({ ok: false, error: 'Please enter a valid email address.' }, 400);
   // Cloudflare Turnstile verification
   const token = String(fd.get('cf-turnstile-response') ?? '');
-  const ver = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+  // Staging (*.workers.dev) is already behind the staging password: the anti-bot check only runs on the real domain.
+  const isStaging = new URL(request.url).hostname.endsWith('.workers.dev');
+  const ver = isStaging ? { success: true, 'error-codes': [] as string[] } : await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
     method: 'POST', body: new URLSearchParams({ secret: turnstileSecret(request, env), response: token, remoteip: request.headers.get('cf-connecting-ip') || '' }),
   }).then((r) => r.json() as Promise<{ success: boolean; 'error-codes'?: string[] }>).catch(() => ({ success: false, 'error-codes': ['siteverify-unreachable'] }));
   if (!ver.success) {
