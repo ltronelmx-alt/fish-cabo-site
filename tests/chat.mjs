@@ -89,7 +89,7 @@ for (const l of langs) {
     fr: ['Je peux payer avec PayPal ?', "Comment payer l'acompte ?", 'Vous acceptez Stripe ?', 'Je peux payer avec Wise ?'],
     es: ['¿Puedo pagar con PayPal?', '¿Cómo pago el depósito?', '¿Aceptan Stripe?', '¿Puedo pagar con Wise?'],
   };
-  const NEED = { en: /contact our team via WhatsApp/, fr: /contactez notre équipe sur WhatsApp/, es: /contacta con nuestro equipo por WhatsApp/ };
+  const NEED = { en: /• PayPal — 6% fee/, fr: /• PayPal — 6 % de frais/, es: /• PayPal — 6% de comisión/ };
   for (const l of langs) {
     const p = await page('en-US'); await open(p); await p.click('#btn-' + l);
     const YES = { en: 'Yes.', fr: 'Oui.', es: 'Sí.' };
@@ -105,7 +105,7 @@ for (const l of langs) {
       const ok = /PayPal/.test(txt) && NEED[l].test(txt) && /Stripe/.test(txt) && /6 ?%/.test(txt) && /Wise/.test(txt)
         && !/unavailable|indisponible|no est[áa] disponible/i.test(txt) && !links.some((h) => /paypal\./i.test(h))
         && wa.host === 'wa.me' && wa.path === '/526241223506' && !MIX[l].test(txt);
-      rec('PayPal', `${l.toUpperCase()} "${q}" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506`, ok, txt.replace(/\s+/g, ' ').slice(0, 160));
+      rec('PayPal', `${l.toUpperCase()} "${q}" → payment answer lists Stripe 6 %, Wise, PayPal 6 % + WhatsApp button wa.me/526241223506`, ok, txt.replace(/\s+/g, ' ').slice(0, 160));
     }
     await p.context().close();
   }
