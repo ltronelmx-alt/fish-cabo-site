@@ -25,6 +25,10 @@ jobs:
           t "www → apex" "https://www.fish-cabo.com/contact" "301 https://fish-cabo.com/contact"
           t "publish-notify without token" "$S/api/publish-notify" "405"
           img=$(curl -s "$S/" | grep -o '/media/[^" ]*\.webp' | head -1); t "image $img" "$S$img" "200"
+          for u in "https://www.fish-cabo.com/fish-species-in-san-jose-del-cabo" "https://www.fish-cabo.com/contact?x=1" "http://fish-cabo.com/contact" "http://www.fish-cabo.com/"; do
+            echo "HOPS $u: $(curl -s -o /dev/null -L -w '%{num_redirects} redirect(s) → %{url_effective} %{http_code}' "$u")"
+            curl -sI "$u" | grep -iE "^(location|server|cf-ray|x-powered|report-to)" | head -2 | sed 's/^/      /'
+          done
           curl -s "$S/robots.txt" | grep -q "Allow: /" && echo "OK   robots allows indexing" || { echo "FAIL robots"; fail=1; }
           curl -s "$S/" | grep -qi 'name="robots" content="noindex' && { echo "FAIL homepage noindex"; fail=1; } || echo "OK   homepage indexable"
           curl -s "$S/deploy-info.json?t=$(date +%s)" | jq -c '{commit, mode, branch}'
