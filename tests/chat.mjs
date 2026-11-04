@@ -78,6 +78,33 @@ for (const l of langs) {
   await p.context().close();
 }
 
+
+// 6b PayPal policy (permanent regression guard): PayPal is mentioned, never "unavailable", no PayPal link, WhatsApp handoff
+{
+  const src = (await import('node:fs')).readFileSync('public/js/efc-chat.js', 'utf8');
+  rec('PayPal', 'source never says PayPal is unavailable (EN/FR/ES)', !/PayPal is temporarily unavailable|PayPal est momentan[ée]ment indisponible|PayPal no est[áa] disponible/i.test(src) && !/paypal[^"\n]{0,60}(unavailable|indisponible|no est[áa] disponible)/i.test(src));
+  rec('PayPal', 'source contains no PayPal URL', !/paypal\.(com|me)/i.test(src));
+  const QP = {
+    en: ['Can I pay with PayPal?', 'How do I pay the deposit?', 'Do you accept Stripe?', 'Can I pay with Wise?'],
+    fr: ['Je peux payer avec PayPal ?', "Comment payer l'acompte ?", 'Vous acceptez Stripe ?', 'Je peux payer avec Wise ?'],
+    es: ['¿Puedo pagar con PayPal?', '¿Cómo pago el depósito?', '¿Aceptan Stripe?', '¿Puedo pagar con Wise?'],
+  };
+  const NEED = { en: /contact our team via WhatsApp/, fr: /contactez notre équipe sur WhatsApp/, es: /contacta con nuestro equipo por WhatsApp/ };
+  for (const l of langs) {
+    const p = await page('en-US'); await open(p); await p.click('#btn-' + l);
+    for (const q of QP[l]) {
+      const txt = await ask(p, q);
+      const links = await p.locator('#efc-messages .efc-bot').last().locator('a').evaluateAll((a) => a.map((x) => x.href));
+      const wa = await waText(p);
+      const ok = /PayPal/.test(txt) && NEED[l].test(txt) && /Stripe/.test(txt) && /6 ?%/.test(txt) && /Wise/.test(txt)
+        && !/unavailable|indisponible|no est[áa] disponible/i.test(txt) && !links.some((h) => /paypal\./i.test(h))
+        && wa.host === 'wa.me' && wa.path === '/526241223506' && !MIX[l].test(txt);
+      rec('PayPal', `${l.toUpperCase()} "${q}" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506`, ok, txt.replace(/\s+/g, ' ').slice(0, 160));
+    }
+    await p.context().close();
+  }
+}
+
 // 6 free text with automatic detection (no manual choice)
 for (const [q, l] of [['Hola, ¿cuánto cuesta un viaje de pesca para 4 personas?', 'es'], ['Bonjour, combien coûte une journée de pêche ?', 'fr'], ['Hi, how much does a fishing trip cost?', 'en']]) {
   const p = await page('en-US'); await open(p);

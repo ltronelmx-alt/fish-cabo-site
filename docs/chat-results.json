@@ -324,6 +324,90 @@
   "detail": "🙏 De rien ! N'oubliez pas : la pêche à Los Cabos se pratique toute l'année. Réservez tôt "
  },
  {
+  "area": "PayPal",
+  "test": "source never says PayPal is unavailable (EN/FR/ES)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "area": "PayPal",
+  "test": "source contains no PayPal URL",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "area": "PayPal",
+  "test": "EN \"Can I pay with PayPal?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "ok": true,
+  "detail": "💳 Deposit payment On each boat page: • Stripe (card, Apple Pay, Google Pay) — 6% fee • Wise — no fee For PayPal payment arrangements, please contact our team v"
+ },
+ {
+  "area": "PayPal",
+  "test": "EN \"How do I pay the deposit?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "ok": true,
+  "detail": "💳 Deposit payment On each boat page: • Stripe (card, Apple Pay, Google Pay) — 6% fee • Wise — no fee For PayPal payment arrangements, please contact our team v"
+ },
+ {
+  "area": "PayPal",
+  "test": "EN \"Do you accept Stripe?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "ok": true,
+  "detail": "💳 Deposit payment On each boat page: • Stripe (card, Apple Pay, Google Pay) — 6% fee • Wise — no fee For PayPal payment arrangements, please contact our team v"
+ },
+ {
+  "area": "PayPal",
+  "test": "EN \"Can I pay with Wise?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "ok": true,
+  "detail": "💳 Deposit payment On each boat page: • Stripe (card, Apple Pay, Google Pay) — 6% fee • Wise — no fee For PayPal payment arrangements, please contact our team v"
+ },
+ {
+  "area": "PayPal",
+  "test": "ES \"¿Puedo pagar con PayPal?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "ok": true,
+  "detail": "💳 Pago del depósito En la página de cada bote: • Stripe (tarjeta, Apple Pay, Google Pay) — 6% de comisión • Wise — sin comisión Para organizar un pago mediante"
+ },
+ {
+  "area": "PayPal",
+  "test": "ES \"¿Cómo pago el depósito?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "ok": true,
+  "detail": "💳 Pago del depósito En la página de cada bote: • Stripe (tarjeta, Apple Pay, Google Pay) — 6% de comisión • Wise — sin comisión Para organizar un pago mediante"
+ },
+ {
+  "area": "PayPal",
+  "test": "ES \"¿Aceptan Stripe?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "ok": true,
+  "detail": "💳 Pago del depósito En la página de cada bote: • Stripe (tarjeta, Apple Pay, Google Pay) — 6% de comisión • Wise — sin comisión Para organizar un pago mediante"
+ },
+ {
+  "area": "PayPal",
+  "test": "ES \"¿Puedo pagar con Wise?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "ok": true,
+  "detail": "💳 Pago del depósito En la página de cada bote: • Stripe (tarjeta, Apple Pay, Google Pay) — 6% de comisión • Wise — sin comisión Para organizar un pago mediante"
+ },
+ {
+  "area": "PayPal",
+  "test": "FR \"Je peux payer avec PayPal ?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "ok": true,
+  "detail": "💳 Paiement de l'acompte Sur chaque page bateau : • Stripe (carte, Apple Pay, Google Pay) — 6 % de frais • Wise — sans frais Pour organiser un paiement par PayP"
+ },
+ {
+  "area": "PayPal",
+  "test": "FR \"Comment payer l'acompte ?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "ok": true,
+  "detail": "💳 Paiement de l'acompte Sur chaque page bateau : • Stripe (carte, Apple Pay, Google Pay) — 6 % de frais • Wise — sans frais Pour organiser un paiement par PayP"
+ },
+ {
+  "area": "PayPal",
+  "test": "FR \"Vous acceptez Stripe ?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "ok": true,
+  "detail": "💳 Paiement de l'acompte Sur chaque page bateau : • Stripe (carte, Apple Pay, Google Pay) — 6 % de frais • Wise — sans frais Pour organiser un paiement par PayP"
+ },
+ {
+  "area": "PayPal",
+  "test": "FR \"Je peux payer avec Wise ?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "ok": true,
+  "detail": "💳 Paiement de l'acompte Sur chaque page bateau : • Stripe (carte, Apple Pay, Google Pay) — 6 % de frais • Wise — sans frais Pour organiser un paiement par PayP"
+ },
+ {
   "area": "Detection",
   "test": "free text detected as ES",
   "ok": true,
