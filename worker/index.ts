@@ -11,10 +11,13 @@ export interface Env {
 }
 const TEST_TURNSTILE_SECRET = '1x0000000000000000000000000000000AA';
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+const STAGING_OPEN_UNTIL = Date.parse('2026-11-04T01:35:00Z'); // = 2026-11-03 18:35 Mazatlán
 // Staging lock: only on *.workers.dev and only once the STAGING_PASSWORD secret exists. Any user name, that password.
 async function stagingLocked(request: Request, env: Env): Promise<Response | null> {
   const host = new URL(request.url).hostname;
   if (!env.STAGING_PASSWORD || !host.endsWith('.workers.dev')) return null;
+  // Temporary open window (owner request, 2026-11-03): staging readable without password until this time, then locked again automatically
+  if (Date.now() < STAGING_OPEN_UNTIL) return null;
   const h = request.headers.get('authorization') || '';
   let pass = '';
   try { pass = h.startsWith('Basic ') ? atob(h.slice(6)).split(':').slice(1).join(':') : ''; } catch {}
