@@ -51,6 +51,11 @@ def fix_head_tag(t, fb=None, used=None):
             og = bool(re.search(r'og:image|twitter:image', t))
             t = re.sub(r'content="[^"]*"', f'content="{fb[0]}"', t, count=1)  # F6c
             if og: used.append(1)
+    if re.search(r'name="twitter:card"', t): t = t.replace('content="summary"', 'content="summary_large_image"')  # F12
+    if fb and re.search(r'property="og:image"|name="twitter:image"', t) and 'logo-low-res-fishing-san-jose-del-cabo' in t:  # F12
+        og = 'og:image' in t
+        t = re.sub(r'content="[^"]*"', f'content="{fb[0]}"', t, count=1)
+        if og: used.append(1)
     return t
 
 def fix_soup(soup, slug):

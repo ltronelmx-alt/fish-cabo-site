@@ -1,0 +1,87 @@
+{
+  "_doc": "Owner-approved text corrections (2026-11-04). Applied once to src/data/original/*.json by scripts/apply_content_edits.py and applied to the Squarespace export by scripts/verify-original.py, so the verbatim check accepts exactly these edits and nothing else.",
+  "edits": [
+    {
+      "page": "contact",
+      "find": "live bait, food, drinks, transportation",
+      "replace": "live bait, food, other beverages (bottled water and soft drinks are included), transportation"
+    },
+    {
+      "page": "deep-sea-fishing-charters",
+      "find": "live bait, food, drinks, transportation",
+      "replace": "live bait, food, other beverages (bottled water and soft drinks are included), transportation"
+    },
+    {
+      "page": "deep-sea-fishing-cabo",
+      "find": "live bait, food, drinks, transportation",
+      "replace": "live bait, food, other beverages (bottled water and soft drinks are included), transportation"
+    },
+    {
+      "page": "fishing-boats/31ft-premium-center-console",
+      "find": "live bait, food, drinks, transportation",
+      "replace": "live bait, food, other beverages (bottled water and soft drinks are included), transportation"
+    },
+    {
+      "page": "fishing-boats/26ft-super-panga",
+      "find": "bait, food, drinks, transportation",
+      "replace": "bait, food, other beverages (bottled water and soft drinks are included), transportation"
+    },
+    {
+      "page": "family-fishing-charters-san-jose-del-cabo",
+      "find": "<p>Food, drinks, fishing licenses, live bait, and other services vary by charter.",
+      "replace": "<p>Bottled water and soft drinks are included. Food, other beverages, fishing licenses, live bait, and other services vary by charter.",
+      "export_find": "data-rte-preserve-empty=\"true\">Food, drinks, fishing licenses, live bait, and other services vary by charter.",
+      "export_replace": "data-rte-preserve-empty=\"true\">Bottled water and soft drinks are included. Food, other beverages, fishing licenses, live bait, and other services vary by charter."
+    },
+    {
+      "page": "puerto-los-cabos-fishing",
+      "find": "including licenses, bait, food, and drinks, can be confirmed",
+      "replace": "including licenses, bait, food, and other beverages, can be confirmed"
+    },
+    {
+      "page": "fishing-charters",
+      "find": "Fishing rods, reels, and basic tackle</p></li><li><p>A fishing experience tailored",
+      "replace": "Fishing rods, reels, and basic tackle</p></li><li><p>Bottled water and soft drinks</p></li><li><p>A fishing experience tailored",
+      "export_find": "Fishing rods, reels, and basic tackle</p></li><li><p style=\"white-space:pre-wrap;\" data-rte-preserve-empty=\"true\">A fishing experience tailored",
+      "export_replace": "Fishing rods, reels, and basic tackle</p></li><li><p>Bottled water and soft drinks</p></li><li><p style=\"white-space:pre-wrap;\" data-rte-preserve-empty=\"true\">A fishing experience tailored"
+    },
+    {
+      "page": "fishing-charters",
+      "find": "Fishing licenses, bait, food, and drinks can be discussed",
+      "replace": "Fishing licenses, bait, food, and other beverages can be discussed"
+    },
+    {
+      "page": "fishing-boats",
+      "find": "31ft premium cent. console",
+      "replace": "31ft premium center console"
+    },
+    {
+      "page": "cabo-san-lucas-fishing-charters",
+      "find": "1792188357408-UOBHX5L6K3KZ665VN6X1/unsplash-image-vr70IKbhEkc.jpg",
+      "replace": "1767136065492-V9MG20QYGDA8KHHK4XYO/Howard+YFT.webp"
+    },
+    {
+      "page": "cabo-san-lucas-fishing-charters",
+      "find": "next page",
+      "replace": "Gordo Banks Fishing Guide",
+      "exact": true,
+      "export_find": ">\n    next page\n  </a>",
+      "export_replace": ">\n    Gordo Banks Fishing Guide\n  </a>"
+    },
+    {
+      "page": "cabo-fishing-faq",
+      "find": "Tournament arrangements also provide for a 20% of the winnings must be paid to the crew, as required by law.",
+      "replace": "Under tournament arrangements, 20% of any winnings must be paid to the crew, as required by law."
+    },
+    {
+      "page": "terms-conditions",
+      "find": "in case of a cancelled trip by you, no‑show, bad weather, seasickness, poor fishing results, or other circumstances beyond the control of EXOTIC FISH CABO.",
+      "replace": "in case of a cancelled trip by you, no‑show, bad weather, seasickness, poor fishing results, or other circumstances beyond the control of EXOTIC FISH CABO. If a trip cannot take place because of bad weather or a port closure, it will be rescheduled; if rescheduling is not possible, a voucher will be issued for a future trip."
+    },
+    {
+      "page": "terms-conditions",
+      "find": "Credits or rescheduling options are offered solely at",
+      "replace": "Except as stated above for bad weather and port closures, credits or rescheduling options are offered solely at"
+    }
+  ]
+}
