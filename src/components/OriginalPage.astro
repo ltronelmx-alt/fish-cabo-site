@@ -2,6 +2,7 @@
 // Generic renderer for ANY original Squarespace page.
 // Content (text, headings, links, alts, order) comes verbatim from the export; this file only adds layout + design.
 import Rich from './Rich.astro';
+import { liWrap } from '../lib/design-markup';
 import OImg from './OImg.astro';
 import OBtn from './OBtn.astro';
 import LatestLog from './LatestLog.astro';
@@ -102,10 +103,10 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
                 </div>
               );
             }
-            return <div class="rich" set:html={pictures(html)} />;
+            return <div class="rich" set:html={liWrap(pictures(html))} />;
           }
           // gallery / item lists / collection items (articles, videos, listings)
-          return <div class:list={['rich o-html', b.kind === 'gallery' && 'o-gallery-html']} set:html={pictures(isVideoItem ? videoH1(b.html || '') : (b.html || ''), '(min-width: 900px) 33vw, 92vw')} />;
+          return <div class:list={['rich o-html', b.kind === 'gallery' && 'o-gallery-html']} set:html={liWrap(pictures(isVideoItem ? videoH1(b.html || '') : (b.html || ''), '(min-width: 900px) 33vw, 92vw'))} />;
         })}
         {si === 0 && page.videos && page.videos.length > 0 && page.videos.map((id) => (
           <div class="o-video media"><iframe src={`https://www.youtube.com/embed/${id}?feature=oembed`} title="YouTube video" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
@@ -247,6 +248,13 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
   .rich ul > li:has(> picture) p:has(> a:only-child) { margin-top: auto; padding-top: 10px; }
   .rich ul > li:has(> picture) p > a:only-child { display: inline-flex; min-height: 48px; align-items: center; padding: 12px 20px; border: 1.5px solid var(--ink); border-radius: var(--radius-sm); text-decoration: none; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
   .rich ul > li:has(> picture) p > a:only-child:hover { background: var(--ink); color: var(--white); }
+  /* a photo-card list continued in the next section (same background): same gap as inside the list */
+  .o-sec.bg-sand:has(> .container > .rich:last-child > ul:last-child > li > picture):has(+ .o-sec.bg-sand > .container > .rich:first-child > ul:first-child > li > picture),
+  .o-sec.bg-white:has(> .container > .rich:last-child > ul:last-child > li > picture):has(+ .o-sec.bg-white > .container > .rich:first-child > ul:first-child > li > picture) { padding-bottom: 0; }
+  .o-sec.bg-sand:has(> .container > .rich:last-child > ul:last-child > li > picture) + .o-sec.bg-sand:has(> .container > .rich:first-child > ul:first-child > li > picture),
+  .o-sec.bg-white:has(> .container > .rich:last-child > ul:last-child > li > picture) + .o-sec.bg-white:has(> .container > .rich:first-child > ul:first-child > li > picture) { padding-top: clamp(16px, 2vw, 32px); }
+  .o-sec > .container > .rich:first-child > ul:first-child:has(> li > picture) { margin-top: 0; }
+  .o-sec > .container > .rich:last-child > ul:last-child:has(> li > picture) { margin-bottom: 0; }
   /* Fishing Reports listing → grid of post cards (CSS only, same markup) */
   .o-html:not(.article):has(> article > h2.as-h1) { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: clamp(18px, 2vw, 32px); align-items: start; }
   .o-html:not(.article):has(> article > h2.as-h1) > nav { grid-column: 1 / -1; }

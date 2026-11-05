@@ -1,6 +1,7 @@
 ---
 // Renders an original text block. mode="cards" wraps each <h3> group in a card (markup only).
 import { byH3, byH4 } from '../lib/original';
+import { liWrap, ctaGroups } from '../lib/design-markup';
 interface Props { html: string; mode?: 'plain' | 'cards'; class?: string }
 const { html: raw, mode = 'plain', class: cls } = Astro.props;
 // Design hook only: paragraphs made entirely of bold text get class="sub" (styled as sub-headings). Text untouched.
@@ -10,7 +11,7 @@ const html = raw.replace(/<p>(<strong>(?:(?!<\/?strong>)[\s\S])*<\/strong>)<\/p>
   .replace(/<p>(<a [^>]*>(?:<strong>)?[^<]*(?:<\/strong>)?<\/a>)<\/p>/g, '<p class="cta">$1</p>');
 const kvRe = /<p><strong>[^<]*<\/strong>(?:<strong>[^<]*<\/strong>)?[^<]+<\/p>/;
 // runs of 3+ "<strong>Label</strong> value" paragraphs → class="kv" (read as a table). Class only.
-const html2 = html.replace(new RegExp(`(?:${kvRe.source}){3,}`, 'g'), (run) => run.replace(/<p>/g, '<p class="kv">'));
+const html2 = ctaGroups(liWrap(html.replace(new RegExp(`(?:${kvRe.source}){3,}`, 'g'), (run) => run.replace(/<p>/g, '<p class="kv">'))));
 const h3 = byH3(html2);
 const h4 = byH4(html2);
 // cards from <h3> groups; if the block has no h3 groups, use <h4> groups (3 or more). Markup only, text untouched.

@@ -53,10 +53,13 @@ const bt = b1.filter((b) => b.kind === 'button');
   .s1grid :global(.grounds) { grid-column: 1 / -1; grid-row: 3; }
   .s1grid :global(.img1) { grid-column: 1; grid-row: 4; }
   .s1grid :global(.img2) { grid-column: 2; grid-row: 4; }
-  .s1grid :global(.btnB) { grid-column: 1; grid-row: 5; justify-self: end; }
-  .s1grid :global(.btnA) { grid-column: 2; grid-row: 5; justify-self: start; }
+  .s1grid :global(.btnB) { grid-column: 1; grid-row: 5; justify-self: center; }
+  .s1grid :global(.btnA) { grid-column: 2; grid-row: 5; justify-self: center; }
+  /* both buttons: centred under their photo, same width */
+  .s1grid :global(:is(.btnA, .btnB) a) { width: 300px; }
+  @media (max-width: 640px) { .s1grid :global(:is(.btnA, .btnB) a) { width: 100%; } }
   @media (max-width: 900px) { .s1grid { grid-template-columns: 1fr; } .s1grid > :global(*) { grid-column: 1 !important; grid-row: auto !important; justify-self: stretch !important; }
-    .s1grid :global(.main) { order: 1; } .s1grid :global(.gh2) { order: 2; } .s1grid :global(.amber) { order: 3; } .s1grid :global(.grounds) { order: 4; } .s1grid :global(.img1) { order: 5; } .s1grid :global(.img2) { order: 6; } .s1grid :global(.btnB) { order: 7; } .s1grid :global(.btnA) { order: 8; } .s1grid :global(.gh2) { padding-top: 0; } .s1grid :global(.amber) { margin-top: 0; } }
+    .s1grid :global(.main) { order: 1; } .s1grid :global(.gh2) { order: 2; } .s1grid :global(.amber) { order: 3; } .s1grid :global(.grounds) { order: 4; } .s1grid :global(.img1) { order: 5; } .s1grid :global(.img2) { order: 7; } .s1grid :global(.btnB) { order: 6; } .s1grid :global(.btnA) { order: 8; } .s1grid :global(.gh2) { padding-top: 0; } .s1grid :global(.amber) { margin-top: 0; } }
   .banner { position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template: 1fr / 1fr; text-align: center; background: var(--ink); }
   .banner > :global(.banner-img), .banner::after, .banner > .container { grid-area: 1 / 1; }
   .banner :global(.banner-img) { position: relative; z-index: -2; border-radius: 0; box-shadow: none; }

@@ -111,6 +111,8 @@ const c4 = byH2(txt(s4)[0].html!); // areas · different · fish
   @media (max-width: 900px) {
     .s4grid, .s6grid { grid-template-columns: 1fr; }
     .s4grid > *, .s6grid > * { grid-column: 1 !important; grid-row: auto !important; }
+    /* phones: button right after its text (as on desktop), never at the edge of the black band */
+    .s4a { order: 1; } .s4img { order: 2; } .s4btn { order: 3; margin-bottom: 0; } .s4b { order: 4; } .s4c { order: 5; }
     .s4img { margin-top: 32px; }
 
   }
