@@ -56,7 +56,7 @@ const head = d.originalHead ?? [
   ...(ogImg ? [`<meta name="twitter:image" content="${ogImg}"/>`] : []),
   `<script type="application/ld+json">${JSON.stringify(ld)}</script>`,
 ];
-const mdy = d.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+const mdy = d.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 ---
 <Base original={{ lang: 'en-US', head, bodyLd: [] }} solidHeader>
   <section class="section bg-white o-first">
@@ -87,5 +87,13 @@ const mdy = d.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric',
   .article picture { display: block; max-width: 960px; margin-inline: auto !important; }
   .article picture img { width: 100%; height: auto; }
   .article .art-figure { margin: 24px auto 32px; max-width: 960px; }
+  /* data tables in articles (Fishing Conditions Summary) */
+  .article table { border: 1px solid var(--line); border-radius: var(--radius-sm); border-collapse: separate; border-spacing: 0; overflow: hidden; }
+  .article th, .article td { text-align: left; vertical-align: top; padding: 12px 16px; border-bottom: 1px solid var(--line); line-height: 1.5; }
+  .article thead th { background: var(--ink); color: var(--white); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .article tbody tr:nth-child(even) td { background: var(--sand); }
+  .article tbody tr:last-child td { border-bottom: 0; }
+  .article tbody td:first-child { font-weight: 700; color: var(--ink); }
+  @media (max-width: 640px) { .article th, .article td { padding: 10px 10px; font-size: 13px; } }
   .article .art-figure figcaption { margin-top: 10px; font-size: 14px; color: var(--muted); text-align: center; }
 </style>
