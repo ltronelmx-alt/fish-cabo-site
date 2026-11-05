@@ -34,6 +34,18 @@ for o, n in PAIRS:
     T = lambda r: sorted(norm(p.get_text()) for p in r.find_all(['p','li','h1','h2','h3','h4']) if norm(p.get_text()) and not p.find(['p','li']))
     head = lambda d: sorted(str(t) for t in d.head.find_all(['title','meta','link','script']) if (t.name=='title' or (t.name=='meta' and (t.get('name') in ('description','twitter:title','twitter:image','twitter:url','twitter:card','twitter:description') or (t.get('property') or '').startswith('og:') or t.get('itemprop'))) or (t.name=='link' and t.get('rel')==['canonical']) or (t.name=='script' and t.get('type')=='application/ld+json')))
     D = lambda r: [(e.name, norm(e.get_text()) if e.name!='img' else e.get('alt','')) for e in r.find_all(['h1','h2','h3','h4','p','li','img','a']) if (e.name=='img' or norm(e.get_text()))]
+    # Archive pages (listing / older / category / tag) are generated from the Fishing Reports collection: they MUST change when a
+    # new report is published. Their body is checked only for the original posts (new posts removed; posts pushed to the next page tolerated).
+    if re.match(r'fishing-reports($|/older|/category/|/tag/)', n):
+        import json as _j
+        base = set(_j.load(open('src/data/reports-baseline.json'))['slugs'])
+        for art in b.select('article'):
+            hrefs = [x.get('href', '') for x in art.find_all('a')]
+            if any(h.startswith('/fishing-reports/') and h.split('/')[2] not in base and h.split('/')[2] not in ('category', 'tag', 'older') for h in hrefs): art.decompose()
+        bt = set(norm(h.get_text()) for h in b.find_all('h2'))
+        for art in a.select('article'):
+            h2 = art.find('h2')
+            if h2 and norm(h2.get_text()) not in bt: art.decompose()
     checks = {'DOM order of all content': (D(a), D(b)), 'headings (order+level)': (H(a), H(b)), 'links': (L(a), L(b)), 'image alts': (I(a), I(b)), 'text blocks': (T(a), T(b)), 'head tags + JSON-LD': (head(A), head(B)), 'lang': (A.html.get('lang'), B.html.get('lang'))}
     for k, (x, y) in checks.items():
         if x == y:

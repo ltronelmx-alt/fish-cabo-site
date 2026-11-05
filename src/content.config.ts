@@ -18,6 +18,9 @@ const reports = defineCollection({
     image: z.object({ src: z.string(), alt: z.string().default('') }).nullable().optional(),
     thumbnail: z.object({ src: z.string(), alt: z.string().default('') }).nullable().optional(),
     thumbnailSource: z.string().optional(),
+    imageTitle: z.string().optional(), // title attribute of the featured photo (new Markdown articles)
+    caption: z.string().optional(), // visible caption under the featured photo (new Markdown articles)
+    updated: z.coerce.date().optional(), // dateModified (defaults to date)
     listingRank: z.number().default(999), // tie-breaker for posts published the same day (original order)
     excerpt: z.string().default(''),
     excerptSource: z.string().optional(),

@@ -19,11 +19,42 @@ const isHtml = d.format === 'html';
 const { Content } = isHtml ? { Content: null } : await render(entry);
 const url = `${SITE.url}/fishing-reports/${entry.id}`;
 const ogImg = d.image ? new URL(media(d.image.src)?.at(1500) ?? '/', SITE.url).href : undefined;
+// New Markdown articles (no original Squarespace head): full SEO/GEO head — BlogPosting + BreadcrumbList,
+// reusing the site's LocalBusiness entity (@id https://fish-cabo.com/#business). Imported articles keep their original head.
+const ogMedia = d.image ? media(d.image.src) : null;
+const ogW = ogMedia ? Math.min(ogMedia.width, 1500) : undefined;
+const ogH = ogMedia && ogW ? Math.round((ogMedia.height * ogW) / ogMedia.width) : undefined;
+const seoT = d.seoTitle || d.title;
+const q = (x: string) => x.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+const ld = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'BlogPosting', '@id': `${url}#article`, headline: d.title, description: d.description,
+      ...(ogImg ? { image: { '@type': 'ImageObject', url: ogImg, width: ogW, height: ogH, ...(d.caption ? { caption: d.caption } : {}) } } : {}),
+      datePublished: d.date.toISOString().slice(0, 10), dateModified: (d.updated ?? d.date).toISOString().slice(0, 10),
+      author: { '@id': `${SITE.url}/#business` }, publisher: { '@id': `${SITE.url}/#business` },
+      mainEntityOfPage: { '@type': 'WebPage', '@id': url }, inLanguage: 'en', articleSection: 'Fishing Reports',
+      ...(d.tags.length ? { keywords: d.tags.join(', ') } : {}),
+    },
+    {
+      '@type': 'BreadcrumbList', itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE.url}/` },
+        { '@type': 'ListItem', position: 2, name: 'Fishing Reports', item: `${SITE.url}/fishing-reports` },
+        { '@type': 'ListItem', position: 3, name: d.title, item: url },
+      ],
+    },
+  ],
+};
 const head = d.originalHead ?? [
-  `<title>${d.seoTitle || d.title}</title>`, `<meta name="description" content="${d.description.replace(/"/g, '&quot;')}"/>`, `<link rel="canonical" href="${url}"/>`,
-  `<meta property="og:title" content="${(d.seoTitle || d.title).replace(/"/g, '&quot;')}"/>`, `<meta property="og:type" content="article"/>`, `<meta property="og:url" content="${url}"/>`,
-  ...(ogImg ? [`<meta property="og:image" content="${ogImg}"/>`] : []),
-  `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@type': 'Article', headline: d.title, datePublished: d.date.toISOString(), author: { '@type': 'Person', name: d.author }, ...(ogImg ? { image: ogImg } : {}) })}</script>`,
+  `<title>${q(seoT)}</title>`, `<meta name="description" content="${q(d.description)}"/>`, `<link rel="canonical" href="${url}"/>`,
+  `<meta property="og:site_name" content="EXOTIC FISH CABO"/>`, `<meta property="og:title" content="${q(seoT)}"/>`, `<meta property="og:description" content="${q(d.description)}"/>`,
+  `<meta property="og:type" content="article"/>`, `<meta property="og:url" content="${url}"/>`, `<meta property="og:locale" content="en_US"/>`,
+  ...(ogImg ? [`<meta property="og:image" content="${ogImg}"/>`, `<meta property="og:image:width" content="${ogW}"/>`, `<meta property="og:image:height" content="${ogH}"/>`, ...(d.image?.alt ? [`<meta property="og:image:alt" content="${q(d.image.alt)}"/>`] : [])] : []),
+  `<meta property="article:published_time" content="${d.date.toISOString().slice(0, 10)}"/>`, `<meta property="article:section" content="Fishing Reports"/>`,
+  `<meta name="twitter:card" content="summary_large_image"/>`, `<meta name="twitter:title" content="${q(seoT)}"/>`, `<meta name="twitter:description" content="${q(d.description)}"/>`,
+  ...(ogImg ? [`<meta name="twitter:image" content="${ogImg}"/>`] : []),
+  `<script type="application/ld+json">${JSON.stringify(ld)}</script>`,
 ];
 const mdy = d.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 ---
@@ -36,7 +67,9 @@ const mdy = d.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric',
             <h1>{d.title}</h1>
             {d.category && <a href={catUrl(d.category)}>{d.category}</a>}
             <time datetime={d.date.toISOString().slice(0, 10)}>{mdy}</time> Written by <a href="/fishing-reports">{d.author}</a>
-            {d.image && <Fragment set:html={pictures(`<img alt="${d.image.alt}" data-path="${d.image.src}"/>`, '(min-width: 1040px) 960px, 92vw')} />}
+            {d.image && (d.caption || d.imageTitle
+              ? <figure class="art-figure"><Fragment set:html={pictures(`<img alt="${q(d.image.alt)}" data-path="${d.image.src}"/>`, '(min-width: 1040px) 960px, 92vw').replace('<img alt=', d.imageTitle ? `<img title="${q(d.imageTitle)}" alt=` : '<img alt=')} />{d.caption && <figcaption>{d.caption}</figcaption>}</figure>
+              : <Fragment set:html={pictures(`<img alt="${d.image.alt}" data-path="${d.image.src}"/>`, '(min-width: 1040px) 960px, 92vw')} />)}
             <Content />
             {d.tags.map((t) => <a href={tagUrl(t)} rel="tag">{t}</a>)}
           </article>
@@ -53,4 +86,6 @@ const mdy = d.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric',
   /* article photos: never wider than ~960px on desktop (sharp at their resolution), centred, whole */
   .article picture { display: block; max-width: 960px; margin-inline: auto !important; }
   .article picture img { width: 100%; height: auto; }
+  .article .art-figure { margin: 24px auto 32px; max-width: 960px; }
+  .article .art-figure figcaption { margin-top: 10px; font-size: 14px; color: var(--muted); text-align: center; }
 </style>
