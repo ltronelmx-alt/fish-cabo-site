@@ -1,9 +1,27 @@
 {
  "base": "http://127.0.0.1:8787",
- "date": "2026-11-04T20:19:40.248Z",
- "total": 145,
+ "date": "2026-11-06T18:55:34.779Z",
+ "total": 150,
  "failed": 0,
  "results": [
+  {
+   "area": "Routes",
+   "test": "GET /book-now/canceled",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /book-now/confirmation",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /book-now",
+   "ok": true,
+   "detail": "200"
+  },
   {
    "area": "Routes",
    "test": "GET /cabo-fishing-faq",
@@ -240,6 +258,12 @@
   },
   {
    "area": "Routes",
+   "test": "GET /fishing-reports/monster-wahoo-fishing-san-jose-del-cabo-alan",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
    "test": "GET /fishing-reports/older",
    "ok": true,
    "detail": "200"
@@ -319,6 +343,12 @@
   {
    "area": "Routes",
    "test": "GET /fishing-reports/san-jose-del-cabo-fishing-log-october-19-25-2026",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "area": "Routes",
+   "test": "GET /fishing-reports/san-jose-del-cabo-fishing-log-october-26-november-1-2026",
    "ok": true,
    "detail": "200"
   },
@@ -612,7 +642,7 @@
   },
   {
    "area": "Links",
-   "test": "all 947 internal links and images resolve",
+   "test": "all 946 internal links and images resolve",
    "ok": true,
    "detail": "0 broken"
   },
@@ -684,7 +714,7 @@
   },
   {
    "area": "SEO",
-   "test": "sitemap.xml: same page URLs as the original (F7: homepage instead of /cabo-fishing), same number of images, images self-hosted (F9)",
+   "test": "sitemap.xml: same page URLs as the original (F7: homepage instead of /cabo-fishing), same number of images (minus owner-removed images), images self-hosted (F9)",
    "ok": true,
    "detail": ""
   },
@@ -708,7 +738,7 @@
   },
   {
    "area": "Layout",
-   "test": "no horizontal scrolling on 101 pages (mobile 375px)",
+   "test": "no horizontal scrolling on 106 pages (mobile 375px)",
    "ok": true,
    "detail": ""
   },
@@ -762,7 +792,7 @@
   },
   {
    "area": "Layout",
-   "test": "no horizontal scrolling on 101 pages (tablet 768px)",
+   "test": "no horizontal scrolling on 106 pages (tablet 768px)",
    "ok": true,
    "detail": ""
   },
@@ -798,7 +828,7 @@
   },
   {
    "area": "Layout",
-   "test": "no horizontal scrolling on 101 pages (desktop 1440px)",
+   "test": "no horizontal scrolling on 106 pages (desktop 1440px)",
    "ok": true,
    "detail": ""
   },
@@ -822,9 +852,9 @@
   },
   {
    "area": "Booking",
-   "test": "header BOOK NOW → /fishing-boats",
+   "test": "header BOOK NOW → /book-now",
    "ok": true,
-   "detail": "/fishing-boats"
+   "detail": "/book-now"
   },
   {
    "area": "Directions",
@@ -872,7 +902,7 @@
    "area": "Fishing Logs",
    "test": "homepage shows the newest published Fishing Log",
    "ok": true,
-   "detail": "San Jose del Cabo Fishing Log — October 19–25, 2026 / expected San Jose del Cabo Fishing Log — October 19–25, 2026"
+   "detail": "San Jose del Cabo Fishing Log – October 26 to November 1, 2026 / expected San Jose del Cabo Fishing Log – October 26 to November 1, 2026"
   }
  ]
 }

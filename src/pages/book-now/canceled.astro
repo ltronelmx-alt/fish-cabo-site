@@ -1,0 +1,25 @@
+---
+// Customer left Stripe Checkout: the held date is released immediately. Private: noindex.
+import Base from '../../layouts/Base.astro';
+---
+<Base title="Payment canceled | Exotic Fish Cabo" description="Payment canceled." solidHeader>
+  <Fragment slot="head"><meta name="robots" content="noindex, nofollow" /><meta name="referrer" content="no-referrer" /></Fragment>
+  <section class="section bg-sand bs"><div class="container"><div class="bs-card" id="bc" aria-live="polite">
+    <h1>Payment canceled</h1><p>No deposit was taken.</p><p><a class="btn btn-primary no-arrow" href="/book-now">BACK TO BOOKING</a></p>
+  </div></div></section>
+</Base>
+<script>
+  const q = new URLSearchParams(location.search);
+  if (q.get('ref') && q.get('t')) {
+    fetch('/api/booking/cancel-checkout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ref: q.get('ref'), t: q.get('t') }) })
+      .then((r) => r.json()).then((j) => {
+        if (j.status === 'CONFIRMED') location.replace(`/book-now/confirmation?ref=${encodeURIComponent(q.get('ref')!)}&t=${encodeURIComponent(q.get('t')!)}`);
+        else if (j.status === 'AWAITING_PAYMENT' && !j.pending) document.querySelector('#bc p')!.insertAdjacentHTML('afterend', `<p>Your date is still held for you. <a href="/api/booking/pay?ref=${encodeURIComponent(q.get('ref')!)}&t=${encodeURIComponent(q.get('t')!)}">Pay the deposit</a></p>`);
+      }).catch(() => {});
+  }
+</script>
+<style>
+  .bs { padding-block: clamp(110px, 12vw, 160px) clamp(56px, 6vw, 96px); min-height: 60vh; }
+  .bs-card { max-width: 720px; margin-inline: auto; background: var(--white); border: 1px solid var(--line); border-top: 3px solid var(--orange); border-radius: var(--radius); padding: clamp(24px, 3vw, 44px); box-shadow: var(--shadow); font-family: var(--font-ui); }
+  .bs-card h1 { font-family: var(--font-head); font-size: clamp(24px, 3vw, 36px); margin: 0 0 12px; }
+</style>

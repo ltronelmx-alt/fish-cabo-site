@@ -1,0 +1,62 @@
+---
+// Booking status page (after Stripe Checkout, or Wise instructions). Private: noindex, not in the sitemap.
+import Base from '../../layouts/Base.astro';
+---
+<Base title="Your booking | Exotic Fish Cabo" description="Booking status." solidHeader>
+  <Fragment slot="head"><meta name="robots" content="noindex, nofollow" /><meta name="referrer" content="no-referrer" /></Fragment>
+  <section class="section bg-sand bs">
+    <div class="container"><div class="bs-card" id="bs" aria-live="polite"><h1>Checking your booking…</h1></div></div>
+  </section>
+</Base>
+<script>
+  const box = document.getElementById('bs')!;
+  const q = new URLSearchParams(location.search);
+  const ref = q.get('ref') || '', t = q.get('t') || '';
+  const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+  const money = (n: number) => '$' + n.toLocaleString('en-US') + ' USD';
+  const cents = (c: number) => '$' + (c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' USD';
+  const when = (iso: string) => new Date(iso).toLocaleString('en-US', { timeZone: 'America/Mazatlan', weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' (Los Cabos time)';
+  const longDate = (d: string) => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+  const NOTES: Record<string, string> = { notfound: 'We could not find this booking.', nopay: 'This booking does not need a card payment.', unavailable: 'Card payment is not available right now. Please contact us.', later: 'Too many attempts. Please try again later.' };
+  let tries = 0;
+  async function load() {
+    const r = await fetch(`/api/booking/status?ref=${encodeURIComponent(ref)}&t=${encodeURIComponent(t)}`).catch(() => null);
+    const j = r ? await r.json().catch(() => ({})) : {};
+    if (!j.ok) { box.innerHTML = '<h1>Booking not found</h1><p>Please check the link in your email, or contact us on WhatsApp +52 624 122 3506.</p>'; return; }
+    const rows = `<dl><dt>Reference</dt><dd>${esc(j.ref)}</dd><dt>Boat</dt><dd>${esc(j.boat)}</dd><dt>Date</dt><dd>${longDate(j.date)}</dd><dt>Trip</dt><dd>${j.hours} hours</dd><dt>People</dt><dd>${j.people}</dd>
+      <dt>Charter price</dt><dd>${money(j.total)}</dd><dt>Deposit</dt><dd>${money(j.deposit)}${j.feeCents ? ' + ' + cents(j.feeCents) + ' card fee' : ''}</dd><dt>Remaining balance</dt><dd>${money(j.balance)}</dd></dl>`;
+    const note = q.get('m') && NOTES[q.get('m')!] ? `<p class="bs-warn">${NOTES[q.get('m')!]}</p>` : '';
+    const test = j.test ? '<p class="bs-test">Test booking — no real payment.</p>' : '';
+    let html = '';
+    switch (j.status) {
+      case 'CONFIRMED': html = `<h1>Your charter is confirmed ✅</h1><p>Thank you ${esc(j.firstName)}! Your deposit has been received. A confirmation email is on its way.</p>${rows}<p>Departure: Puerto Los Cabos Marina, San José del Cabo. Questions? WhatsApp +52 624 122 3506.</p>`; break;
+      case 'AWAITING_PAYMENT':
+      case 'HELD':
+        if (j.canPay && tries === 0 && !q.has('m') && !document.referrer.includes('stripe.com')) html = `<h1>Pay your deposit</h1><p>Your date is held until ${when(j.holdExpiresAt)}.</p>${rows}<a class="btn btn-primary no-arrow" href="/api/booking/pay?ref=${encodeURIComponent(ref)}&t=${encodeURIComponent(t)}">PAY ${cents(j.chargeCents)} BY CARD</a>`;
+        else if (tries < 40) { html = `<h1>Confirming your payment…</h1><p>This usually takes a few seconds. Please keep this page open.</p>${rows}`; setTimeout(load, 3000); }
+        else html = `<h1>Payment not confirmed yet</h1><p>If you completed the payment, you will receive a confirmation email shortly. Otherwise you can try again${j.canPay ? ` — <a href="/api/booking/pay?ref=${encodeURIComponent(ref)}&t=${encodeURIComponent(t)}">pay the deposit</a>` : ''}.</p>${rows}`;
+        tries++; break;
+      case 'AWAITING_PAYMENT_VERIFICATION': html = `<h1>Almost done: pay your deposit with Wise</h1>
+        <ol><li>Pay <b>${money(j.deposit)}</b> with Wise.</li><li>Write your booking reference <b>${esc(j.ref)}</b> in the payment note.</li><li>We confirm your booking by email once we have checked the payment.</li></ol>
+        <p><a class="btn btn-primary no-arrow" href="${esc(j.wiseUrl)}" target="_blank" rel="noopener">PAY ${money(j.deposit)} WITH WISE</a></p>
+        <p>Your date is held until <b>${when(j.holdExpiresAt)}</b>. We also sent these instructions to your email.</p>${rows}`; break;
+      case 'PAYMENT_EXCEPTION': html = `<h1>We received your payment</h1><p>There is a problem with this booking that we need to check personally (for example the date is no longer available). We will contact you very soon — or WhatsApp us on +52 624 122 3506.</p>${rows}`; break;
+      case 'CANCELED': html = `<h1>Booking canceled</h1><p>No deposit was taken. <a href="/book-now">Choose another date or boat</a>.</p>`; break;
+      case 'EXPIRED': html = `<h1>Reservation expired</h1><p>The date was held but no deposit was received in time, so it has been released. <a href="/book-now">Book again</a> or contact us if you already paid.</p>`; break;
+      case 'REFUND_PENDING': case 'REFUNDED': html = `<h1>Booking canceled</h1><p>Your refund is ${j.status === 'REFUNDED' ? 'done' : 'being processed'}.</p>${rows}`; break;
+      default: html = `<h1>Booking ${esc(j.ref)}</h1>${rows}`;
+    }
+    box.innerHTML = note + html + test;
+  }
+  load();
+</script>
+<style>
+  .bs { padding-block: clamp(110px, 12vw, 160px) clamp(56px, 6vw, 96px); min-height: 70vh; }
+  .bs-card { max-width: 720px; margin-inline: auto; background: var(--white); border: 1px solid var(--line); border-top: 3px solid var(--orange); border-radius: var(--radius); padding: clamp(24px, 3vw, 44px); box-shadow: var(--shadow); font-family: var(--font-ui); }
+  .bs-card :global(h1) { font-family: var(--font-head); font-size: clamp(24px, 3vw, 36px); margin: 0 0 12px; }
+  .bs-card :global(dl) { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; padding: 16px 18px; background: var(--sand); border-radius: var(--radius-sm); margin: 18px 0; }
+  .bs-card :global(dt) { color: var(--muted); } .bs-card :global(dd) { margin: 0; font-weight: 700; }
+  .bs-card :global(.bs-warn) { background: #fff7ef; border-left: 4px solid var(--orange); padding: 10px 14px; }
+  .bs-card :global(.bs-test) { color: #075985; font-size: 13px; }
+  @media (max-width: 560px) { .bs-card :global(dl) { grid-template-columns: 1fr; } }
+</style>

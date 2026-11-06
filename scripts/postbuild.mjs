@@ -36,6 +36,10 @@ ${isProd ? '' : '  X-Robots-Tag: noindex, nofollow\n'}
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store
 
+/book-now/*
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
+
 /deploy-info.json
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store
@@ -95,6 +99,8 @@ try {
     extra.push(`<url><loc>${SITE}${path}</loc>${date ? `<lastmod>${date}</lastmod>` : ''}</url>`);
   }
 } catch {}
+// Booking page (new URL, indexable). Its private sub-pages (/book-now/confirmation, /book-now/canceled) are noindex.
+try { readFileSync(join(DIST, 'book-now.html')); if (!known.has('/book-now')) extra.push(`<url><loc>${SITE}/book-now</loc></url>`); } catch {}
 // F7 — /cabo-fishing is a duplicate of the homepage and canonicalises to "/": list the canonical homepage URL instead
 const fixed = orig.replace(`<loc>${SITE}/cabo-fishing</loc>`, `<loc>${SITE}/</loc>`);
 // F9 — sitemap <image:loc>: the exact same files, self-hosted (all 102 references have a local copy in /media)

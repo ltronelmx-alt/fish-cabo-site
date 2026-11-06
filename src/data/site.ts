@@ -10,7 +10,7 @@ export const SITE = {
     'https://www.google.com/maps/dir/?api=1&destination=23.060275%2C-109.670677&travelmode=driving',
   directionsUrl:
     'https://www.google.com/maps/dir/?api=1&destination=23.060275%2C-109.670677&travelmode=driving',
-  bookUrl: '/fishing-boats',
+  bookUrl: '/book-now', // online booking (was /fishing-boats)
   gps: { lat: 23.060275, lng: -109.670677 },
   googleReviews: 'https://g.page/r/CVkU9WoXqp_DEBM',
   googleLeaveReview: 'https://g.page/r/CVkU9WoXqp_DEBM/review',

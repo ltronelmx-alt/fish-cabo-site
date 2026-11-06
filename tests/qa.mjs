@@ -72,7 +72,7 @@ for (const [vw, label] of [[375, 'mobile'], [768, 'tablet'], [1440, 'desktop']])
     await p.keyboard.press('Escape'); await p.waitForTimeout(150);
     await p.mouse.move(5, 600); await p.waitForTimeout(150);
     rec('Accessibility', `Escape closes dropdown (${label})`, !(await p.evaluate(() => document.querySelector('.dd')?.classList.contains('open'))));
-    const bookHref = await p.getAttribute('.hdr-cta .cta-book', 'href'); rec('Booking', 'header BOOK NOW → /fishing-boats', bookHref === '/fishing-boats', bookHref);
+    const bookHref = await p.getAttribute('.hdr-cta .cta-book', 'href'); rec('Booking', 'header BOOK NOW → /book-now', bookHref === '/book-now', bookHref);
     const gps = await p.getAttribute('.hdr-cta .cta-gps', 'href'); rec('Directions', 'MARINA GPS → 23.060275,-109.670677', /23\.060275%2C-109\.670677/.test(gps), gps);
   } else {
     await p.click('.burger'); await p.waitForTimeout(200);

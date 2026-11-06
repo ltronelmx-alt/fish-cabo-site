@@ -14,6 +14,11 @@
     "run_worker_first": ["/*", "!/media/*", "!/_astro/*", "!/fonts/*", "!/og/*", "!/js/*", "!/cms/*", "!/favicon.ico"]
   },
   "observability": { "enabled": true },
+  // Booking system: Cloudflare D1 (free plan: 5 GB, 5M reads + 100k writes per day). Wrangler creates the database
+  // automatically on the first deploy (no database_id needed). Tables are created by the Worker itself (worker/booking/schema.ts).
+  "d1_databases": [{ "binding": "DB", "database_name": "fish-cabo-bookings" }],
+  // Hourly: release expired holds, Wise expiry notices, retry confirmation emails that failed (free plan: 5 cron triggers).
+  "triggers": { "crons": ["17 * * * *"] },
   // Enable after creating the dataset (free): uncomment to store click counts.
   // "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "fishcabo_events" }],
   // Production configuration. Staging isolation does not depend on this value: on *.workers.dev the Worker

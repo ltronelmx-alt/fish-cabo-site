@@ -9,9 +9,18 @@ export interface Env {
   CONTACT_FROM?: string;
   NOTIFY_TEST_JWKS?: string; // local tests only (ignored unless the request host is 127.0.0.1/localhost)
   STAGING_PASSWORD?: string; // secret: password-protects the *.workers.dev staging site only (never fish-cabo.com)
+  // Booking system (D1 free plan). Secrets are set by the owner in the Cloudflare dashboard, never in code.
+  DB?: D1Database;
+  STRIPE_SECRET_KEY?: string; // sk_test_… until the owner approves live payments
+  STRIPE_WEBHOOK_SECRET?: string;
+  STRIPE_API_BASE?: string; // local tests only
+  BOOKING_LIVE?: string; // "approved" = owner explicitly approved live card payments
+  ADMIN_PASSWORD?: string;
 }
 import REDIRECTS from '../src/data/redirects.json';
 import { publishNotify } from './notify';
+import { apiBoats, apiAvailability, apiReserve, apiStatus, apiCancelCheckout, apiPay, apiStripeWebhook, cron } from './booking/core';
+import { adminPage, adminApi } from './booking/admin';
 const TEST_TURNSTILE_SECRET = '1x0000000000000000000000000000000AA';
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
 const STAGING_OPEN_UNTIL = Date.parse('2026-11-04T16:55:00Z'); // = 2026-11-04 09:55 Mazatlán (post-deploy verification window)
@@ -87,6 +96,9 @@ export default {
     h.set('X-Robots-Tag', 'noindex, nofollow');
     return new Response(res.body, { status: res.status, statusText: res.statusText, headers: h });
   },
+  async scheduled(_c: ScheduledController, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(cron(env).catch((e) => console.log('cron error', String(e))));
+  },
 } satisfies ExportedHandler<Env>;
 
 async function handle(request: Request, env: Env): Promise<Response> {
@@ -104,11 +116,35 @@ async function handle(request: Request, env: Env): Promise<Response> {
     // robots.txt on *.workers.dev is public (no password) so crawlers read "Disallow: /"
     if (new URL(request.url).hostname.endsWith('.workers.dev') && new URL(request.url).pathname === '/robots.txt')
       return new Response('User-agent: *\nDisallow: /\n', { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } });
+    if (new URL(request.url).pathname === '/api/stripe/webhook') {
+      if (!env.DB) return json({ ok: false }, 503);
+      return apiStripeWebhook(request, env).catch((e) => { console.log('webhook fatal', String(e)); return json({ ok: false }, 500); });
+    }
     const locked = await stagingLocked(request, env);
     if (locked) return locked;
     const url = new URL(request.url);
     if (url.pathname === '/api/contact') return contact(request, env);
     if (url.pathname === '/api/publish-notify') return publishNotify(request, env);
+    // Booking system. The Stripe webhook is reachable without the staging password (Stripe cannot send one; it is signed).
+    if (url.pathname.startsWith('/api/booking/') || url.pathname.startsWith('/api/admin/') || url.pathname === '/admin/bookings') {
+      if (!env.DB) return json({ ok: false, error: 'Online booking is not available yet.' }, 503);
+      try {
+        switch (url.pathname) {
+          case '/api/booking/boats': return await apiBoats(env);
+          case '/api/booking/availability': return await apiAvailability(request, env);
+          case '/api/booking/reserve': return await apiReserve(request, env);
+          case '/api/booking/status': return await apiStatus(request, env);
+          case '/api/booking/cancel-checkout': return await apiCancelCheckout(request, env);
+          case '/api/booking/pay': return await apiPay(request, env);
+          case '/admin/bookings': return await adminPage(request, env);
+        }
+        if (url.pathname.startsWith('/api/admin/')) return await adminApi(request, env);
+      } catch (e) {
+        console.log('booking error', String(e));
+        return json({ ok: false, error: 'Something went wrong. Please try again or contact us on WhatsApp +52 624 122 3506.' }, 500);
+      }
+      return json({ ok: false, error: 'Not found' }, 404);
+    }
     if (url.pathname === '/api/event') {
       if (request.method !== 'POST') return new Response(null, { status: 405 });
       try {

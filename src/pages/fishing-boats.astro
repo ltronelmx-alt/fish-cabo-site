@@ -6,6 +6,8 @@ import Rich from '../components/Rich.astro';
 import OImg from '../components/OImg.astro';
 import OBtn from '../components/OBtn.astro';
 import { PAGES, type Block } from '../lib/original';
+import catalogue from '../data/boats.json';
+const bookId = (href = '') => catalogue.boats.find((x) => x.url === href.replace(/^https?:\/\/[^/]+/, '').replace(/\/$/, ''))?.id;
 
 const P = PAGES['fishing-boats'];
 const [s0, s1, s2, s3, s4, s5] = P.sections;
@@ -38,7 +40,7 @@ const faq = s4.blocks.filter((b) => b.ga[3] - b.ga[1] > 12);
         <div class="container boats" style={`--n:${cs.length}`}>
           {ordered.map((b) =>
             b.kind === 'img' ? <OImg block={b} class="boat-media" sizes="(min-width: 1000px) 30vw, 92vw" style={pos.get(b)} /> :
-            b.kind === 'button' ? <div class="boat-btn" style={pos.get(b)}><OBtn block={b} track={`boat_${(b.href || '').split('/').pop()}`} /></div> :
+            b.kind === 'button' ? <div class="boat-btn" style={pos.get(b)}><OBtn block={b} track={`boat_${(b.href || '').split('/').pop()}`} />{bookId(b.href) && <a class="btn btn-primary" data-booking href={`/book-now?boat=${bookId(b.href)}`} data-track={`book_this_boat_${bookId(b.href)}`}>BOOK THIS BOAT</a>}</div> :
             <div class="boat-text rich" style={pos.get(b)} set:html={b.html} />
           )}
         </div>
@@ -64,7 +66,7 @@ const faq = s4.blocks.filter((b) => b.ga[3] - b.ga[1] > 12);
   .boat-text { padding: 20px 24px 0; }
   .boat-text :global(h4) { margin: 0; }
   .boat-text :global(p) { font-size: 0.93em; margin: 0; }
-  .boat-btn { padding: 22px 24px 26px; border-radius: 0 0 var(--radius) var(--radius); display: flex; align-items: flex-end; }
+  .boat-btn { padding: 22px 24px 26px; border-radius: 0 0 var(--radius) var(--radius); display: flex; flex-direction: column; justify-content: flex-end; gap: 10px; }
   .boat-btn :global(.btn) { width: 100%; min-width: 0 !important; }
   @media (max-width: 760px) {
     .boats { grid-template-columns: 1fr; row-gap: 0; }

@@ -1,0 +1,185 @@
+{
+ "_doc": "Booking engine boat catalogue (seed). Stable IDs boat-01..boat-10 = Boat #1..#10 on /fishing-boats (order verified 2026-11-06; each boat page also shows its number). Deposits: owner-confirmed USD, same for 6h and 8h. Prices: to be provided by the owner (null = online booking disabled for that boat). Capacity: from each boat page. After the first deploy the database is the source of truth (prices editable in /admin/bookings).",
+ "boats": [
+  {
+   "id": "boat-01",
+   "number": 1,
+   "name": "23ft Panga",
+   "contactFormLabel": "Boat # 1   (23 Ft Panga)",
+   "slug": "23ft-panga",
+   "url": "/fishing-boats/23ft-panga",
+   "capacity": 2,
+   "depositUsd": 100,
+   "price6Usd": null,
+   "price8Usd": null,
+   "image": {
+    "path": "505fc072-1705-4425-aa79-71de7ea28485/23-ft+Fishing+San+Jose+del+Cabo.webp",
+    "alt": "23ft Panga"
+   },
+   "description": "A compact and affordable private fishing boat for 1–2 guests. Its simple, practical layout makes it an excellent choice for couples or solo anglers looking for a straightforward fishing experience in San José del Cabo.",
+   "sizeFt": 23
+  },
+  {
+   "id": "boat-02",
+   "number": 2,
+   "name": "26ft Super Panga",
+   "contactFormLabel": "Boat # 2   (26 Ft Super Panga)",
+   "slug": "26ft-super-panga",
+   "url": "/fishing-boats/26ft-super-panga",
+   "capacity": 3,
+   "depositUsd": 200,
+   "price6Usd": null,
+   "price8Usd": null,
+   "image": {
+    "path": "ae474e4c-80fd-4491-91c5-fdabc0d00cb7/26ft+super+panga+fishing+san+jose+del+cabo.webp",
+    "alt": "26ft Super Panga"
+   },
+   "description": "A versatile 26-foot fishing boat accommodating up to 3 guests. Ideal for couples and small groups seeking a private fishing adventure with more space than a traditional panga.",
+   "sizeFt": 26
+  },
+  {
+   "id": "boat-03",
+   "number": 3,
+   "name": "27ft Premium Center Console",
+   "contactFormLabel": "Boat # 3  (27 Ft Premium Cent. Cons)",
+   "slug": "27ft-premium-center-console",
+   "url": "/fishing-boats/27ft-premium-center-console",
+   "capacity": 4,
+   "depositUsd": 200,
+   "price6Usd": null,
+   "price8Usd": null,
+   "image": {
+    "path": "529f2243-d23b-4633-a5ef-75f62bca6a4f/fishing+San+Jose+del+Cabo+27Ft.webp",
+    "alt": "27ft Premium Center Console"
+   },
+   "description": "A comfortable center console for up to 4 guests, featuring an open fishing deck, cushioned seating, and an onboard toilet. A great option for families and small groups wanting extra comfort while fishing.",
+   "sizeFt": 27
+  },
+  {
+   "id": "boat-04",
+   "number": 4,
+   "name": "30ft Cuddy Cabin",
+   "contactFormLabel": "Boat # 4  (30 Ft Cuddy cabin)",
+   "slug": "30ft-cuddy-cabin",
+   "url": "/fishing-boats/30ft-cuddy-cabin",
+   "capacity": 6,
+   "depositUsd": 200,
+   "price6Usd": null,
+   "price8Usd": null,
+   "image": {
+    "path": "b0c7dbc5-74df-480f-a6d1-1afd79712cf4/30ft+cuddy+cabin+fishing+San+Jose+del+Cabo.webp",
+    "alt": "30ft Cuddy Cabin"
+   },
+   "description": "Designed for groups of up to 6 guests, this fishing boat combines an open fishing area with a sheltered cabin, comfortable seating, and onboard facilities. An appealing choice for family fishing trips.",
+   "sizeFt": 30
+  },
+  {
+   "id": "boat-05",
+   "number": 5,
+   "name": "38ft Flybridge",
+   "contactFormLabel": "Boat # 5  (38 Ft Flybridge)",
+   "slug": "38ft-flybridge",
+   "url": "/fishing-boats/38ft-flybridge",
+   "capacity": 8,
+   "depositUsd": 300,
+   "price6Usd": null,
+   "price8Usd": null,
+   "image": {
+    "path": "8d45feed-30fd-40cc-b61c-efc171be3a11/38Ft+Flybridge+fishing+San+Jose+del+Cabo.webp",
+    "alt": "38ft Flybridge"
+   },
+   "description": "A spacious flybridge fishing boat accommodating up to 8 guests. Its elevated viewing area, sheltered cabin, and comfortable seating make it a practical option for larger groups seeking additional onboard comfort.",
+   "sizeFt": 38
+  },
+  {
+   "id": "boat-06",
+   "number": 6,
+   "name": "31ft Premium Center Console",
+   "contactFormLabel": "Boat # 6  (31 Ft Premium Cent. Cons)",
+   "slug": "31ft-premium-center-console",
+   "url": "/fishing-boats/31ft-premium-center-console",
+   "capacity": 5,
+   "depositUsd": 400,
+   "price6Usd": null,
+   "price8Usd": null,
+   "image": {
+    "path": "0109b493-9700-4fc8-8848-ace8dd7069f8/Fishing+San+Jose+del+Cabo+31Ft.webp",
+    "alt": "31ft Premium Center Console"
+   },
+   "description": "A well-equipped center console for up to 5 guests, featuring twin outboard engines, a spacious fishing deck, a shaded T-top, and an onboard toilet. Ideal for anglers who appreciate open fishing space and convenience.",
+   "sizeFt": 31
+  },
+  {
+   "id": "boat-07",
+   "number": 7,
+   "name": "29ft Catamaran Center Console",
+   "contactFormLabel": "Boat # 7  (29 Ft Premium Catamaran)",
+   "slug": "29-ft-catamaran-center-console",
+   "url": "/fishing-boats/29-ft-catamaran-center-console",
+   "capacity": 6,
+   "depositUsd": 400,
+   "price6Usd": null,
+   "price8Usd": null,
+   "image": {
+    "path": "ad2a6356-f668-4895-baed-dfe9e63b4516/29+Ft+Catamaran+Center+Console.webp",
+    "alt": "29ft Catamaran Center Console"
+   },
+   "description": "A distinctive twin-hull fishing catamaran for up to 6 guests. Its wide, stable fishing platform, twin outboard engines, and comfortable seating offer an alternative to traditional single-hull center consoles.",
+   "sizeFt": 29
+  },
+  {
+   "id": "boat-08",
+   "number": 8,
+   "name": "35ft Premium Cuddy Cabin",
+   "contactFormLabel": "Boat # 8  (35 Ft Premium Cuddy Cabin)",
+   "slug": "35ft-premium-cuddy-cabin",
+   "url": "/fishing-boats/35ft-premium-cuddy-cabin",
+   "capacity": 8,
+   "depositUsd": 500,
+   "price6Usd": null,
+   "price8Usd": null,
+   "image": {
+    "path": "d2d41a96-63bc-4cec-9f96-e481459465c9/Fishing+San+Jose+del+Cabo+35Ft.webp",
+    "alt": "35ft Premium Cuddy Cabin"
+   },
+   "description": "A spacious fishing boat for up to 8 guests, combining a sheltered cabin, shaded seating, and onboard navigation and fish-finding electronics. Well suited to families and groups planning longer offshore fishing trips.",
+   "sizeFt": 35
+  },
+  {
+   "id": "boat-09",
+   "number": 9,
+   "name": "44ft Premium Flybridge",
+   "contactFormLabel": "Boat # 9 (44 Ft Premium Flybridge)",
+   "slug": "44ft-premium-flybridge",
+   "url": "/fishing-boats/44ft-premium-flybridge",
+   "capacity": 10,
+   "depositUsd": 500,
+   "price6Usd": null,
+   "price8Usd": null,
+   "image": {
+    "path": "0ab97240-a3e8-454a-96d3-6871b25ab610/44ft+premium+flybridge+yacht+to+fish+san+jose+del+cabo.webp",
+    "alt": "44ft Premium Flybridge"
+   },
+   "description": "Our largest private fishing boat option, accommodating up to 10 guests. Featuring an elevated flybridge, generous fishing deck, and sheltered cabin, it is ideal for bigger groups seeking space and comfort.",
+   "sizeFt": 44
+  },
+  {
+   "id": "boat-10",
+   "number": 10,
+   "name": "37ft Ultimate Fishing Machine",
+   "contactFormLabel": "Boat #10 (37FT Ultimate Fishing Machine)",
+   "slug": "37ft-ultimate-fishing-machine",
+   "url": "/fishing-boats/37ft-ultimate-fishing-machine",
+   "capacity": 6,
+   "depositUsd": 1000,
+   "price6Usd": null,
+   "price8Usd": null,
+   "image": {
+    "path": "78d32865-8446-4e34-b090-e52c7d6a542b/freeman+cruise.webp",
+    "alt": "37ft Ultimate Fishing Machine"
+   },
+   "description": "A powerful offshore fishing catamaran for up to 6 guests, featuring a twin-hull design, four outboard engines, and a spacious open deck. An excellent option for anglers prioritizing fishing space and offshore capability.",
+   "sizeFt": 37
+  }
+ ]
+}

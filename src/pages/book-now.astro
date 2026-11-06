@@ -1,0 +1,287 @@
+---
+// /book-now — online booking (Cloudflare Workers + D1). Prices, deposits and availability always come from the server.
+// No Product/Offer/availability schema on purpose (owner prices may change; avoids stale structured data).
+import Base from '../layouts/Base.astro';
+import catalogue from '../data/boats.json';
+import { SITE } from '../data/site';
+import { media } from '../lib/media';
+
+const title = 'Book a Fishing Charter in San Jose del Cabo | Exotic Fish Cabo';
+const description = 'Book your private fishing charter from Puerto Los Cabos Marina online: choose your boat, date and 6 or 8 hour trip, and pay the deposit by card or Wise.';
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY || '0x4AAAAAAFyrH2-R96GEy7AN';
+const boats = catalogue.boats.map((b) => ({ id: b.id, number: b.number, name: b.name, capacity: b.capacity, deposit: b.depositUsd, url: b.url, img: media(b.image.path)?.at(480) ?? '', alt: b.image.alt }));
+const isProd = import.meta.env.PUBLIC_SITE_ENV === 'production';
+---
+<Base title={title} description={description} solidHeader>
+  <Fragment slot="head">
+    <link rel="canonical" href={`${SITE.url}/book-now`} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={`${SITE.url}/book-now`} />
+    <meta property="og:type" content="website" />
+  </Fragment>
+
+  <section class="section bg-sand bk-top">
+    <div class="container">
+      <h1 class="bk-h1">Book Your San Jose del Cabo Fishing Charter</h1>
+      <p class="bk-lead">Choose your boat, your fishing date and a 6 or 8 hour trip, then secure it with a deposit. Every charter is private and leaves from Puerto Los Cabos Marina in San José del Cabo.</p>
+      <ul class="bk-facts">
+        <li><b>One private trip per boat per day</b> — the boat is yours.</li>
+        <li><b>Deposit by card</b> (Stripe, +6% processing fee) <b>or Wise</b> (no fee).</li>
+        <li><b>Book at least 24 hours</b> before your trip. Last minute? <a href={`https://wa.me/${SITE.whatsapp.replace('+', '')}`}>WhatsApp us</a>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section bg-white bk-sec">
+    <div class="container">
+      <form id="bk" class="bk" novalidate data-boats={JSON.stringify(boats)}>
+        <noscript><p class="bk-note">Online booking needs JavaScript. You can also <a href="/contact">contact us</a>.</p></noscript>
+        <div class="bk-step">
+          <h2><span>1</span> Choose your boat</h2>
+          <div class="bk-boats" role="radiogroup" aria-label="Boat">
+            {boats.map((b) => (
+              <label class="bk-boat" data-id={b.id}>
+                <input type="radio" name="boat" value={b.id} required />
+                {b.img && <img src={b.img} alt={b.alt} loading="lazy" decoding="async" width="320" height="200" />}
+                <span class="bk-bn">#{b.number} · {b.name}</span>
+                <span class="bk-bm">Up to {b.capacity} {b.capacity === 1 ? 'person' : 'people'} · Deposit ${b.deposit}</span>
+                <span class="bk-bp" data-price></span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div class="bk-step" id="s-trip" hidden>
+          <h2><span>2</span> Trip and date</h2>
+          <fieldset class="bk-dur"><legend>Trip duration * <small>(required)</small></legend>
+            <label><input type="radio" name="duration" value="6" required /> <span><b>6-Hour Fishing Trip</b> (3/4 day)<em data-p="6"></em></span></label>
+            <label><input type="radio" name="duration" value="8" /> <span><b>8-Hour Fishing Trip</b> (full day)<em data-p="8"></em></span></label>
+          </fieldset>
+          <div class="bk-cal" aria-live="polite">
+            <div class="bk-calhead"><button type="button" class="bk-nav" data-m="-1" aria-label="Previous month">‹</button><b id="cal-month"></b><button type="button" class="bk-nav" data-m="1" aria-label="Next month">›</button></div>
+            <div class="bk-grid" id="cal-grid"></div>
+            <p class="bk-legend"><i class="l-av"></i>Available <i class="l-bk"></i>Booked <i class="l-na"></i>Not bookable online</p>
+          </div>
+          <input type="hidden" name="date" />
+          <div class="bk-alert" id="booked" hidden>
+            <p><strong>This boat already has a booking on your selected date. A second trip may be possible upon request. Please contact us to check availability.</strong></p>
+            <a class="btn btn-primary no-arrow" id="req" href="/contact">REQUEST AVAILABILITY</a>
+          </div>
+          <div class="bk-alert" id="onrequest" hidden>
+            <p><strong>Online booking is not open for this trip yet.</strong> Send us your date and we will reply with the price and availability.</p>
+            <a class="btn btn-primary no-arrow" id="req2" href="/contact">REQUEST AVAILABILITY</a>
+          </div>
+        </div>
+
+        <div class="bk-step" id="s-details" hidden>
+          <h2><span>3</span> Your details</h2>
+          <div class="bk-two">
+            <label>First Name *<input name="fname" autocomplete="given-name" required maxlength="80" /></label>
+            <label>Last Name *<input name="lname" autocomplete="family-name" required maxlength="80" /></label>
+          </div>
+          <div class="bk-two">
+            <label>Email *<input name="email" type="email" autocomplete="email" required maxlength="120" /></label>
+            <label>Phone *<input name="phone" type="tel" autocomplete="tel" required maxlength="40" /></label>
+          </div>
+          <label>People aboard *<select name="people" required><option value="">Select an option</option></select></label>
+          <label>Message *<textarea name="message" rows="4" required maxlength="5000" placeholder="Anything we should know: target species, children aboard, hotel pick-up questions…"></textarea></label>
+        </div>
+
+        <div class="bk-step" id="s-pay" hidden>
+          <h2><span>4</span> Deposit</h2>
+          <div class="bk-sum" id="sum"></div>
+          <fieldset class="bk-payopts"><legend>Pay the deposit with</legend>
+            <label><input type="radio" name="payment" value="stripe" required /> <span><b>Card</b> (Stripe — card, Apple Pay, Google Pay)<em id="pay-stripe"></em></span></label>
+            <label><input type="radio" name="payment" value="wise" /> <span><b>Wise</b> (no fee — date held 24 h while we verify your transfer)<em id="pay-wise"></em></span></label>
+          </fieldset>
+          <label class="bk-consent"><input type="checkbox" name="consent" value="yes" required /> <span>I accept the <a href="/terms-conditions" target="_blank" rel="noopener">Terms &amp; Conditions</a> and the <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>
+          <input type="text" name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true" />
+          <div class="cf-turnstile" data-sitekey={siteKey}></div>
+          <button class="btn btn-primary no-arrow bk-go" type="submit">PAY DEPOSIT &amp; BOOK</button>
+          <p class="bk-msg" role="status" aria-live="polite"></p>
+          {!isProd && <p class="bk-test">Staging: test mode — no real payment is taken.</p>}
+        </div>
+      </form>
+    </div>
+  </section>
+</Base>
+<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script>
+  type B = { id: string; number: number; name: string; capacity: number; deposit: number; url: string; prices: Record<string, number | null>; bookable: boolean; active: boolean };
+  const f = document.getElementById('bk') as HTMLFormElement;
+  const $ = <T extends Element = HTMLElement>(s: string) => f.querySelector(s) as T;
+  const msg = $('.bk-msg');
+  const show = (id: string, on: boolean) => { const el = document.getElementById(id); if (el) el.hidden = !on; };
+  const money = (n: number) => '$' + n.toLocaleString('en-US') + ' USD';
+  const cents = (c: number) => '$' + (c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' USD';
+  let boats: B[] = [], fee = 6, today = '', month = '', days: Record<string, string> = {};
+  const q = new URLSearchParams(location.search);
+  const boat = () => boats.find((b) => b.id === (f.elements.namedItem('boat') as RadioNodeList).value);
+  const val = (n: string) => ((f.elements.namedItem(n) as RadioNodeList | HTMLInputElement)?.value || '');
+  const contactUrl = () => {
+    const b = boat(); const p = new URLSearchParams({ request: 'second-trip' });
+    if (b) p.set('boat', b.id); if (val('date')) p.set('date', val('date')); if (val('duration')) p.set('duration', val('duration'));
+    return '/contact?' + p + '#contact-form';
+  };
+
+  async function init() {
+    try {
+      const r = await fetch('/api/booking/boats'); const j = await r.json();
+      if (!j.ok) throw 0;
+      boats = j.boats; fee = j.stripeFeePct; today = j.today; month = today.slice(0, 7);
+    } catch {
+      msg.innerHTML = 'Online booking is not available right now. Please <a href="/contact">contact us</a> or WhatsApp +52 624 122 3506.';
+      show('s-pay', true); ($('.bk-go') as HTMLButtonElement).disabled = true; return;
+    }
+    f.querySelectorAll<HTMLElement>('.bk-boat').forEach((el) => {
+      const b = boats.find((x) => x.id === el.dataset.id);
+      const p = el.querySelector('[data-price]')!;
+      if (!b || !b.active) { el.classList.add('off'); p.textContent = 'Not available online'; return; }
+      const ps = [b.prices[6] && `6 h ${money(b.prices[6]!)}`, b.prices[8] && `8 h ${money(b.prices[8]!)}`].filter(Boolean);
+      p.textContent = ps.length ? ps.join(' · ') : 'Price on request';
+    });
+    const pre = q.get('boat');
+    if (pre) { const r = f.querySelector<HTMLInputElement>(`input[name=boat][value="${CSS.escape(pre)}"]`); if (r) { r.checked = true; pickBoat(); r.closest('.bk-boat')?.scrollIntoView({ block: 'center' }); } }
+    const d = q.get('duration'); if (d === '6' || d === '8') { const r = f.querySelector<HTMLInputElement>(`input[name=duration][value="${d}"]`); if (r) { r.checked = true; onTrip(); } }
+  }
+
+  function pickBoat() {
+    const b = boat(); if (!b) return;
+    show('s-trip', true);
+    f.querySelectorAll<HTMLElement>('[data-p]').forEach((em) => { const p = b.prices[em.dataset.p!]; em.textContent = p ? ' — ' + money(p) : ' — price on request'; });
+    const sel = $('select[name=people]') as HTMLSelectElement; const cur = sel.value;
+    sel.innerHTML = '<option value="">Select an option</option>' + Array.from({ length: Math.min(b.capacity, 10) }, (_, i) => `<option value="${i + 1}">${i + 1} ${i ? 'people' : 'person'}</option>`).join('');
+    if (+cur <= b.capacity) sel.value = cur;
+    (f.elements.namedItem('date') as HTMLInputElement).value = '';
+    loadMonth(); onTrip();
+  }
+  function onTrip() {
+    const b = boat(); const h = val('duration');
+    const open = !!b && !!h && b.prices[h] != null;
+    show('onrequest', !!b && !!h && !open); ($('#req2') as HTMLAnchorElement).href = contactUrl();
+    const ok = open && !!val('date') && days[val('date')] === 'available';
+    show('s-details', ok); show('s-pay', ok); if (ok) summary();
+  }
+  async function loadMonth() {
+    const b = boat(); if (!b) return;
+    const grid = document.getElementById('cal-grid')!; grid.setAttribute('aria-busy', 'true');
+    const j = await fetch(`/api/booking/availability?boat=${b.id}&month=${month}`).then((r) => r.json()).catch(() => ({ ok: false }));
+    days = j.ok ? j.days : {};
+    const [y, m] = month.split('-').map(Number);
+    document.getElementById('cal-month')!.textContent = new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+    const lead = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7;
+    const labels: Record<string, string> = { available: 'available', booked: 'already booked', pending: 'already booked', blocked: 'not available', too_soon: 'less than 24 h away — contact us', past: 'past', closed: 'not open yet' };
+    grid.innerHTML = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((d) => `<span class="dow">${d}</span>`).join('') + '<span></span>'.repeat(lead) +
+      Object.entries(days).map(([d, s]) => `<button type="button" class="day s-${s}${d === val('date') ? ' sel' : ''}" data-d="${d}" ${['available', 'booked', 'pending'].includes(s) ? '' : 'disabled'} aria-label="${new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })}: ${labels[s]}">${+d.slice(8)}</button>`).join('');
+    grid.removeAttribute('aria-busy');
+    (f.querySelector('.bk-nav[data-m="-1"]') as HTMLButtonElement).disabled = month <= today.slice(0, 7);
+  }
+  function pickDay(d: string) {
+    (f.elements.namedItem('date') as HTMLInputElement).value = d;
+    f.querySelectorAll('.day.sel').forEach((x) => x.classList.remove('sel'));
+    f.querySelector(`.day[data-d="${d}"]`)?.classList.add('sel');
+    const taken = days[d] === 'booked' || days[d] === 'pending';
+    show('booked', taken); ($('#req') as HTMLAnchorElement).href = contactUrl();
+    onTrip();
+    if (taken) document.getElementById('booked')!.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+  function summary() {
+    const b = boat()!, h = val('duration'), total = b.prices[h]!, card = Math.round(b.deposit * 100 * (1 + fee / 100));
+    const d = new Date(val('date') + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+    document.getElementById('sum')!.innerHTML = `<dl><dt>Boat</dt><dd>#${b.number} · ${b.name}</dd><dt>Date</dt><dd>${d}</dd><dt>Trip duration</dt><dd>${h}-Hour Fishing Trip</dd>
+      <dt>Charter price</dt><dd>${money(total)}</dd><dt>Deposit today</dt><dd>${money(b.deposit)}</dd><dt>Remaining balance</dt><dd>${money(total - b.deposit)}</dd></dl>`;
+    document.getElementById('pay-stripe')!.textContent = ` — you pay ${cents(card)} (deposit + ${fee}%)`;
+    document.getElementById('pay-wise')!.textContent = ` — you pay ${money(b.deposit)}`;
+  }
+
+  f.addEventListener('change', (e) => {
+    const t = e.target as HTMLInputElement;
+    if (t.name === 'boat') pickBoat();
+    if (t.name === 'duration') { onTrip(); ($('#req') as HTMLAnchorElement).href = contactUrl(); }
+  });
+  f.addEventListener('click', (e) => {
+    const t = (e.target as HTMLElement).closest<HTMLButtonElement>('button');
+    if (!t) return;
+    if (t.classList.contains('day')) pickDay(t.dataset.d!);
+    if (t.classList.contains('bk-nav')) {
+      const [y, m] = month.split('-').map(Number);
+      month = new Date(Date.UTC(y, m - 1 + Number(t.dataset.m), 1)).toISOString().slice(0, 7); loadMonth();
+    }
+  });
+  f.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!f.checkValidity()) { f.reportValidity(); msg.textContent = 'Please complete all required fields.'; return; }
+    const btn = $('.bk-go') as HTMLButtonElement; btn.disabled = true; msg.textContent = 'Reserving your date…';
+    const fd = new FormData(f); fd.set('lang', (navigator.language || 'en').slice(0, 2));
+    try {
+      const r = await fetch('/api/booking/reserve', { method: 'POST', body: fd });
+      const j = await r.json().catch(() => ({}));
+      if (j.ok && j.redirect) { msg.textContent = 'Redirecting…'; navigator.sendBeacon?.('/api/event', new Blob([JSON.stringify({ event: 'booking_started_' + val('payment'), page: location.pathname })], { type: 'application/json' })); location.href = j.redirect; return; }
+      if (j.code === 'BOOKED') { await loadMonth(); pickDay(val('date')); }
+      msg.textContent = j.error || 'Sorry, something went wrong. Please try again or contact us on WhatsApp.';
+      (window as any).turnstile?.reset?.();
+    } catch { msg.textContent = 'Network error. Please try again.'; }
+    btn.disabled = false;
+  });
+  init();
+</script>
+<style is:global>
+  .bk-top { padding-block: clamp(110px, 12vw, 160px) clamp(32px, 4vw, 56px); }
+  .bk-h1 { font-family: var(--font-head); font-size: clamp(30px, 4vw, 54px); line-height: 1.05; margin: 0 0 16px; max-width: 18ch; }
+  .bk-lead { font-size: var(--fs-lead); max-width: 60ch; margin: 0 0 20px; }
+  .bk-facts { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; font-size: var(--fs-p); }
+  .bk-sec { padding-top: clamp(32px, 4vw, 56px); }
+  .bk { display: grid; gap: clamp(28px, 3vw, 44px); max-width: 980px; margin-inline: auto; }
+  .bk-step h2 { font-family: var(--font-head); font-size: clamp(20px, 2vw, 28px); margin: 0 0 16px; display: flex; gap: 12px; align-items: center; }
+  .bk-step h2 span { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--orange); color: #fff; font-size: 16px; flex: none; }
+  .bk-boats { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 14px; }
+  .bk-boat { position: relative; display: grid; gap: 4px; padding: 10px 10px 14px; border: 2px solid var(--line); border-radius: var(--radius-sm); background: var(--white); cursor: pointer; font-family: var(--font-ui); transition: border-color .15s, box-shadow .15s; }
+  .bk-boat:hover { border-color: #f5c08a; }
+  .bk-boat:has(input:checked) { border-color: var(--orange); box-shadow: 0 0 0 3px rgb(251 119 4 / .18); }
+  .bk-boat:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 2px; }
+  .bk-boat input { position: absolute; opacity: 0; pointer-events: none; }
+  .bk-boat img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 6px; margin-bottom: 6px; }
+  .bk-bn { font-weight: 700; font-size: 15px; color: var(--ink); }
+  .bk-bm, .bk-bp { font-size: 13px; color: var(--muted); }
+  .bk-bp { color: var(--ink); font-weight: 600; }
+  .bk-boat.off { opacity: .5; }
+  .bk fieldset { border: 0; padding: 0; margin: 0 0 18px; }
+  .bk legend { font-weight: 700; margin-bottom: 8px; font-family: var(--font-ui); }
+  .bk-dur, .bk-payopts { display: grid; gap: 10px; }
+  .bk-dur label, .bk-payopts label, .bk-consent { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: var(--radius-sm); background: var(--white); cursor: pointer; font-family: var(--font-ui); font-size: 15px; }
+  .bk-dur label:has(input:checked), .bk-payopts label:has(input:checked) { border-color: var(--orange); }
+  .bk-dur em, .bk-payopts em { font-style: normal; color: var(--muted); }
+  .bk input[type=radio], .bk input[type=checkbox] { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--orange); flex: none; }
+  .bk-cal { border: 1.5px solid var(--line); border-radius: var(--radius-sm); padding: 14px; background: var(--white); font-family: var(--font-ui); }
+  .bk-calhead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .bk-nav { width: 44px; height: 44px; border: 1.5px solid var(--line); border-radius: 50%; background: var(--white); font-size: 22px; cursor: pointer; }
+  .bk-nav:disabled { opacity: .3; cursor: default; }
+  .bk-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .bk-grid .dow { text-align: center; font-size: 12px; color: var(--muted); font-weight: 700; }
+  .bk-grid .day { min-height: 44px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--white); font: inherit; font-weight: 700; cursor: pointer; }
+  .bk-grid .day.s-available { border-color: #9ad5a8; background: #f0fbf3; }
+  .bk-grid .day.s-booked, .bk-grid .day.s-pending { background: #f2f2f2; color: #888; text-decoration: line-through; }
+  .bk-grid .day:disabled { background: transparent; color: #c4c4c4; border-color: transparent; cursor: default; }
+  .bk-grid .day.sel { outline: 3px solid var(--orange); outline-offset: 1px; }
+  .bk-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 12px 0 0; }
+  .bk-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .l-av { background: #f0fbf3; border: 1.5px solid #9ad5a8; } .l-bk { background: #f2f2f2; border: 1.5px solid var(--line); } .l-na { border: 1.5px dashed #ccc; }
+  .bk-alert { margin-top: 16px; padding: 16px 18px; border-left: 4px solid var(--orange); background: #fff7ef; border-radius: var(--radius-sm); font-family: var(--font-ui); display: grid; gap: 12px; justify-items: start; }
+  .bk-alert p { margin: 0; }
+  .bk-two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  #s-details { display: grid; gap: 14px; }
+  #s-details[hidden], .bk-step[hidden], .bk-alert[hidden] { display: none; }
+  #s-details label { display: grid; gap: 6px; font-family: var(--font-ui); font-weight: 700; font-size: 14px; }
+  .bk input:not([type=radio]):not([type=checkbox]), .bk select, .bk textarea { font: inherit; font-family: var(--font-ui); font-weight: 400; font-size: 16px; padding: 13px 15px; border: 1.5px solid var(--line); border-radius: var(--radius-sm); background: var(--white); width: 100%; }
+  .bk input:focus, .bk select:focus, .bk textarea:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgb(251 119 4 / .15); }
+  .bk-sum dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0 0 18px; padding: 16px 18px; background: var(--sand); border-radius: var(--radius-sm); font-family: var(--font-ui); }
+  .bk-sum dt { color: var(--muted); } .bk-sum dd { margin: 0; font-weight: 700; }
+  .bk-consent { margin: 4px 0 14px; }
+  .bk .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+  .bk-go { margin-top: 12px; }
+  .bk-msg { font-weight: 700; font-family: var(--font-ui); min-height: 1.4em; }
+  .bk-test { font-size: 13px; color: #075985; font-family: var(--font-ui); }
+  .bk-note { font-family: var(--font-ui); }
+  @media (max-width: 640px) { .bk-boats { grid-template-columns: 1fr 1fr; gap: 10px; } .bk-boat { padding: 8px 8px 10px; } .bk-bn { font-size: 13.5px; } .bk-bm, .bk-bp { font-size: 12px; } .bk-two { grid-template-columns: 1fr; } .bk-sum dl { grid-template-columns: 1fr; } .bk-sum dd { margin-bottom: 6px; } }
+</style>
