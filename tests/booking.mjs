@@ -1,7 +1,7 @@
 // End-to-end tests of the booking system against `wrangler dev` (local D1) + a mock Stripe API (no network, no real money).
 // Usage: node tests/booking.mjs   (starts its own mock Stripe on :8788; expects wrangler dev on :8787 started with
 //   --var ADMIN_PASSWORD:test-admin-pass STRIPE_SECRET_KEY:sk_test_local STRIPE_WEBHOOK_SECRET:whsec_local
-//         STRIPE_API_BASE:http://127.0.0.1:8788 CONTACT_TO:owner@example.test SITE_ENV:staging --test-scheduled --persist-to $PERSIST)
+//         STRIPE_API_BASE:http://127.0.0.1:8788 CONTACT_TO:owner@example.test SITE_ENV:staging SITE_URL:http://127.0.0.1:8787 --test-scheduled --persist-to $PERSIST)
 import http from 'node:http';
 import { createHmac, randomBytes } from 'node:crypto';
 import { execFileSync } from 'node:child_process';

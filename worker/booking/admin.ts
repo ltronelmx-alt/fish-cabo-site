@@ -3,7 +3,7 @@
 // Every change is written to audit_log. An override never confirms a booking by itself: payment must still be verified.
 import { getSettings } from './schema';
 import { json, nowIso, newId, newRef, newToken, hmacHex, sha256Hex, safeEqual, rateLimit, isDate, localToday, addDays } from './util';
-import { db, boats, audit, loadRes, runSweep, cron, isProductionHost, notifyConfirmed, sendLogged, chargeCents, dayStates, priceOf, durationsOf, BOOKED_MSG, TERMS_VERSION, type BEnv, type Boat } from './core';
+import { db, boats, audit, loadRes, runSweep, cron, isProductionEnv, isStagingEnv, adminUrl, notifyConfirmed, sendLogged, sendOnce, chargeCents, dayStates, priceOf, durationsOf, BOOKED_MSG, TERMS_VERSION, type BEnv, type Boat } from './core';
 import * as M from './emails';
 import type { Res } from './emails';
 import { ADMIN_HTML } from './admin-page';
@@ -132,7 +132,7 @@ export async function adminApi(request: Request, env: BEnv): Promise<Response> {
   if (path === 'run-hourly-job') {
     // STAGING ONLY (owner request 2026-11-09): run the existing hourly job on demand, because crons never run on
     // Cloudflare Previews. Same code as the cron; deadlines and one-time claims apply. Does not exist on fish-cabo.com.
-    if (isProductionHost(u) || (env as any).SITE_ENV === 'production') return json({ ok: false, error: 'Not found' }, 404);
+    if (isProductionEnv(env, u)) return json({ ok: false, error: 'Not found' }, 404);
     if (request.method !== 'POST') return json({ ok: false, error: 'POST only' }, 405);
     const summary = await cron(env);
     await audit(d, 'admin', 'hourly_job_run_manually', null, { ...summary, host: u.hostname }).run();
@@ -227,7 +227,7 @@ async function action(request: Request, env: BEnv, d: D1Database, body: Record<s
         d.prepare(`UPDATE reservations SET status = ?, holds_slot = 0, updated_at = ? WHERE id = ?`).bind(status, now, r.id),
         audit(d, 'admin', 'cancel', r.id, { from: r.status, to: status, reason: body.reason || null, notify: !!body.notify }),
       ]);
-      if (body.notify) await sendLogged(env, d, r, 'customer_canceled', r.email, M.customerCanceled(r, String(body.reason || '').slice(0, 500)));
+      if (body.notify) await sendLogged(env, d, r, 'customer_canceled', r.email, M.customerCanceled(r, String(body.reason || '').slice(0, 500)), env.CONTACT_TO);
       return json({ ok: true, status });
     }
     case 'refund_pending':
@@ -289,7 +289,7 @@ async function secondTrip(request: Request, env: BEnv, d: D1Database, b: Record<
   const id = newId(), ref = newRef(), token = newToken(), now = nowIso();
   const fee = b.payment === 'stripe' ? chargeCents(boat.deposit_usd, s.stripe_fee_pct) - boat.deposit_usd * 100 : 0;
   const u = new URL(request.url);
-  const isTest = u.hostname.endsWith('.workers.dev') || u.hostname === '127.0.0.1' || u.hostname === 'localhost' || (env.STRIPE_SECRET_KEY || '').includes('_test_') ? 1 : 0;
+  const isTest = isStagingEnv(env, u) || (env.STRIPE_SECRET_KEY || '').includes('_test_') ? 1 : 0;
   try {
     await d.batch([
       d.prepare(`INSERT INTO reservations (id, ref, token, boat_id, date, hours, slot, holds_slot, hold_expires_at, status, payment_method, total_usd, deposit_usd, balance_usd,
@@ -345,7 +345,7 @@ async function phoneBooking(request: Request, env: BEnv, d: D1Database, b: Recor
   const status = method === 'other' ? 'CONFIRMED' : method === 'stripe' ? 'AWAITING_PAYMENT' : 'AWAITING_PAYMENT_VERIFICATION';
   const holdH = method === 'wise' ? s.wise_hold_hours : s.override_hold_hours;
   const u = new URL(request.url);
-  const isTest = u.hostname.endsWith('.workers.dev') || u.hostname === '127.0.0.1' || u.hostname === 'localhost' || (env.STRIPE_SECRET_KEY || '').includes('_test_') ? 1 : 0;
+  const isTest = isStagingEnv(env, u) || (env.STRIPE_SECRET_KEY || '').includes('_test_') ? 1 : 0;
   try {
     const stmts = [
       d.prepare(`INSERT INTO reservations (id, ref, token, boat_id, date, hours, slot, holds_slot, hold_expires_at, status, payment_method, total_usd, deposit_usd, balance_usd,
@@ -368,6 +368,6 @@ async function phoneBooking(request: Request, env: BEnv, d: D1Database, b: Recor
     await notifyConfirmed(env, d, id); // owner record + customer confirmation (if an email was given)
     emailSent = !!f.email;
   } else if (method === 'stripe') emailSent = await sendLogged(env, d, r, 'customer_payment_request', r.email, M.customerPaymentRequest(r, payUrl), env.CONTACT_TO);
-  else emailSent = await sendLogged(env, d, r, 'customer_wise_pending', r.email, M.customerWisePending(r), env.CONTACT_TO);
+  else emailSent = (await sendOnce(env, d, r, 'customer_wise_pending', r.email, M.customerWisePending(r), env.CONTACT_TO)) === 'sent';
   return json({ ok: true, id, ref, status, total, deposit: boat.deposit_usd, balance: total - boat.deposit_usd, payUrl: method === 'stripe' ? payUrl : null, emailSent });
 }

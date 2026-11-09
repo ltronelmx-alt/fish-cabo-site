@@ -14,7 +14,9 @@ export type Res = {
   source: 'online' | 'phone' | 'override'; holds_slot: number; stripe_session_id: string | null; stripe_payment_intent: string | null;
   owner_notified_at: string | null; customer_notified_at: string | null; admin_note: string | null; lang: string | null; consent_at: string;
 };
-type Env = { RESEND_API_KEY?: string; CONTACT_TO?: string; CONTACT_FROM?: string };
+type Env = { RESEND_API_KEY?: string; CONTACT_TO?: string; CONTACT_FROM?: string; SITE_ENV?: string; RESEND_API_BASE?: string };
+// Local tests only: a mock Resend on 127.0.0.1, never honoured by a production Worker.
+const resendBase = (env: Env) => (env.SITE_ENV !== 'production' && /^http:\/\/127\.0\.0\.1:\d+$/.test(env.RESEND_API_BASE || '') ? env.RESEND_API_BASE! : 'https://api.resend.com');
 
 const B = (r: Res) => `Boat #${r.boat_number} (${r.boat_size_ft} ft)`;
 const PAY = (r: Res) => (r.payment_method === 'stripe' ? 'Card via Stripe' : r.payment_method === 'wise' ? 'Wise' : 'Received directly (verified by the owner)');
@@ -24,7 +26,7 @@ const WHATSAPP = '+52 624 122 3506';
 
 export async function sendEmail(env: Env, to: string, subject: string, text: string, html: string, replyTo?: string): Promise<{ ok: boolean; dryRun?: boolean; status?: number }> {
   if (!env.RESEND_API_KEY) return { ok: true, dryRun: true }; // local tests / unconfigured: nothing is sent (callers record it)
-  const r = await fetch('https://api.resend.com/emails', {
+  const r = await fetch(`${resendBase(env)}/emails`, {
     method: 'POST',
     headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
     body: JSON.stringify({ from: env.CONTACT_FROM || 'Exotic Fish Cabo <onboarding@resend.dev>', to: [to], subject, text, html, ...(replyTo ? { reply_to: replyTo } : {}) }),
@@ -64,7 +66,7 @@ const DUR = (h: number) => `${h} HOURS`; // owner rule: trip duration always spe
 
 /** ONE owner email per verified deposit (all contact-form fields + booking details). Duration and the customer's
  * email address come first: the owner sends the official confirmation personally (owner decision 2026-11-08). */
-export function ownerConfirmed(r: Res) {
+export function ownerConfirmed(r: Res, adminUrl = ADMIN_URL) {
   const email = r.email || '(no email given)';
   const card = r.payment_method === 'stripe';
   const received = r.payment_amount_cents ?? null; // what the payment record actually shows (Stripe amount_total or the amount the owner verified)
@@ -92,9 +94,9 @@ export function ownerConfirmed(r: Res) {
     ['Booked via', r.source === 'online' ? 'Website' : r.source === 'phone' ? 'Owner (telephone booking)' : 'Owner (authorised second trip)'],
   ];
   const subject = `${test(r)}✅ CONFIRMED ${r.ref} — ${DUR(r.hours)} — Boat #${r.boat_number}, ${r.date}`;
-  const text = `${test(r)}New CONFIRMED booking (deposit verified)\n\nTRIP DURATION: ${DUR(r.hours)}\nCUSTOMER EMAIL: ${email}\n\nThe customer received an automatic deposit receipt only. Send your official confirmation email personally.\n\n${lines(rows)}\n\nCustomer (contact form fields)\n${lines(customerRows(r))}\n\nManage: ${ADMIN_URL}`;
+  const text = `${test(r)}New CONFIRMED booking (deposit verified)\n\nTRIP DURATION: ${DUR(r.hours)}\nCUSTOMER EMAIL: ${email}\n\nThe customer received an automatic deposit receipt only. Send your official confirmation email personally.\n\n${lines(rows)}\n\nCustomer (contact form fields)\n${lines(customerRows(r))}\n\nManage: ${adminUrl}`;
   const mail = r.email ? `<a href="mailto:${esc(r.email)}" style="color:#111">${esc(r.email)}</a>` : esc(email);
-  const html = wrap('New confirmed booking — deposit verified', `<p style="font-size:22px;font-weight:800;margin:0 0 10px;padding:12px 14px;background:#fff3e0;border-left:5px solid #fb7704">TRIP DURATION: ${DUR(r.hours)}</p><p style="font-size:18px;font-weight:700;margin:0 0 6px;padding:12px 14px;background:#f4f1ea;border-left:5px solid #111;user-select:all">CUSTOMER EMAIL: ${mail}</p><p style="margin:0 0 16px;font-size:13px;color:#555">The customer received an automatic deposit receipt only. Send your official confirmation email personally.</p>${table(rows)}<h2 style="font-size:16px;margin:22px 0 8px">Customer</h2>${table(customerRows(r))}<p style="margin-top:20px"><a href="${ADMIN_URL}" style="color:#111">Open the booking dashboard</a></p>`);
+  const html = wrap('New confirmed booking — deposit verified', `<p style="font-size:22px;font-weight:800;margin:0 0 10px;padding:12px 14px;background:#fff3e0;border-left:5px solid #fb7704">TRIP DURATION: ${DUR(r.hours)}</p><p style="font-size:18px;font-weight:700;margin:0 0 6px;padding:12px 14px;background:#f4f1ea;border-left:5px solid #111;user-select:all">CUSTOMER EMAIL: ${mail}</p><p style="margin:0 0 16px;font-size:13px;color:#555">The customer received an automatic deposit receipt only. Send your official confirmation email personally.</p>${table(rows)}<h2 style="font-size:16px;margin:22px 0 8px">Customer</h2>${table(customerRows(r))}<p style="margin-top:20px"><a href="${esc(adminUrl)}" style="color:#111">Open the booking dashboard</a></p>`);
   return { subject, text, html };
 }
 
@@ -125,7 +127,7 @@ export function ownerWisePending(r: Res, adminUrl = ADMIN_URL) {
 }
 
 /** Owner notice when an unpaid Wise booking expires (owner request 2026-11-09). Sent once, with the customer notice. */
-export function ownerWiseExpired(r: Res) {
+export function ownerWiseExpired(r: Res, adminUrl = ADMIN_URL) {
   const deadline = r.hold_expires_at ? localDateTime(r.hold_expires_at) : '(not recorded)';
   const warn = 'No payment was verified. The booking has expired and the date has been released (it is available again for booking).';
   const rows: [string, string][] = [
@@ -141,8 +143,8 @@ export function ownerWiseExpired(r: Res) {
     ['Expired at (payment deadline)', deadline],
   ];
   const subject = `${test(r)}WISE — EXPIRED ${r.ref} — DATE RELEASED`;
-  const text = `${test(r)}WISE — EXPIRED — DATE RELEASED\n\n${warn}\nThe customer has been told by email that the date was released. If the deposit arrives later, you can still confirm it from the booking dashboard while the date is free.\n\n${lines(rows)}\n\nBooking dashboard: ${ADMIN_URL}`;
-  const html = wrap('WISE — EXPIRED — DATE RELEASED', `<p style="font-size:17px;font-weight:800;margin:0 0 10px;padding:12px 14px;background:#fee2e2;border-left:5px solid #b42318">${esc(warn)}</p><p style="margin:0 0 16px">The customer has been told by email that the date was released. If the deposit arrives later, you can still confirm it from the booking dashboard while the date is free.</p>${table(rows)}`);
+  const text = `${test(r)}WISE — EXPIRED — DATE RELEASED\n\n${warn}\nThe customer has been told by email that the date was released. If the deposit arrives later, you can still confirm it from the booking dashboard while the date is free.\n\n${lines(rows)}\n\nBooking dashboard: ${adminUrl}`;
+  const html = wrap('WISE — EXPIRED — DATE RELEASED', `<p style="font-size:17px;font-weight:800;margin:0 0 10px;padding:12px 14px;background:#fee2e2;border-left:5px solid #b42318">${esc(warn)}</p><p style="margin:0 0 16px">The customer has been told by email that the date was released. If the deposit arrives later, you can still confirm it from the booking dashboard while the date is free.</p>${table(rows)}<p style="margin-top:20px"><a href="${esc(adminUrl)}" style="color:#111">Open the booking dashboard</a></p>`);
   return { subject, text, html };
 }
 
@@ -236,8 +238,8 @@ export function customerWiseExpired(r: Res) {
 }
 
 /** Exceptions only (payment received for a date that is no longer available, etc.) — needs owner action. */
-export function ownerException(r: Res, problem: string) {
+export function ownerException(r: Res, problem: string, adminUrl = ADMIN_URL) {
   const head = 'ACTION REQUIRED — money was received but this booking is NOT confirmed. The customer has NOT received a deposit receipt. No automatic refund was made: refund the customer or offer another date yourself.';
   const rows: [string, string][] = [['CUSTOMER EMAIL', r.email || '(no email given)'], ['Status', `${r.status} — NOT CONFIRMED`], ['Payment reference', r.payment_ref || r.stripe_payment_intent || '(see Stripe)'], ...tripRows(r), ...customerRows(r)];
-  return { subject: `${test(r)}⚠️ ACTION REQUIRED — payment received, booking NOT confirmed — ${r.ref}`, text: `${head}\n\n${problem}\n\n${lines(rows)}\n\n${ADMIN_URL}`, html: wrap('ACTION REQUIRED — booking NOT confirmed', `<p style="padding:12px 14px;background:#fee2e2;border-left:5px solid #b42318;font-weight:700">${esc(head)}</p><p><strong>${esc(problem)}</strong></p>${table(rows)}<p><a href="${ADMIN_URL}">${ADMIN_URL}</a></p>`) };
+  return { subject: `${test(r)}⚠️ ACTION REQUIRED — payment received, booking NOT confirmed — ${r.ref}`, text: `${head}\n\n${problem}\n\n${lines(rows)}\n\n${adminUrl}`, html: wrap('ACTION REQUIRED — booking NOT confirmed', `<p style="padding:12px 14px;background:#fee2e2;border-left:5px solid #b42318;font-weight:700">${esc(head)}</p><p><strong>${esc(problem)}</strong></p>${table(rows)}<p><a href="${esc(adminUrl)}">${esc(adminUrl)}</a></p>`) };
 }

@@ -26,13 +26,15 @@ export interface BEnv {
   RESEND_API_KEY?: string;
   CONTACT_TO?: string;
   CONTACT_FROM?: string;
+  SITE_ENV?: string; // "production" (top-level vars) | "staging" (previews.vars) — see envmode.ts
+  SITE_URL?: string; // staging only: trusted origin used for the /booking-admin link in owner emails
+  RESEND_API_BASE?: string; // local tests only (honoured off production, on 127.0.0.1 only)
 }
 
 export const HOLDING = ['HELD', 'AWAITING_PAYMENT', 'AWAITING_PAYMENT_VERIFICATION'] as const;
 const TEST_TURNSTILE_SECRET = '1x0000000000000000000000000000000AA'; // Cloudflare's public test secret (pairs with test site key 1x00000000000000000000AA)
-const isLocal = (u: URL) => u.hostname === '127.0.0.1' || u.hostname === 'localhost';
-const isStaging = (u: URL) => u.hostname.endsWith('.workers.dev') || isLocal(u);
-export const isProductionHost = (u: URL) => u.hostname === 'fish-cabo.com' || u.hostname === 'www.fish-cabo.com';
+import { isProductionHost, isProductionEnv, isStagingEnv, isLocalHost as isLocal, adminUrl } from './envmode';
+export { isProductionHost, isProductionEnv, isStagingEnv, adminUrl };
 /** Terms & Privacy versions the customer accepts by completing a booking ("Last updated" dates of the published pages). */
 export const TERMS_VERSION = 'terms:2026-03;privacy:2026-02';
 /** Public boat reference: "Boat #3 (27 ft)" — boat numbers and sizes only, never vessel or captain names. */
@@ -192,9 +194,10 @@ export const BOOKED_MSG = 'This boat already has a booking on your selected date
  * Other hosts (local, *.workers.dev previews) use Cloudflare's public test pair, so the check still runs end-to-end. */
 async function human(request: Request, env: BEnv, token: string) {
   const u = new URL(request.url);
-  if (isProductionHost(u) && !env.TURNSTILE_SECRET) return false;
-  if (isLocal(u)) return true; // no network in local tests
-  const secret = isProductionHost(u) ? env.TURNSTILE_SECRET! : TEST_TURNSTILE_SECRET;
+  const prod = isProductionEnv(env, u); // SITE_ENV=production enforces the real check on every hostname (audit B2)
+  if (prod && !env.TURNSTILE_SECRET) return false;
+  if (!prod && isLocal(u)) return true; // no network in local tests
+  const secret = prod ? env.TURNSTILE_SECRET! : TEST_TURNSTILE_SECRET;
   const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
     method: 'POST', body: new URLSearchParams({ secret, response: token, remoteip: request.headers.get('cf-connecting-ip') || '' }),
   }).then((x) => x.json() as Promise<{ success: boolean }>).catch(() => ({ success: false }));
@@ -262,7 +265,7 @@ export async function apiReserve(request: Request, env: BEnv) {
   const id = newId(), ref = newRef(), token = newToken(), now = nowIso();
   const fee = f.payment === 'stripe' ? chargeCents(boat.deposit_usd, s.stripe_fee_pct) - boat.deposit_usd * 100 : 0;
   const holdMs = f.payment === 'stripe' ? s.stripe_hold_minutes * 60e3 : s.wise_hold_hours * 3600e3;
-  const isTest = isStaging(u) || stripeMode(env) === 'test' ? 1 : 0;
+  const isTest = isStagingEnv(env, u) || stripeMode(env) === 'test' ? 1 : 0;
   try {
     await d.batch([
       ...sweep(d, now),
@@ -280,8 +283,8 @@ export async function apiReserve(request: Request, env: BEnv) {
   const r = (await loadRes(d, 'r.id = ?', id))!;
   const statusUrl = `${u.origin}/book-now/confirmation?ref=${ref}&t=${token}`;
   if (f.payment === 'wise') {
-    await sendLogged(env, d, r, 'customer_wise_pending', r.email, M.customerWisePending(r), env.CONTACT_TO);
-    await notifyWisePending(env, d, r, `${u.origin}/booking-admin`);
+    await sendOnce(env, d, r, 'customer_wise_pending', r.email, M.customerWisePending(r), env.CONTACT_TO);
+    await notifyWisePending(env, d, r);
     return json({ ok: true, ref, redirect: statusUrl });
   }
   const sess = await createCheckout(env, d, r, u.origin);
@@ -297,7 +300,8 @@ export async function apiReserve(request: Request, env: BEnv) {
 
 // ---------- Stripe ----------
 function stripeBase(env: BEnv, origin: string) {
-  return env.STRIPE_API_BASE && isLocal(new URL(origin)) ? env.STRIPE_API_BASE : 'https://api.stripe.com';
+  const o = new URL(origin);
+  return env.STRIPE_API_BASE && isLocal(o) && !isProductionEnv(env, o) ? env.STRIPE_API_BASE : 'https://api.stripe.com';
 }
 async function stripe(env: BEnv, origin: string, path: string, params: Record<string, string>, idem?: string) {
   const r = await fetch(`${stripeBase(env, origin)}${path}`, {
@@ -442,7 +446,7 @@ async function markException(env: BEnv, d: D1Database, r: Res, problem: string, 
     audit(d, 'system', 'payment_exception', r.id, { problem, details }),
   ]);
   const fresh = (await loadRes(d, 'r.id = ?', r.id))!;
-  if (env.CONTACT_TO) await sendLogged(env, d, fresh, 'owner_exception', env.CONTACT_TO, M.ownerException(fresh, problem));
+  if (env.CONTACT_TO) await sendOnce(env, d, fresh, 'owner_exception', env.CONTACT_TO, M.ownerException(fresh, problem, adminUrl(env)), fresh.email || undefined);
   return { result: 'payment_exception', reservationId: r.id };
 }
 
@@ -454,12 +458,33 @@ export async function sendLogged(env: BEnv, d: D1Database, r: Res | null, kind: 
   return res.ok;
 }
 
-/** "WISE — PENDING PAYMENT" alert to the owner, at most once per booking (email_log is the record; sent at creation). */
-export async function notifyWisePending(env: BEnv, d: D1Database, r: Res, adminUrl: string) {
+/* Once-only notifications with bounded retries (pre-launch audit B3, 2026-11-09). No new table or column: email_log
+ * is the record. Statuses: 'sending' (claimed, in flight) → 'sent' | 'dry_run' (accepted / nothing configured) |
+ * 'failed_<http status>' (transient: retried by the hourly job) | 'rejected_<http status>' (permanent 4xx: never retried).
+ * One (reservation, kind) is sent at most once: the claim is a single conditional INSERT, so two runs at the same time
+ * cannot both send. A 'sending' row older than 10 minutes (worker stopped mid-send) counts as a failed attempt. */
+export const EMAIL_MAX_ATTEMPTS = 5;
+export const EMAIL_RETRY_WINDOW_MS = 3 * 864e5;
+const PERMANENT = (status?: number) => !!status && status >= 400 && status < 500 && status !== 408 && status !== 429;
+export async function sendOnce(env: BEnv, d: D1Database, r: Res, kind: string, to: string, m: { subject: string; text: string; html: string }, replyTo?: string): Promise<'sent' | 'failed' | 'skipped'> {
+  const stale = new Date(Date.now() - 10 * 60e3).toISOString();
+  const claim = await d.prepare(`INSERT INTO email_log (reservation_id, kind, recipient, subject, status, at, body)
+      SELECT ?1, ?2, ?3, ?4, 'sending', ?5, ?6
+      WHERE NOT EXISTS (SELECT 1 FROM email_log WHERE reservation_id = ?1 AND kind = ?2
+                          AND (status IN ('sent', 'dry_run') OR status LIKE 'rejected%' OR (status = 'sending' AND at > ?7)))
+        AND (SELECT COUNT(*) FROM email_log WHERE reservation_id = ?1 AND kind = ?2 AND (status LIKE 'failed%' OR status = 'sending')) < ?8
+      RETURNING id`).bind(r.id, kind, to, m.subject, nowIso(), m.text, stale, EMAIL_MAX_ATTEMPTS).first<{ id: number }>();
+  if (!claim) return 'skipped';
+  const res = await M.sendEmail(env, to, m.subject, m.text, m.html, replyTo);
+  const status = res.dryRun ? 'dry_run' : res.ok ? 'sent' : `${PERMANENT(res.status) ? 'rejected' : 'failed'}_${res.status ?? 0}`;
+  await d.prepare(`UPDATE email_log SET status = ?, at = ? WHERE id = ?`).bind(status, nowIso(), claim.id).run();
+  return res.ok ? 'sent' : 'failed';
+}
+
+/** "WISE — PENDING PAYMENT" alert to the owner, at most once per booking (sent at creation, retried by the hourly job). */
+export async function notifyWisePending(env: BEnv, d: D1Database, r: Res) {
   if (!env.CONTACT_TO || r.payment_method !== 'wise') return;
-  const done = await d.prepare(`SELECT 1 FROM email_log WHERE reservation_id = ? AND kind = 'owner_wise_pending' AND status IN ('sent','dry_run')`).bind(r.id).first();
-  if (done) return;
-  await sendLogged(env, d, r, 'owner_wise_pending', env.CONTACT_TO, M.ownerWisePending(r, adminUrl), r.email || undefined);
+  await sendOnce(env, d, r, 'owner_wise_pending', env.CONTACT_TO, M.ownerWisePending(r, adminUrl(env)), r.email || undefined);
 }
 
 /** Owner notification + customer deposit receipt, each sent at most once (atomic claim; released again if the send fails → retried by the cron). */
@@ -467,7 +492,7 @@ export async function notifyConfirmed(env: BEnv, d: D1Database, id: string) {
   const r = await loadRes(d, `r.id = ? AND r.status = 'CONFIRMED'`, id);
   if (!r) return;
   if (env.CONTACT_TO && (await d.prepare(`UPDATE reservations SET owner_notified_at = ? WHERE id = ? AND owner_notified_at IS NULL RETURNING id`).bind(nowIso(), id).first())) {
-    if (!(await sendLogged(env, d, r, 'owner_confirmed', env.CONTACT_TO, M.ownerConfirmed(r), r.email || undefined)))
+    if (!(await sendLogged(env, d, r, 'owner_confirmed', env.CONTACT_TO, M.ownerConfirmed(r, adminUrl(env)), r.email || undefined)))
       await d.prepare(`UPDATE reservations SET owner_notified_at = NULL WHERE id = ?`).bind(id).run();
   }
   if (r.email && await d.prepare(`UPDATE reservations SET customer_notified_at = ? WHERE id = ? AND customer_notified_at IS NULL RETURNING id`).bind(nowIso(), id).first()) {
@@ -539,20 +564,39 @@ export async function apiPay(request: Request, env: BEnv) {
 
 // ---------- cron ----------
 export async function cron(env: BEnv) {
-  const summary = { expired: 0, customerExpiryEmails: 0, ownerExpiryEmails: 0, confirmationRetries: 0 };
+  const summary = { expired: 0, customerExpiryEmails: 0, ownerExpiryEmails: 0, confirmationRetries: 0, emailRetries: 0 };
   if (!env.DB) return summary;
   const d = await db(env);
   const sw = await runSweep(d);
   summary.expired = (sw[1] as any)?.meta?.changes ?? 0;
-  // Wise reservations released after 24 h: tell the customer once
+  const since = new Date(Date.now() - EMAIL_RETRY_WINDOW_MS).toISOString();
+  const failedOf = (kinds: string) => `EXISTS (SELECT 1 FROM email_log e WHERE e.reservation_id = r.id AND e.kind IN (${kinds}) AND (e.status LIKE 'failed%' OR e.status = 'sending'))`;
+  // Wise reservations released after the deadline (by this job or by any earlier request): customer + owner notices,
+  // each once (sendOnce). Candidates = not processed yet, or processed with a failed notice still to retry.
   const { results: expired } = await d.prepare(`SELECT ${RES_COLS} FROM reservations r JOIN boats b ON b.id = r.boat_id
-     WHERE r.status = 'EXPIRED' AND r.payment_method = 'wise' AND r.expiry_notified_at IS NULL AND r.updated_at > ? LIMIT 20`).bind(new Date(Date.now() - 3 * 864e5).toISOString()).all<Res>();
+     WHERE r.status = 'EXPIRED' AND r.payment_method = 'wise' AND r.updated_at > ?
+       AND (r.expiry_notified_at IS NULL OR ${failedOf("'customer_wise_expired','owner_wise_expired'")}) LIMIT 20`).bind(since).all<Res>();
   for (const r of expired) {
-    // one atomic claim per expiration → the customer notice and the owner notice are each sent once
-    if (await d.prepare(`UPDATE reservations SET expiry_notified_at = ? WHERE id = ? AND expiry_notified_at IS NULL RETURNING id`).bind(nowIso(), r.id).first()) {
-      if (r.email && (await sendLogged(env, d, r, 'customer_wise_expired', r.email, M.customerWiseExpired(r)))) summary.customerExpiryEmails++;
-      if (env.CONTACT_TO && (await sendLogged(env, d, r, 'owner_wise_expired', env.CONTACT_TO, M.ownerWiseExpired(r), r.email || undefined))) summary.ownerExpiryEmails++;
-    }
+    if (r.email && (await sendOnce(env, d, r, 'customer_wise_expired', r.email, M.customerWiseExpired(r), env.CONTACT_TO)) === 'sent') summary.customerExpiryEmails++;
+    if (env.CONTACT_TO && (await sendOnce(env, d, r, 'owner_wise_expired', env.CONTACT_TO, M.ownerWiseExpired(r, adminUrl(env)), r.email || undefined)) === 'sent') summary.ownerExpiryEmails++;
+    await d.prepare(`UPDATE reservations SET expiry_notified_at = ? WHERE id = ? AND expiry_notified_at IS NULL`).bind(nowIso(), r.id).run();
+  }
+  // Wise still awaiting verification (before its deadline): retry the customer instructions / owner alert that FAILED
+  const { results: pending } = await d.prepare(`SELECT ${RES_COLS} FROM reservations r JOIN boats b ON b.id = r.boat_id
+     WHERE r.status = 'AWAITING_PAYMENT_VERIFICATION' AND r.payment_method = 'wise' AND r.created_at > ? AND r.hold_expires_at > ?
+       AND ${failedOf("'customer_wise_pending','owner_wise_pending'")} LIMIT 20`).bind(since, nowIso()).all<Res>();
+  for (const r of pending) {
+    if (r.email && (await sendOnce(env, d, r, 'customer_wise_pending', r.email, M.customerWisePending(r), env.CONTACT_TO)) === 'sent') summary.emailRetries++;
+    if (r.source === 'online' && env.CONTACT_TO && (await sendOnce(env, d, r, 'owner_wise_pending', env.CONTACT_TO, M.ownerWisePending(r, adminUrl(env)), r.email || undefined)) === 'sent') summary.emailRetries++;
+  }
+  // "ACTION REQUIRED" (payment received, booking NOT confirmed) that failed: retried with the recorded problem
+  const { results: exc } = await d.prepare(`SELECT ${RES_COLS} FROM reservations r JOIN boats b ON b.id = r.boat_id
+     WHERE r.status = 'PAYMENT_EXCEPTION' AND r.updated_at > ? AND ${failedOf("'owner_exception'")} LIMIT 20`).bind(since).all<Res>();
+  for (const r of exc) {
+    const a = await d.prepare(`SELECT details FROM audit_log WHERE reservation_id = ? AND action = 'payment_exception' ORDER BY id DESC LIMIT 1`).bind(r.id).first<{ details: string }>();
+    let problem = 'Payment received but the booking could not be confirmed. Check the booking dashboard.';
+    try { problem = JSON.parse(a?.details || '{}').problem || problem; } catch {}
+    if (env.CONTACT_TO && (await sendOnce(env, d, r, 'owner_exception', env.CONTACT_TO, M.ownerException(r, problem, adminUrl(env)), r.email || undefined)) === 'sent') summary.emailRetries++;
   }
   // confirmation emails whose delivery failed earlier
   const { results: unsent } = await d.prepare(`SELECT id FROM reservations WHERE status = 'CONFIRMED' AND (owner_notified_at IS NULL OR (customer_notified_at IS NULL AND email <> '')) AND updated_at > ? LIMIT 20`)

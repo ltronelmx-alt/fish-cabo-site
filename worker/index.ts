@@ -8,6 +8,8 @@ export interface Env {
   CONTACT_TO?: string; // destination address for contact messages
   CONTACT_FROM?: string;
   NOTIFY_TEST_JWKS?: string; // local tests only (ignored unless the request host is 127.0.0.1/localhost)
+  SITE_ENV?: string; // "production" (wrangler vars) | "staging" (previews.vars)
+  SITE_URL?: string; // staging only (previews.vars): origin for admin links in owner emails
   STAGING_PASSWORD?: string; // secret: password-protects the *.workers.dev staging site only (never fish-cabo.com)
   // Booking system (D1 free plan). Secrets are set by the owner in the Cloudflare dashboard, never in code.
   DB?: D1Database;
@@ -19,7 +21,7 @@ export interface Env {
 }
 import REDIRECTS from '../src/data/redirects.json';
 import { publishNotify } from './notify';
-import { apiBoats, apiAvailability, apiQuote, apiSummary, apiReserve, apiStatus, apiCancelCheckout, apiPay, apiStripeWebhook, cron, isProductionHost } from './booking/core';
+import { apiBoats, apiAvailability, apiQuote, apiSummary, apiReserve, apiStatus, apiCancelCheckout, apiPay, apiStripeWebhook, cron, isProductionEnv, isStagingEnv, adminUrl } from './booking/core';
 import { adminPage, adminApi } from './booking/admin';
 const TEST_TURNSTILE_SECRET = '1x0000000000000000000000000000000AA';
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
@@ -41,7 +43,8 @@ async function stagingLocked(request: Request, env: Env): Promise<Response | nul
 // Turnstile keys are host-specific (error 110200 = site key not allowed on this hostname). fish-cabo.com: real site key
 // (page) + real TURNSTILE_SECRET (here). Every other host (localhost, *.workers.dev previews): Cloudflare's public TEST
 // pair, chosen by the page at runtime (public/js/efc-turnstile.js) and here, so the full check still runs off-production.
-const turnstileSecret = (request: Request, env: Env) => (isProductionHost(new URL(request.url)) ? env.TURNSTILE_SECRET || '' : TEST_TURNSTILE_SECRET);
+// Production rules follow SITE_ENV=production on every hostname (audit B2): a production Worker on *.workers.dev keeps the real secret.
+const turnstileSecret = (request: Request, env: Env) => (isProductionEnv(env, new URL(request.url)) ? env.TURNSTILE_SECRET || '' : TEST_TURNSTILE_SECRET);
 const ALLOWED_EVENTS = /^[a-z0-9_-]{2,80}$/;
 
 async function contact(request: Request, env: Env) {
@@ -63,20 +66,20 @@ async function contact(request: Request, env: Env) {
   const token = String(fd.get('cf-turnstile-response') ?? '');
   const host = new URL(request.url).hostname;
   // local runtime (no network in tests): skipped; everywhere else the token is verified with the host's secret
-  const ver = host === 'localhost' || host === '127.0.0.1' ? { success: true, 'error-codes': [] as string[] } : await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+  const ver = (host === 'localhost' || host === '127.0.0.1') && !isProductionEnv(env, new URL(request.url)) ? { success: true, 'error-codes': [] as string[] } : await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
     method: 'POST', body: new URLSearchParams({ secret: turnstileSecret(request, env), response: token, remoteip: request.headers.get('cf-connecting-ip') || '' }),
   }).then((r) => r.json() as Promise<{ success: boolean; 'error-codes'?: string[] }>).catch(() => ({ success: false, 'error-codes': ['siteverify-unreachable'] }));
   if (!ver.success) {
     const codes = ver['error-codes'] || [];
     console.log('turnstile failed', JSON.stringify({ codes, tokenLength: token.length })); // no personal data logged
     // staging only: show Cloudflare's error codes to help diagnose the configuration
-    const dbg = new URL(request.url).hostname.endsWith('.workers.dev') ? { codes, tokenLength: token.length } : {};
+    const dbg = isStagingEnv(env, new URL(request.url)) ? { codes, tokenLength: token.length } : {};
     return json({ ok: false, error: 'Verification failed. Please try again.', ...dbg }, 403);
   }
   // Delivery: only when an approved provider is configured; otherwise TEST MODE (nothing sent, nothing stored).
   if (!env.RESEND_API_KEY || !env.CONTACT_TO) {
     // staging: test mode (nothing sent). fish-cabo.com: never pretend a request was sent when no email is configured
-    if (new URL(request.url).hostname.endsWith('.workers.dev')) return json({ ok: true, test: true });
+    if (isStagingEnv(env, new URL(request.url))) return json({ ok: true, test: true });
     return json({ ok: false, error: 'The form is temporarily unavailable. Please contact us on WhatsApp +52 624 122 3506 or at contact@fish-cabo.com.' }, 503);
   }
   const text = Object.entries(data).map(([k, v]) => `${k}: ${v}`).join('\n');
@@ -130,7 +133,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
     // Sends no email and creates no payment. The Resend key is checked with a read-only call that a sending-only key
     // answers with "restricted" (= valid key) and a wrong key with "invalid".
     if (url.pathname === '/api/booking/config-check') {
-      if (isProductionHost(url)) return new Response('Not found', { status: 404 });
+      if (isProductionEnv(env, url)) return new Response('Not found', { status: 404 }); // never on a production Worker, whatever the hostname
       const from = env.CONTACT_FROM || '';
       const fromAddr = (from.match(/<([^<>\s@]+@[^<>\s@]+)>\s*$/) || [])[1] || '';
       let resend = 'missing';
@@ -149,6 +152,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
         CONTACT_TO: !env.CONTACT_TO ? 'missing' : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(env.CONTACT_TO) ? env.CONTACT_TO : 'invalid format',
         CONTACT_FROM: !from ? 'missing' : fromAddr ? { name: from.replace(/<[^>]*>\s*$/, '').trim(), address: fromAddr, domainIsFishCabo: fromAddr.endsWith('@fish-cabo.com') } : 'invalid format (expected: Name <address>)',
         DB: env.DB ? 'bound' : 'missing',
+        ADMIN_LINK_IN_OWNER_EMAILS: adminUrl(env),
       }, { headers: { 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } });
     }
 

@@ -35,7 +35,9 @@
     "vars": {
       "SITE_ENV": "staging",
       "CONTACT_TO": "contact@fish-cabo.com",
-      "CONTACT_FROM": "Exotic Fish Cabo STAGING <bookings@fish-cabo.com>"
+      "CONTACT_FROM": "Exotic Fish Cabo STAGING <bookings@fish-cabo.com>",
+      // staging only: origin used for the /booking-admin link in owner emails (production always uses https://fish-cabo.com)
+      "SITE_URL": "https://booking-system-fish-cabo.small-boat-4235.workers.dev"
     },
     // Staging-only booking database (created by the owner 2026-11-09). Never the production database.
     "d1_databases": [

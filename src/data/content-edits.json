@@ -147,6 +147,20 @@
       "page": "home",
       "find": "<p>From your first questions about boat options to your confirmed departure instructions, our team is here to help you prepare for your trip.</p>",
       "replace": ""
+    },
+    {
+      "page": "home",
+      "find": "/fishing-boats",
+      "replace": "/book-now",
+      "exact": true,
+      "_why": "2026-11-09 owner (pre-launch audit B4): FAQ 'Book Now' button goes straight to /book-now. Only this button: it is the only value on the page that is exactly '/fishing-boats'."
+    },
+    {
+      "page": "cabo-fishing",
+      "find": "/fishing-boats",
+      "replace": "/book-now",
+      "exact": true,
+      "_why": "2026-11-09 owner (pre-launch audit B4): FAQ 'Book Now' button goes straight to /book-now. Only this button: it is the only value on the page that is exactly '/fishing-boats'."
     }
   ]
 }
