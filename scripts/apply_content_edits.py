@@ -19,7 +19,8 @@ def _walk(o, e):
     if isinstance(o, list): return [_walk(v, e) for v in o]
     if isinstance(o, str):
         if e.get('exact'): return e['replace'] if o == e['find'] else o
-        return o.replace(e['find'], e['replace']) if e['replace'] not in o else o
+        # idempotent: skip when the replacement is already there (an empty replacement = deletion, always safe to repeat)
+        return o.replace(e['find'], e['replace']) if not e['replace'] or e['replace'] not in o else o
     return o
 
 def apply_json():

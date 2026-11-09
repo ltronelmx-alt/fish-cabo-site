@@ -1,5 +1,5 @@
 {
-  "_doc": "Owner-approved text corrections (2026-11-04). Applied once to src/data/original/*.json by scripts/apply_content_edits.py and applied to the Squarespace export by scripts/verify-original.py, so the verbatim check accepts exactly these edits and nothing else.",
+  "_doc": "Owner-approved text corrections (2026-11-04). Applied once to src/data/original/*.json by scripts/apply_content_edits.py and applied to the Squarespace export by scripts/verify-original.py, so the verbatim check accepts exactly these edits and nothing else. 2026-11-08 (owner, master prompt §3.1 + answer of 2026-11-08): per-boat prices removed from the 10 boat pages — visible text, <title>, og/twitter titles and meta descriptions. Customers get their price on /book-now (SHOW MY PRICE). 2026-11-08 homepage SEO audit (master prompt §10): owner-approved reputation wording added as the first H3 of 'Why Choose Exotic Fish Cabo?'; one About sentence that repeated 'Why Choose' removed; '$600USD' spacing fixed in the 8-hour H3. (No export_find: the Squarespace export is not in this environment — see docs/BOOKING-AND-SEO-REPORT.md.)",
   "edits": [
     {
       "page": "contact",
@@ -82,6 +82,76 @@
       "page": "terms-conditions",
       "find": "Credits or rescheduling options are offered solely at",
       "replace": "Except as stated above for bad weather and port closures, credits or rescheduling options are offered solely at"
+    },
+    {
+      "page": "fishing-boats/23ft-panga",
+      "find": "23ft Panga Fishing Charter | From $350 | San Jose del Cabo",
+      "replace": "23ft Panga Fishing Charter | San Jose del Cabo"
+    },
+    {
+      "page": "fishing-boats/23ft-panga",
+      "find": "for 1–2 guests in San Jose del Cabo. From $350 USD. Depart from",
+      "replace": "for 1–2 guests in San Jose del Cabo. Depart from"
+    },
+    {
+      "page": "fishing-boats/23ft-panga",
+      "find": "Private Fishing Charter for 1–2 Guests | From $350 USD</strong>",
+      "replace": "Private Fishing Charter for 1–2 Guests</strong>"
+    },
+    {
+      "page": "fishing-boats/26ft-super-panga",
+      "find": "26ft Super Panga Fishing Charter | From $500 | San Jose del Cabo",
+      "replace": "26ft Super Panga Fishing Charter | San Jose del Cabo"
+    },
+    {
+      "page": "fishing-boats/26ft-super-panga",
+      "find": "Book a private 26ft Super Panga fishing charter from $500 USD per boat in San Jose del Cabo.",
+      "replace": "Book a private 26ft Super Panga fishing charter in San Jose del Cabo."
+    },
+    {
+      "page": "fishing-boats/26ft-super-panga",
+      "find": "Private Fishing Charter for 1–3 Guests | From $550 USD</strong>",
+      "replace": "Private Fishing Charter for 1–3 Guests</strong>"
+    },
+    {
+      "page": "fishing-boats/27ft-premium-center-console",
+      "find": "27ft Center Console Fishing Charter | From $680 | San Jose del Cabo",
+      "replace": "27ft Center Console Fishing Charter | San Jose del Cabo"
+    },
+    {
+      "page": "fishing-boats/27ft-premium-center-console",
+      "find": "in San Jose del Cabo. From $680 USD for up to 4 guests. Depart from",
+      "replace": "in San Jose del Cabo for up to 4 guests. Depart from"
+    },
+    {
+      "page": "fishing-boats/27ft-premium-center-console",
+      "find": "Private charter for 1–4 guests, starting from $680 USD.</strong>",
+      "replace": "Private charter for 1–4 guests.</strong>"
+    },
+    {
+      "page": "fishing-boats/30ft-cuddy-cabin",
+      "find": "Private fishing charter for 1–6 guests, starting from $640 USD.</strong>",
+      "replace": "Private fishing charter for 1–6 guests.</strong>"
+    },
+    {
+      "page": "fishing-boats/31ft-premium-center-console",
+      "find": "Private Fishing Charter for 1–5 Guests | Contact Us for Pricing</strong>",
+      "replace": "Private Fishing Charter for 1–5 Guests</strong>"
+    },
+    {
+      "page": "home",
+      "find": "<h2>Why Choose Exotic Fish Cabo?</h2><h3>A Local Fishing Charter Service",
+      "replace": "<h2>Why Choose Exotic Fish Cabo?</h2><h3>A Reputation for Excellence Since 2014</h3><p>Since 2014, Exotic Fish Cabo has built a reputation for exceptional fishing experiences in San José del Cabo, earning the trust of anglers through a long-standing commitment to excellence, reflected in customer reviews on TripAdvisor and Google Maps.</p><h3>A Local Fishing Charter Service"
+    },
+    {
+      "page": "home",
+      "find": "<p>From your first questions about boat options to your confirmed departure instructions, our team is here to help you prepare for your trip.</p>",
+      "replace": ""
+    },
+    {
+      "page": "home",
+      "find": "<h3>8-Hour Private Fishing Charter – From $600USD</h3>",
+      "replace": "<h3>8-Hour Private Fishing Charter – From $600 USD</h3>"
     }
   ]
 }

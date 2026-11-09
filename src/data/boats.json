@@ -1,5 +1,5 @@
 {
- "_doc": "Booking engine boat catalogue (seed). Stable IDs boat-01..boat-10 = Boat #1..#10 on /fishing-boats (order verified 2026-11-06; each boat page also shows its number). Deposits: owner-confirmed USD, same for 6h and 8h. Prices: to be provided by the owner (null = online booking disabled for that boat). Capacity: from each boat page. After the first deploy the database is the source of truth (prices editable in /admin/bookings).",
+ "_doc": "Public boat catalogue (no prices, no deposits). Stable IDs boat-01..boat-10 = Boat #1..#10 on /fishing-boats. Prices and deposits are server-side only (worker/booking/pricing.ts) and are never shipped in public HTML/JS. Capacity and size: from each boat page. src/data/boats.ts is a legacy list kept in sync by tests/catalogue.mjs.",
  "boats": [
   {
    "id": "boat-01",
@@ -9,9 +9,6 @@
    "slug": "23ft-panga",
    "url": "/fishing-boats/23ft-panga",
    "capacity": 2,
-   "depositUsd": 100,
-   "price6Usd": null,
-   "price8Usd": null,
    "image": {
     "path": "505fc072-1705-4425-aa79-71de7ea28485/23-ft+Fishing+San+Jose+del+Cabo.webp",
     "alt": "23ft Panga"
@@ -27,9 +24,6 @@
    "slug": "26ft-super-panga",
    "url": "/fishing-boats/26ft-super-panga",
    "capacity": 3,
-   "depositUsd": 200,
-   "price6Usd": null,
-   "price8Usd": null,
    "image": {
     "path": "ae474e4c-80fd-4491-91c5-fdabc0d00cb7/26ft+super+panga+fishing+san+jose+del+cabo.webp",
     "alt": "26ft Super Panga"
@@ -45,9 +39,6 @@
    "slug": "27ft-premium-center-console",
    "url": "/fishing-boats/27ft-premium-center-console",
    "capacity": 4,
-   "depositUsd": 200,
-   "price6Usd": null,
-   "price8Usd": null,
    "image": {
     "path": "529f2243-d23b-4633-a5ef-75f62bca6a4f/fishing+San+Jose+del+Cabo+27Ft.webp",
     "alt": "27ft Premium Center Console"
@@ -63,9 +54,6 @@
    "slug": "30ft-cuddy-cabin",
    "url": "/fishing-boats/30ft-cuddy-cabin",
    "capacity": 6,
-   "depositUsd": 200,
-   "price6Usd": null,
-   "price8Usd": null,
    "image": {
     "path": "b0c7dbc5-74df-480f-a6d1-1afd79712cf4/30ft+cuddy+cabin+fishing+San+Jose+del+Cabo.webp",
     "alt": "30ft Cuddy Cabin"
@@ -81,9 +69,6 @@
    "slug": "38ft-flybridge",
    "url": "/fishing-boats/38ft-flybridge",
    "capacity": 8,
-   "depositUsd": 300,
-   "price6Usd": null,
-   "price8Usd": null,
    "image": {
     "path": "8d45feed-30fd-40cc-b61c-efc171be3a11/38Ft+Flybridge+fishing+San+Jose+del+Cabo.webp",
     "alt": "38ft Flybridge"
@@ -99,9 +84,6 @@
    "slug": "31ft-premium-center-console",
    "url": "/fishing-boats/31ft-premium-center-console",
    "capacity": 5,
-   "depositUsd": 400,
-   "price6Usd": null,
-   "price8Usd": null,
    "image": {
     "path": "0109b493-9700-4fc8-8848-ace8dd7069f8/Fishing+San+Jose+del+Cabo+31Ft.webp",
     "alt": "31ft Premium Center Console"
@@ -117,9 +99,6 @@
    "slug": "29-ft-catamaran-center-console",
    "url": "/fishing-boats/29-ft-catamaran-center-console",
    "capacity": 6,
-   "depositUsd": 400,
-   "price6Usd": null,
-   "price8Usd": null,
    "image": {
     "path": "ad2a6356-f668-4895-baed-dfe9e63b4516/29+Ft+Catamaran+Center+Console.webp",
     "alt": "29ft Catamaran Center Console"
@@ -135,9 +114,6 @@
    "slug": "35ft-premium-cuddy-cabin",
    "url": "/fishing-boats/35ft-premium-cuddy-cabin",
    "capacity": 8,
-   "depositUsd": 500,
-   "price6Usd": null,
-   "price8Usd": null,
    "image": {
     "path": "d2d41a96-63bc-4cec-9f96-e481459465c9/Fishing+San+Jose+del+Cabo+35Ft.webp",
     "alt": "35ft Premium Cuddy Cabin"
@@ -153,9 +129,6 @@
    "slug": "44ft-premium-flybridge",
    "url": "/fishing-boats/44ft-premium-flybridge",
    "capacity": 10,
-   "depositUsd": 500,
-   "price6Usd": null,
-   "price8Usd": null,
    "image": {
     "path": "0ab97240-a3e8-454a-96d3-6871b25ab610/44ft+premium+flybridge+yacht+to+fish+san+jose+del+cabo.webp",
     "alt": "44ft Premium Flybridge"
@@ -171,9 +144,6 @@
    "slug": "37ft-ultimate-fishing-machine",
    "url": "/fishing-boats/37ft-ultimate-fishing-machine",
    "capacity": 6,
-   "depositUsd": 1000,
-   "price6Usd": null,
-   "price8Usd": null,
    "image": {
     "path": "78d32865-8446-4e34-b090-e52c7d6a542b/freeman+cruise.webp",
     "alt": "37ft Ultimate Fishing Machine"

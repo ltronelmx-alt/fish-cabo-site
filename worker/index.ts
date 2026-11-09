@@ -19,7 +19,7 @@ export interface Env {
 }
 import REDIRECTS from '../src/data/redirects.json';
 import { publishNotify } from './notify';
-import { apiBoats, apiAvailability, apiReserve, apiStatus, apiCancelCheckout, apiPay, apiStripeWebhook, cron } from './booking/core';
+import { apiBoats, apiAvailability, apiQuote, apiSummary, apiReserve, apiStatus, apiCancelCheckout, apiPay, apiStripeWebhook, cron, isProductionHost } from './booking/core';
 import { adminPage, adminApi } from './booking/admin';
 const TEST_TURNSTILE_SECRET = '1x0000000000000000000000000000000AA';
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
@@ -38,9 +38,10 @@ async function stagingLocked(request: Request, env: Env): Promise<Response | nul
   if (crypto.subtle.timingSafeEqual(a, b)) return null;
   return new Response('Staging site — password required', { status: 401, headers: { 'www-authenticate': 'Basic realm="Exotic Fish Cabo staging", charset="UTF-8"', 'x-robots-tag': 'noindex, nofollow', 'cache-control': 'no-store' } });
 }
-// Staging (*.workers.dev) always uses Cloudflare's public TEST secret (always passes) so the form can be tested;
-// fish-cabo.com uses the real TURNSTILE_SECRET. The real secret must be re-checked before going live.
-const turnstileSecret = (_request: Request, env: Env) => env.TURNSTILE_SECRET || TEST_TURNSTILE_SECRET;
+// Turnstile keys are host-specific (error 110200 = site key not allowed on this hostname). fish-cabo.com: real site key
+// (page) + real TURNSTILE_SECRET (here). Every other host (localhost, *.workers.dev previews): Cloudflare's public TEST
+// pair, chosen by the page at runtime (public/js/efc-turnstile.js) and here, so the full check still runs off-production.
+const turnstileSecret = (request: Request, env: Env) => (isProductionHost(new URL(request.url)) ? env.TURNSTILE_SECRET || '' : TEST_TURNSTILE_SECRET);
 const ALLOWED_EVENTS = /^[a-z0-9_-]{2,80}$/;
 
 async function contact(request: Request, env: Env) {
@@ -60,10 +61,9 @@ async function contact(request: Request, env: Env) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(data.email)) return json({ ok: false, error: 'Please enter a valid email address.' }, 400);
   // Cloudflare Turnstile verification
   const token = String(fd.get('cf-turnstile-response') ?? '');
-  // Staging (*.workers.dev) is already behind the staging password: the anti-bot check only runs on the real domain.
-  const isStaging = new URL(request.url).hostname.endsWith('.workers.dev');
-  // staging: verify with the real secret once it is set (to test it before launch); without it, skip
-  const ver = isStaging && !env.TURNSTILE_SECRET ? { success: true, 'error-codes': [] as string[] } : await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+  const host = new URL(request.url).hostname;
+  // local runtime (no network in tests): skipped; everywhere else the token is verified with the host's secret
+  const ver = host === 'localhost' || host === '127.0.0.1' ? { success: true, 'error-codes': [] as string[] } : await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
     method: 'POST', body: new URLSearchParams({ secret: turnstileSecret(request, env), response: token, remoteip: request.headers.get('cf-connecting-ip') || '' }),
   }).then((r) => r.json() as Promise<{ success: boolean; 'error-codes'?: string[] }>).catch(() => ({ success: false, 'error-codes': ['siteverify-unreachable'] }));
   if (!ver.success) {
@@ -126,17 +126,20 @@ async function handle(request: Request, env: Env): Promise<Response> {
     if (url.pathname === '/api/contact') return contact(request, env);
     if (url.pathname === '/api/publish-notify') return publishNotify(request, env);
     // Booking system. The Stripe webhook is reachable without the staging password (Stripe cannot send one; it is signed).
-    if (url.pathname.startsWith('/api/booking/') || url.pathname.startsWith('/api/admin/') || url.pathname === '/admin/bookings') {
+    // /booking-admin = owner dashboard (Worker). /admin/ stays Sveltia CMS (static files) and is never handled here.
+    if (url.pathname.startsWith('/api/booking/') || url.pathname.startsWith('/api/admin/') || url.pathname === '/booking-admin') {
       if (!env.DB) return json({ ok: false, error: 'Online booking is not available yet.' }, 503);
       try {
         switch (url.pathname) {
           case '/api/booking/boats': return await apiBoats(env);
           case '/api/booking/availability': return await apiAvailability(request, env);
+          case '/api/booking/quote': return await apiQuote(request, env);
+          case '/api/booking/summary': return await apiSummary(request, env);
           case '/api/booking/reserve': return await apiReserve(request, env);
           case '/api/booking/status': return await apiStatus(request, env);
           case '/api/booking/cancel-checkout': return await apiCancelCheckout(request, env);
           case '/api/booking/pay': return await apiPay(request, env);
-          case '/admin/bookings': return await adminPage(request, env);
+          case '/booking-admin': return await adminPage(request, env);
         }
         if (url.pathname.startsWith('/api/admin/')) return await adminApi(request, env);
       } catch (e) {

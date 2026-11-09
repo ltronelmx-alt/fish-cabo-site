@@ -23,5 +23,12 @@
   // "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "fishcabo_events" }],
   // Production configuration. Staging isolation does not depend on this value: on *.workers.dev the Worker
   // always adds X-Robots-Tag noindex, serves robots.txt "Disallow: /" and applies the STAGING_PASSWORD lock.
-  "vars": { "SITE_ENV": "production" }
+  "vars": { "SITE_ENV": "production" },
+  // Worker Previews (branch builds). Since Wrangler 4.135, Workers Builds deploys non-production branches with
+  // `npx wrangler preview`, which REQUIRES this block (error "Your Wrangler configuration is missing a `previews` block").
+  // Previews inherit NOTHING from production: no vars, no D1, no secrets. Assets, compatibility_date and cron triggers
+  // stay at the top level (crons never run on Previews). Secrets for Previews are set separately (Previews base config).
+  "previews": {
+    "vars": { "SITE_ENV": "staging" }
+  }
 }

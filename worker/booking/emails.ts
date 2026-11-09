@@ -1,20 +1,24 @@
 // Transactional emails (Resend, already used by the contact form). Plain text + simple HTML.
 // Owner rule (2026-11-06): the business receives ONE email per booking, only once it is CONFIRMED and paid
-// Second trips the same day are requested through the contact form and recorded by the owner (admin override).
+// Second trips the same day are requested on WhatsApp (REQUEST AVAILABILITY) and recorded by the owner (admin override).
+// Public boat references use the boat number and size only ("Boat #3 (27 ft)") — never vessel or captain names.
 // Never for pending/abandoned/canceled/expired/failed attempts. Only exception: money received for a booking that
 // could not be confirmed (PAYMENT_EXCEPTION) — the owner must act (refund or move the date).
 import { esc, usd, usdCents, longDate, localDateTime } from './util';
 
 export type Res = {
-  id: string; ref: string; token: string; boat_id: string; boat_name: string; boat_size_ft: number; date: string; hours: number; status: string;
-  payment_method: 'stripe' | 'wise'; total_usd: number; deposit_usd: number; balance_usd: number; fee_cents: number; charge_cents: number;
+  id: string; ref: string; token: string; boat_id: string; boat_name: string; boat_number: number; boat_size_ft: number; payment_ref?: string | null; terms_version?: string | null; date: string; hours: number; status: string;
+  payment_method: 'stripe' | 'wise' | 'other'; total_usd: number; deposit_usd: number; balance_usd: number; fee_cents: number; charge_cents: number;
   first_name: string; last_name: string; email: string; phone: string; people: number; message: string; slot: number;
   hold_expires_at: string | null; is_test: number; created_at: string; updated_at: string;
-  source: 'online' | 'override'; holds_slot: number; stripe_session_id: string | null; stripe_payment_intent: string | null;
+  source: 'online' | 'phone' | 'override'; holds_slot: number; stripe_session_id: string | null; stripe_payment_intent: string | null;
   owner_notified_at: string | null; customer_notified_at: string | null; admin_note: string | null; lang: string | null; consent_at: string;
 };
 type Env = { RESEND_API_KEY?: string; CONTACT_TO?: string; CONTACT_FROM?: string };
 
+const B = (r: Res) => `Boat #${r.boat_number} (${r.boat_size_ft} ft)`;
+const PAY = (r: Res) => (r.payment_method === 'stripe' ? 'Card via Stripe' : r.payment_method === 'wise' ? 'Wise' : 'Received directly (verified by the owner)');
+export const ADMIN_URL = 'https://fish-cabo.com/booking-admin';
 export const WISE_PAY_URL = 'https://wise.com/pay/me/loict92'; // the Wise link already published on every boat page
 const WHATSAPP = '+52 624 122 3506';
 
@@ -39,20 +43,20 @@ const test = (r: Res) => (r.is_test ? '[TEST] ' : '');
 function tripRows(r: Res): [string, string][] {
   return [
     ['Booking reference', r.ref],
-    ['Boat', r.boat_name],
+    ['Boat', B(r)],
     ['Fishing date', longDate(r.date)],
     ['Trip duration', `${r.hours} HOURS`],
     ['Total charter price', usd(r.total_usd)],
     ['Deposit', usd(r.deposit_usd) + (r.fee_cents ? ` + ${usdCents(r.fee_cents)} card processing fee` : '')],
     ['Remaining balance', usd(r.balance_usd)],
-    ['Payment method', r.payment_method === 'stripe' ? 'Stripe (card)' : 'Wise'],
+    ['Payment method', PAY(r)],
   ];
 }
 function customerRows(r: Res): [string, string][] {
   return [
     ['First name', r.first_name], ['Last name', r.last_name], ['Email', r.email], ['Phone', r.phone],
     ['Date', r.date], ['People aboard', String(r.people)], ['Duration', r.hours === 6 ? '3/4 day (6 hours)' : 'Full day (8 hours)'],
-    ['Boat', r.boat_name], ['Message', r.message],
+    ['Boat', B(r)], ['Message', r.message],
   ];
 }
 
@@ -64,16 +68,18 @@ export function ownerConfirmed(r: Res) {
     ['TRIP DURATION', `${DUR(r.hours)} (${r.hours === 6 ? '3/4 day' : 'full day'})`],
     ['Status', 'CONFIRMED — deposit verified'],
     ['Booking reference', r.ref],
-    ['Boat', r.boat_name],
+    ['Boat', B(r)],
     ['Fishing date', longDate(r.date)],
     ['Total charter price', usd(r.total_usd)],
     ['Deposit paid', usdCents(r.deposit_usd * 100) + (r.fee_cents ? ` (+ ${usdCents(r.fee_cents)} card fee = ${usdCents(r.charge_cents)} charged)` : '')],
     ['Remaining balance', usd(r.balance_usd)],
-    ['Payment method', r.payment_method === 'stripe' ? 'Stripe (card)' : 'Wise'],
+    ['Payment method', PAY(r)],
+    ['Payment reference', r.payment_ref || r.stripe_payment_intent || '—'],
+    ['Booked via', r.source === 'online' ? 'Website' : r.source === 'phone' ? 'Owner (telephone booking)' : 'Owner (authorised second trip)'],
   ];
-  const subject = `${test(r)}✅ CONFIRMED ${r.ref} — ${DUR(r.hours)} — ${r.boat_name}, ${r.date}`;
-  const text = `${test(r)}New CONFIRMED booking (deposit verified)\n\nTRIP DURATION: ${DUR(r.hours)}\n\n${lines(rows)}\n\nCustomer (contact form fields)\n${lines(customerRows(r))}\n\nManage: https://fish-cabo.com/admin/bookings`;
-  const html = wrap('New confirmed booking — deposit verified', `<p style="font-size:22px;font-weight:800;margin:0 0 16px;padding:12px 14px;background:#fff3e0;border-left:5px solid #fb7704">TRIP DURATION: ${DUR(r.hours)}</p>${table(rows)}<h2 style="font-size:16px;margin:22px 0 8px">Customer</h2>${table(customerRows(r))}<p style="margin-top:20px"><a href="https://fish-cabo.com/admin/bookings" style="color:#111">Open the booking dashboard</a></p>`);
+  const subject = `${test(r)}✅ CONFIRMED ${r.ref} — ${DUR(r.hours)} — Boat #${r.boat_number}, ${r.date}`;
+  const text = `${test(r)}New CONFIRMED booking (deposit verified)\n\nTRIP DURATION: ${DUR(r.hours)}\n\n${lines(rows)}\n\nCustomer (contact form fields)\n${lines(customerRows(r))}\n\nManage: ${ADMIN_URL}`;
+  const html = wrap('New confirmed booking — deposit verified', `<p style="font-size:22px;font-weight:800;margin:0 0 16px;padding:12px 14px;background:#fff3e0;border-left:5px solid #fb7704">TRIP DURATION: ${DUR(r.hours)}</p>${table(rows)}<h2 style="font-size:16px;margin:22px 0 8px">Customer</h2>${table(customerRows(r))}<p style="margin-top:20px"><a href="${ADMIN_URL}" style="color:#111">Open the booking dashboard</a></p>`);
   return { subject, text, html };
 }
 
@@ -112,7 +118,7 @@ Loïc`;
 
 export function customerWisePending(r: Res) {
   const amount = usd(r.deposit_usd);
-  const intro = `Hi ${r.first_name}, we have reserved ${r.boat_name} on ${longDate(r.date)} for you while we wait for your Wise deposit.`;
+  const intro = `Hi ${r.first_name}, we have reserved ${B(r)} on ${longDate(r.date)} for you while we wait for your Wise deposit.`;
   const steps = `1. Pay ${amount} with Wise: ${WISE_PAY_URL}\n2. Write your booking reference ${r.ref} in the payment note.\n3. Your booking is confirmed by email once we have verified the payment.\nThe date is held until ${localDateTime(r.hold_expires_at!)} (24 hours). After that it is released.`;
   return {
     subject: `${test(r)}Complete your deposit with Wise — ${r.ref}`,
@@ -123,7 +129,7 @@ export function customerWisePending(r: Res) {
 
 /** Second trip recorded by the owner (admin override): the customer still has to pay the deposit; nothing is confirmed yet. */
 export function customerPaymentRequest(r: Res, payUrl: string) {
-  const intro = `Good news ${r.first_name}: we can take you out on ${r.boat_name} on ${longDate(r.date)} (${r.hours} hours). Pay your deposit to confirm the booking — the date is held for you until ${localDateTime(r.hold_expires_at!)}.`;
+  const intro = `Good news ${r.first_name}: we can take you out on ${B(r)} on ${longDate(r.date)} (${r.hours} hours). Pay your deposit to confirm the booking — the date is held for you until ${localDateTime(r.hold_expires_at!)}.`;
   const pay = r.payment_method === 'stripe'
     ? `Pay ${usdCents(r.charge_cents)} by card (deposit ${usd(r.deposit_usd)} + 6% card fee): ${payUrl}`
     : `Pay ${usd(r.deposit_usd)} with Wise: ${WISE_PAY_URL} — write ${r.ref} in the payment note.`;
@@ -132,7 +138,7 @@ export function customerPaymentRequest(r: Res, payUrl: string) {
 }
 
 export function customerCanceled(r: Res, reason: string) {
-  const intro = `Hi ${r.first_name}, your booking ${r.ref} (${r.boat_name}, ${longDate(r.date)}) has been canceled. ${reason}`;
+  const intro = `Hi ${r.first_name}, your booking ${r.ref} (${B(r)}, ${longDate(r.date)}) has been canceled. ${reason}`;
   return { subject: `${test(r)}Booking canceled — ${r.ref}`, text: `${intro}\nQuestions? WhatsApp ${WHATSAPP}.`, html: wrap('Booking canceled', `<p>${esc(intro)}</p><p>Questions? WhatsApp ${WHATSAPP}.</p>`) };
 }
 
@@ -143,5 +149,5 @@ export function customerWiseExpired(r: Res) {
 
 /** Exceptions only (payment received for a date that is no longer available, etc.) — needs owner action. */
 export function ownerException(r: Res, problem: string) {
-  return { subject: `${test(r)}⚠️ Booking needs your attention — ${r.ref}`, text: `${problem}\n\n${lines([...tripRows(r), ...customerRows(r)])}\n\nhttps://fish-cabo.com/admin/bookings`, html: wrap('Booking needs your attention', `<p><strong>${esc(problem)}</strong></p>${table([...tripRows(r), ...customerRows(r)])}`) };
+  return { subject: `${test(r)}⚠️ Booking needs your attention — ${r.ref}`, text: `${problem}\n\n${lines([...tripRows(r), ...customerRows(r)])}\n\n${ADMIN_URL}`, html: wrap('Booking needs your attention', `<p><strong>${esc(problem)}</strong></p>${table([...tripRows(r), ...customerRows(r)])}`) };
 }

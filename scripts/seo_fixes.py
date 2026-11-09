@@ -51,6 +51,8 @@ def fix_head_tag(t, fb=None, used=None):
             og = bool(re.search(r'og:image|twitter:image', t))
             t = re.sub(r'content="[^"]*"', f'content="{fb[0]}"', t, count=1)  # F6c
             if og: used.append(1)
+    if re.search(r'application/ld\+json', t) and re.search(r'"@type"\s*:\s*"WebSite"', t):
+        t = re.sub(r'"description"\s*:\s*"",?\s*', '', t, count=1)  # F13
     if re.search(r'name="twitter:card"', t): t = t.replace('content="summary"', 'content="summary_large_image"')  # F12
     if fb and re.search(r'property="og:image"|name="twitter:image"', t) and 'logo-low-res-fishing-san-jose-del-cabo' in t:  # F12
         og = 'og:image' in t

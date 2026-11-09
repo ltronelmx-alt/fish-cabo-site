@@ -35,7 +35,8 @@ const id = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^
   <button class="btn btn-primary no-arrow" type="submit">{form.submit}</button>
   <p class="cf-msg" role="status" aria-live="polite"></p>
 </form>
-<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script is:inline src="/js/efc-turnstile.js" defer></script>
+<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer></script>
 <script>
   const f = document.getElementById('contact-form') as HTMLFormElement | null;
   const msg = f?.querySelector('.cf-msg') as HTMLElement | null;

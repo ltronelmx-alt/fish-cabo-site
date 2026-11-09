@@ -1,6 +1,8 @@
 ---
-// /book-now — online booking (Cloudflare Workers + D1). Prices, deposits and availability always come from the server.
-// No Product/Offer/availability schema on purpose (owner prices may change; avoids stale structured data).
+// /book-now — online booking (Cloudflare Workers + D1).
+// Pricing policy (owner, 2026-11-08): NO price grid and NO deposits in this page's HTML or JS. The customer picks boat →
+// duration → date, then SHOW MY PRICE fetches ONE quote from the server. Contact details are asked only after that.
+// No Product/Offer/availability schema on purpose (prices are only shown per request; avoids misleading snippets).
 import Base from '../layouts/Base.astro';
 import catalogue from '../data/boats.json';
 import { SITE } from '../data/site';
@@ -8,9 +10,11 @@ import { media } from '../lib/media';
 
 const title = 'Book a Fishing Charter in San Jose del Cabo | Exotic Fish Cabo';
 const description = 'Book your private fishing charter from Puerto Los Cabos Marina online: choose your boat, date and 6 or 8 hour trip, and pay the deposit by card or Wise.';
-const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY || '0x4AAAAAAFyrH2-R96GEy7AN';
-const boats = catalogue.boats.map((b) => ({ id: b.id, number: b.number, name: b.name, capacity: b.capacity, deposit: b.depositUsd, url: b.url, img: media(b.image.path)?.at(480) ?? '', alt: b.image.alt }));
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY || '0x4AAAAAAFyrH2-R96GEy7AN'; // real key; replaced by the test key off fish-cabo.com (public/js/efc-turnstile.js)
+// public data only: number, size, capacity, photo (prices/deposits are server-side, worker/booking/pricing.ts)
+const boats = catalogue.boats.map((b) => ({ id: b.id, number: b.number, name: b.name, capacity: b.capacity, img: media(b.image.path)?.at(480) ?? '', alt: b.image.alt }));
 const isProd = import.meta.env.PUBLIC_SITE_ENV === 'production';
+const wa = SITE.whatsapp.replace(/\D/g, '');
 ---
 <Base title={title} description={description} solidHeader>
   <Fragment slot="head">
@@ -24,19 +28,20 @@ const isProd = import.meta.env.PUBLIC_SITE_ENV === 'production';
   <section class="section bg-sand bk-top">
     <div class="container">
       <h1 class="bk-h1">Book Your San Jose del Cabo Fishing Charter</h1>
-      <p class="bk-lead">Choose your boat, your fishing date and a 6 or 8 hour trip, then secure it with a deposit. Every charter is private and leaves from Puerto Los Cabos Marina in San José del Cabo.</p>
+      <p class="bk-lead">Choose your boat, your trip and your fishing date, then tap SHOW MY PRICE. Every charter is private and leaves from Puerto Los Cabos Marina in San José del Cabo.</p>
       <ul class="bk-facts">
         <li><b>One private trip per boat per day</b> — the boat is yours.</li>
+        <li><b>See your price before giving any personal details.</b> A deposit secures your date; the balance is paid in cash on the fishing day.</li>
         <li><b>Deposit by card</b> (Stripe, +6% processing fee) <b>or Wise</b> (no fee).</li>
-        <li><b>Book at least 24 hours</b> before your trip. Last minute? <a href={`https://wa.me/${SITE.whatsapp.replace('+', '')}`}>WhatsApp us</a>.</li>
+        <li><b>Book at least 24 hours</b> before your trip. Last minute? <a href={`https://wa.me/${wa}`}>WhatsApp us</a>.</li>
       </ul>
     </div>
   </section>
 
   <section class="section bg-white bk-sec">
     <div class="container">
-      <form id="bk" class="bk" novalidate data-boats={JSON.stringify(boats)}>
-        <noscript><p class="bk-note">Online booking needs JavaScript. You can also <a href="/contact">contact us</a>.</p></noscript>
+      <form id="bk" class="bk" novalidate data-wa={wa}>
+        <noscript><p class="bk-note">Online booking needs JavaScript. You can also <a href="/contact">contact us</a> or WhatsApp +52 624 122 3506.</p></noscript>
         <div class="bk-step">
           <h2><span>1</span> Choose your boat</h2>
           <div class="bk-boats" role="radiogroup" aria-label="Boat">
@@ -45,19 +50,24 @@ const isProd = import.meta.env.PUBLIC_SITE_ENV === 'production';
                 <input type="radio" name="boat" value={b.id} required />
                 {b.img && <img src={b.img} alt={b.alt} loading="lazy" decoding="async" width="320" height="200" />}
                 <span class="bk-bn">#{b.number} · {b.name}</span>
-                <span class="bk-bm">Up to {b.capacity} {b.capacity === 1 ? 'person' : 'people'} · Deposit ${b.deposit}</span>
-                <span class="bk-bp" data-price></span>
+                <span class="bk-bm">Up to {b.capacity} {b.capacity === 1 ? 'person' : 'people'}</span>
+                <span class="bk-bp" data-durs></span>
               </label>
             ))}
           </div>
         </div>
 
-        <div class="bk-step" id="s-trip" hidden>
-          <h2><span>2</span> Trip and date</h2>
+        <div class="bk-step" id="s-dur" hidden>
+          <h2><span>2</span> Trip duration</h2>
           <fieldset class="bk-dur"><legend>Trip duration * <small>(required)</small></legend>
-            <label><input type="radio" name="duration" value="6" required /> <span><b>6-Hour Fishing Trip</b> (3/4 day)<em data-p="6"></em></span></label>
-            <label><input type="radio" name="duration" value="8" /> <span><b>8-Hour Fishing Trip</b> (full day)<em data-p="8"></em></span></label>
+            <label data-h="6"><input type="radio" name="duration" value="6" required /> <span><b>6-Hour Fishing Trip</b> (3/4 day)</span></label>
+            <label data-h="8"><input type="radio" name="duration" value="8" /> <span><b>8-Hour Fishing Trip</b> (full day)</span></label>
           </fieldset>
+          <p class="bk-hint" id="only6" hidden>Boat #1 offers 6-hour trips only.</p>
+        </div>
+
+        <div class="bk-step" id="s-date" hidden>
+          <h2><span>3</span> Fishing date</h2>
           <div class="bk-cal" aria-live="polite">
             <div class="bk-calhead"><button type="button" class="bk-nav" data-m="-1" aria-label="Previous month">‹</button><b id="cal-month"></b><button type="button" class="bk-nav" data-m="1" aria-label="Next month">›</button></div>
             <div class="bk-grid" id="cal-grid"></div>
@@ -66,16 +76,20 @@ const isProd = import.meta.env.PUBLIC_SITE_ENV === 'production';
           <input type="hidden" name="date" />
           <div class="bk-alert" id="booked" hidden>
             <p><strong>This boat already has a booking on your selected date. A second trip may be possible upon request. Please contact us to check availability.</strong></p>
-            <a class="btn btn-primary no-arrow" id="req" href="/contact">REQUEST AVAILABILITY</a>
-          </div>
-          <div class="bk-alert" id="onrequest" hidden>
-            <p><strong>Online booking is not open for this trip yet.</strong> Send us your date and we will reply with the price and availability.</p>
-            <a class="btn btn-primary no-arrow" id="req2" href="/contact">REQUEST AVAILABILITY</a>
+            <a class="btn btn-primary no-arrow" id="req" href={`https://wa.me/${wa}`} target="_blank" rel="noopener" data-track="request_availability_whatsapp">REQUEST AVAILABILITY</a>
+            <small>Opens WhatsApp with your request ready — just press Send.</small>
           </div>
         </div>
 
+        <div class="bk-step" id="s-price" hidden>
+          <h2><span>4</span> Your price</h2>
+          <button type="button" class="btn btn-primary no-arrow" id="show-price">SHOW MY PRICE</button>
+          <div class="bk-quote" id="quote" hidden aria-live="polite"></div>
+          <p class="bk-msg" id="qmsg" role="status" aria-live="polite"></p>
+        </div>
+
         <div class="bk-step" id="s-details" hidden>
-          <h2><span>3</span> Your details</h2>
+          <h2><span>5</span> Your details</h2>
           <div class="bk-two">
             <label>First Name *<input name="fname" autocomplete="given-name" required maxlength="80" /></label>
             <label>Last Name *<input name="lname" autocomplete="family-name" required maxlength="80" /></label>
@@ -85,83 +99,120 @@ const isProd = import.meta.env.PUBLIC_SITE_ENV === 'production';
             <label>Phone *<input name="phone" type="tel" autocomplete="tel" required maxlength="40" /></label>
           </div>
           <label>People aboard *<select name="people" required><option value="">Select an option</option></select></label>
-          <label>Message *<textarea name="message" rows="4" required maxlength="5000" placeholder="Anything we should know: target species, children aboard, hotel pick-up questions…"></textarea></label>
+          <label>Special requests <small>(optional)</small><textarea name="message" rows="3" maxlength="5000" placeholder="Target species, children aboard, anything we should know…"></textarea></label>
+          <button type="button" class="btn btn-primary no-arrow" id="to-pay">REVIEW &amp; PAY DEPOSIT</button>
+          <p class="bk-msg" id="dmsg" role="status" aria-live="polite"></p>
         </div>
 
         <div class="bk-step" id="s-pay" hidden>
-          <h2><span>4</span> Deposit</h2>
-          <div class="bk-sum" id="sum"></div>
-          <fieldset class="bk-payopts"><legend>Pay the deposit with</legend>
-            <label><input type="radio" name="payment" value="stripe" required /> <span><b>Card</b> (Stripe — card, Apple Pay, Google Pay)<em id="pay-stripe"></em></span></label>
-            <label><input type="radio" name="payment" value="wise" /> <span><b>Wise</b> (no fee — date held 24 h while we verify your transfer)<em id="pay-wise"></em></span></label>
+          <h2><span>6</span> Review and pay your deposit</h2>
+          <fieldset class="bk-payopts"><legend>Payment method *</legend>
+            <label><input type="radio" name="payment" value="stripe" required /> <span><b>Card via Stripe (+6% processing fee)</b></span></label>
+            <label><input type="radio" name="payment" value="wise" /> <span><b>Wise (no processing fee)</b> — your date is held 24 hours while we verify your transfer</span></label>
           </fieldset>
-          <label class="bk-consent"><input type="checkbox" name="consent" value="yes" required /> <span>I accept the <a href="/terms-conditions" target="_blank" rel="noopener">Terms &amp; Conditions</a> and the <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>
+          <div class="bk-sum" id="sum"></div>
+          <div class="bk-cond">
+            <p><b>Booking and cancellation conditions</b></p>
+            <ul>
+              <li>Your booking is confirmed by email once your deposit payment has been verified.</li>
+              <li>The remaining balance is paid in cash on the fishing day (there is no ATM at the marina).</li>
+              <li>Deposits are not refunded if you cancel or do not show up. If bad weather or a port closure prevents the trip, it is rescheduled; if rescheduling is not possible, a voucher is issued for a future trip.</li>
+            </ul>
+          </div>
           <input type="text" name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true" />
           <div class="cf-turnstile" data-sitekey={siteKey}></div>
+          <p class="bk-legal">By completing your booking, you agree to our <a href="/terms-conditions" target="_blank" rel="noopener">Terms &amp; Conditions</a> and acknowledge our <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
           <button class="btn btn-primary no-arrow bk-go" type="submit">PAY DEPOSIT &amp; BOOK</button>
-          <p class="bk-msg" role="status" aria-live="polite"></p>
+          <p class="bk-msg" id="pmsg" role="status" aria-live="polite"></p>
           {!isProd && <p class="bk-test">Staging: test mode — no real payment is taken.</p>}
         </div>
       </form>
     </div>
   </section>
 </Base>
-<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script is:inline src="/js/efc-turnstile.js" defer></script>
+<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer></script>
 <script>
-  type B = { id: string; number: number; name: string; capacity: number; deposit: number; url: string; prices: Record<string, number | null>; bookable: boolean; active: boolean };
+  type B = { id: string; number: number; sizeFt: number; capacity: number; durations: number[]; bookable: boolean };
+  type Q = { boat: string; hours: number; date: string; total: number; cardFeePct: number };
+  type S = { total: number; deposit: number; balance: number; cardFeePct: number; cardFeeCents: number; cardChargeCents: number; wiseChargeCents: number };
   const f = document.getElementById('bk') as HTMLFormElement;
-  const $ = <T extends Element = HTMLElement>(s: string) => f.querySelector(s) as T;
-  const msg = $('.bk-msg');
+  const $ = <T extends Element = HTMLElement>(s: string) => document.querySelector(s) as T;
   const show = (id: string, on: boolean) => { const el = document.getElementById(id); if (el) el.hidden = !on; };
   const money = (n: number) => '$' + n.toLocaleString('en-US') + ' USD';
   const cents = (c: number) => '$' + (c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' USD';
-  let boats: B[] = [], fee = 6, today = '', month = '', days: Record<string, string> = {};
+  const longDate = (d: string) => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+  const POST = (url: string, body: unknown) => fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', 'x-efc-quote': '1' }, body: JSON.stringify(body) }).then(async (r) => [r.status, await r.json().catch(() => ({}))] as const);
+  let boats: B[] = [], today = '', month = '', days: Record<string, string> = {};
+  let quote: Q | null = null, sum: S | null = null;
   const q = new URLSearchParams(location.search);
   const boat = () => boats.find((b) => b.id === (f.elements.namedItem('boat') as RadioNodeList).value);
   const val = (n: string) => ((f.elements.namedItem(n) as RadioNodeList | HTMLInputElement)?.value || '');
-  const contactUrl = () => {
-    const b = boat(); const p = new URLSearchParams({ request: 'second-trip' });
-    if (b) p.set('boat', b.id); if (val('date')) p.set('date', val('date')); if (val('duration')) p.set('duration', val('duration'));
-    return '/contact?' + p + '#contact-form';
-  };
+  const dur = () => Number(val('duration')) || 0;
+
+  /** Prefilled WhatsApp message (free click-to-chat; the customer presses Send). */
+  function waUrl() {
+    const b = boat(); const lines = ['Hello Exotic Fish Cabo, I would like to request availability:'];
+    if (b) lines.push(`Boat #${b.number}`);
+    if (val('date')) lines.push(`Date: ${longDate(val('date'))}`);
+    if (dur()) lines.push(`Duration: ${dur()} hours`);
+    const name = [val('fname'), val('lname')].filter(Boolean).join(' ');
+    if (name) lines.push(`Name: ${name}`);
+    if (val('email')) lines.push(`Email: ${val('email')}`);
+    if (val('phone')) lines.push(`Phone: ${val('phone')}`);
+    if (val('people')) lines.push(`People aboard: ${val('people')}`);
+    if (val('message')) lines.push(`Special requests: ${val('message')}`);
+    return `https://wa.me/${f.dataset.wa}?text=${encodeURIComponent(lines.join('\n'))}`;
+  }
+  /** Any change of boat, duration or date invalidates the quote and everything after it. */
+  function resetQuote() {
+    quote = null; sum = null;
+    show('quote', false); show('s-details', false); show('s-pay', false);
+    $('#qmsg').textContent = '';
+    const ready = !!boat() && !!dur() && days[val('date')] === 'available';
+    show('s-price', ready);
+  }
 
   async function init() {
     try {
       const r = await fetch('/api/booking/boats'); const j = await r.json();
       if (!j.ok) throw 0;
-      boats = j.boats; fee = j.stripeFeePct; today = j.today; month = today.slice(0, 7);
+      boats = j.boats; today = j.today; month = today.slice(0, 7);
     } catch {
-      msg.innerHTML = 'Online booking is not available right now. Please <a href="/contact">contact us</a> or WhatsApp +52 624 122 3506.';
-      show('s-pay', true); ($('.bk-go') as HTMLButtonElement).disabled = true; return;
+      const m = document.createElement('p'); m.className = 'bk-msg';
+      m.innerHTML = 'Online booking is not available right now. Please <a href="/contact">contact us</a> or WhatsApp +52 624 122 3506.';
+      f.prepend(m); return;
     }
     f.querySelectorAll<HTMLElement>('.bk-boat').forEach((el) => {
       const b = boats.find((x) => x.id === el.dataset.id);
-      const p = el.querySelector('[data-price]')!;
-      if (!b || !b.active) { el.classList.add('off'); p.textContent = 'Not available online'; return; }
-      const ps = [b.prices[6] && `6 h ${money(b.prices[6]!)}`, b.prices[8] && `8 h ${money(b.prices[8]!)}`].filter(Boolean);
-      p.textContent = ps.length ? ps.join(' · ') : 'Price on request';
+      const p = el.querySelector('[data-durs]')!;
+      if (!b || !b.bookable) { el.classList.add('off'); (el.querySelector('input') as HTMLInputElement).disabled = true; p.textContent = 'Not available online'; return; }
+      p.textContent = b.durations.length === 2 ? '6-hour or 8-hour trips' : `${b.durations[0]}-hour trips only`;
     });
     const pre = q.get('boat');
-    if (pre) { const r = f.querySelector<HTMLInputElement>(`input[name=boat][value="${CSS.escape(pre)}"]`); if (r) { r.checked = true; pickBoat(); r.closest('.bk-boat')?.scrollIntoView({ block: 'center' }); } }
-    const d = q.get('duration'); if (d === '6' || d === '8') { const r = f.querySelector<HTMLInputElement>(`input[name=duration][value="${d}"]`); if (r) { r.checked = true; onTrip(); } }
+    if (pre) { const r = f.querySelector<HTMLInputElement>(`input[name=boat][value="${CSS.escape(pre)}"]`); if (r && !r.disabled) { r.checked = true; pickBoat(); r.closest('.bk-boat')?.scrollIntoView({ block: 'center' }); } }
   }
 
   function pickBoat() {
     const b = boat(); if (!b) return;
-    show('s-trip', true);
-    f.querySelectorAll<HTMLElement>('[data-p]').forEach((em) => { const p = b.prices[em.dataset.p!]; em.textContent = p ? ' — ' + money(p) : ' — price on request'; });
+    show('s-dur', true);
+    // only the durations this boat offers (Boat #1 = 6 hours only)
+    f.querySelectorAll<HTMLElement>('.bk-dur label').forEach((l) => {
+      const h = Number(l.dataset.h); const ok = b.durations.includes(h); l.hidden = !ok;
+      const i = l.querySelector('input') as HTMLInputElement; i.disabled = !ok; if (!ok) i.checked = false;
+    });
+    if (b.durations.length === 1) (f.querySelector(`input[name=duration][value="${b.durations[0]}"]`) as HTMLInputElement).checked = true;
+    show('only6', b.durations.length === 1 && b.durations[0] === 6);
     const sel = $('select[name=people]') as HTMLSelectElement; const cur = sel.value;
     sel.innerHTML = '<option value="">Select an option</option>' + Array.from({ length: Math.min(b.capacity, 10) }, (_, i) => `<option value="${i + 1}">${i + 1} ${i ? 'people' : 'person'}</option>`).join('');
     if (+cur <= b.capacity) sel.value = cur;
-    (f.elements.namedItem('date') as HTMLInputElement).value = '';
-    loadMonth(); onTrip();
+    (f.elements.namedItem('date') as HTMLInputElement).value = ''; show('booked', false);
+    resetQuote(); onDuration();
   }
-  function onTrip() {
-    const b = boat(); const h = val('duration');
-    const open = !!b && !!h && b.prices[h] != null;
-    show('onrequest', !!b && !!h && !open); ($('#req2') as HTMLAnchorElement).href = contactUrl();
-    const ok = open && !!val('date') && days[val('date')] === 'available';
-    show('s-details', ok); show('s-pay', ok); if (ok) summary();
+  function onDuration() {
+    show('s-date', !!boat() && !!dur());
+    if (boat() && dur()) loadMonth();
+    resetQuote();
   }
   async function loadMonth() {
     const b = boat(); if (!b) return;
@@ -182,23 +233,61 @@ const isProd = import.meta.env.PUBLIC_SITE_ENV === 'production';
     f.querySelectorAll('.day.sel').forEach((x) => x.classList.remove('sel'));
     f.querySelector(`.day[data-d="${d}"]`)?.classList.add('sel');
     const taken = days[d] === 'booked' || days[d] === 'pending';
-    show('booked', taken); ($('#req') as HTMLAnchorElement).href = contactUrl();
-    onTrip();
+    show('booked', taken); ($('#req') as HTMLAnchorElement).href = waUrl();
+    resetQuote();
     if (taken) document.getElementById('booked')!.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    else document.getElementById('s-price')!.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  async function showPrice() {
+    const b = boat(), h = dur(), d = val('date'); if (!b || !h || !d) return;
+    const btn = $('#show-price') as HTMLButtonElement; btn.disabled = true; $('#qmsg').textContent = 'Checking your price…';
+    const [st, j] = await POST('/api/booking/quote', { boat: b.id, hours: h, date: d }).catch(() => [0, {}] as const);
+    btn.disabled = false;
+    // the selection may have changed while waiting: ignore a stale answer
+    if (b !== boat() || h !== dur() || d !== val('date')) return;
+    if (!j.ok) {
+      $('#qmsg').textContent = j.error || 'Sorry, the price could not be loaded. Please try again or contact us on WhatsApp.';
+      if (j.code === 'BOOKED') { await loadMonth(); pickDay(d); }
+      return;
+    }
+    quote = j as Q; $('#qmsg').textContent = '';
+    $('#quote').innerHTML = `<p class="bk-qline">Boat #${b.number} · ${h}-hour trip · ${longDate(d)}</p>
+      <p class="bk-total">Total charter price: <b>${money(quote.total)}</b></p>
+      <p class="bk-qnote">Private charter price for the boat. A deposit secures your date and the remaining balance is paid in cash on the fishing day. Card payments carry a ${quote.cardFeePct}% processing fee; Wise has no fee. You will see every amount before you pay.</p>
+      <div class="bk-qbtns"><button type="button" class="btn btn-primary no-arrow" id="continue">CONTINUE TO BOOKING</button><button type="button" class="btn no-arrow" id="change">CHANGE MY SELECTION</button></div>`;
+    show('quote', true);
+  }
+
+  function details() { show('s-details', true); document.getElementById('s-details')!.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+
+  async function toPay() {
+    const need = ['fname', 'lname', 'email', 'phone', 'people'];
+    for (const n of need) { const el = f.elements.namedItem(n) as HTMLInputElement; if (!el.checkValidity()) { el.reportValidity(); $('#dmsg').textContent = 'Please complete all required fields.'; return; } }
+    if (!quote) return;
+    $('#dmsg').textContent = '';
+    const [, j] = await POST('/api/booking/summary', { boat: quote.boat, hours: quote.hours }).catch(() => [0, {}] as const);
+    if (!j.ok) { $('#dmsg').textContent = j.error || 'Please try again.'; return; }
+    sum = j as S; summary(); show('s-pay', true);
+    document.getElementById('s-pay')!.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
   function summary() {
-    const b = boat()!, h = val('duration'), total = b.prices[h]!, card = Math.round(b.deposit * 100 * (1 + fee / 100));
-    const d = new Date(val('date') + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
-    document.getElementById('sum')!.innerHTML = `<dl><dt>Boat</dt><dd>#${b.number} · ${b.name}</dd><dt>Date</dt><dd>${d}</dd><dt>Trip duration</dt><dd>${h}-Hour Fishing Trip</dd>
-      <dt>Charter price</dt><dd>${money(total)}</dd><dt>Deposit today</dt><dd>${money(b.deposit)}</dd><dt>Remaining balance</dt><dd>${money(total - b.deposit)}</dd></dl>`;
-    document.getElementById('pay-stripe')!.textContent = ` — you pay ${cents(card)} (deposit + ${fee}%)`;
-    document.getElementById('pay-wise')!.textContent = ` — you pay ${money(b.deposit)}`;
+    if (!quote || !sum) return;
+    const b = boat()!, pay = val('payment');
+    const fee = pay === 'stripe' ? `<dt>Card processing fee (${sum.cardFeePct}% of the deposit)</dt><dd>${cents(sum.cardFeeCents)}</dd>` : pay === 'wise' ? '<dt>Processing fee</dt><dd>None (Wise)</dd>' : '';
+    const now = pay === 'stripe' ? cents(sum.cardChargeCents) : pay === 'wise' ? cents(sum.wiseChargeCents) : 'Choose a payment method';
+    document.getElementById('sum')!.innerHTML = `<dl><dt>Boat</dt><dd>#${b.number} (${b.sizeFt} ft)</dd><dt>Date</dt><dd>${longDate(quote.date)}</dd><dt>Trip duration</dt><dd>${quote.hours} hours</dd>
+      <dt>Total charter price</dt><dd>${money(sum.total)}</dd><dt>Deposit</dt><dd>${money(sum.deposit)}</dd>${fee}
+      <dt>Total charged now</dt><dd class="bk-now">${now}</dd><dt>Remaining balance (cash on the fishing day)</dt><dd>${money(sum.balance)}</dd>
+      <dt>Payment method</dt><dd>${pay === 'stripe' ? 'Card via Stripe' : pay === 'wise' ? 'Wise' : '—'}</dd></dl>`;
   }
 
   f.addEventListener('change', (e) => {
     const t = e.target as HTMLInputElement;
     if (t.name === 'boat') pickBoat();
-    if (t.name === 'duration') { onTrip(); ($('#req') as HTMLAnchorElement).href = contactUrl(); }
+    if (t.name === 'duration') onDuration();
+    if (t.name === 'payment') summary();
+    if (['fname', 'lname', 'email', 'phone', 'people', 'message'].includes(t.name)) ($('#req') as HTMLAnchorElement).href = waUrl();
   });
   f.addEventListener('click', (e) => {
     const t = (e.target as HTMLElement).closest<HTMLButtonElement>('button');
@@ -208,9 +297,16 @@ const isProd = import.meta.env.PUBLIC_SITE_ENV === 'production';
       const [y, m] = month.split('-').map(Number);
       month = new Date(Date.UTC(y, m - 1 + Number(t.dataset.m), 1)).toISOString().slice(0, 7); loadMonth();
     }
+    if (t.id === 'show-price') showPrice();
+    if (t.id === 'continue') details();
+    if (t.id === 'change') { resetQuote(); f.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+    if (t.id === 'to-pay') toPay();
   });
   f.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const msg = $('#pmsg');
+    if (!quote || !sum) { msg.textContent = 'Please check your price first.'; return; }
+    if (!val('payment')) { msg.textContent = 'Please choose a payment method.'; return; }
     if (!f.checkValidity()) { f.reportValidity(); msg.textContent = 'Please complete all required fields.'; return; }
     const btn = $('.bk-go') as HTMLButtonElement; btn.disabled = true; msg.textContent = 'Reserving your date…';
     const fd = new FormData(f); fd.set('lang', (navigator.language || 'en').slice(0, 2));
@@ -249,7 +345,7 @@ const isProd = import.meta.env.PUBLIC_SITE_ENV === 'production';
   .bk fieldset { border: 0; padding: 0; margin: 0 0 18px; }
   .bk legend { font-weight: 700; margin-bottom: 8px; font-family: var(--font-ui); }
   .bk-dur, .bk-payopts { display: grid; gap: 10px; }
-  .bk-dur label, .bk-payopts label, .bk-consent { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: var(--radius-sm); background: var(--white); cursor: pointer; font-family: var(--font-ui); font-size: 15px; }
+  .bk-dur label, .bk-payopts label { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: var(--radius-sm); background: var(--white); cursor: pointer; font-family: var(--font-ui); font-size: 15px; }
   .bk-dur label:has(input:checked), .bk-payopts label:has(input:checked) { border-color: var(--orange); }
   .bk-dur em, .bk-payopts em { font-style: normal; color: var(--muted); }
   .bk input[type=radio], .bk input[type=checkbox] { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--orange); flex: none; }
@@ -277,7 +373,22 @@ const isProd = import.meta.env.PUBLIC_SITE_ENV === 'production';
   .bk input:focus, .bk select:focus, .bk textarea:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgb(251 119 4 / .15); }
   .bk-sum dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0 0 18px; padding: 16px 18px; background: var(--sand); border-radius: var(--radius-sm); font-family: var(--font-ui); }
   .bk-sum dt { color: var(--muted); } .bk-sum dd { margin: 0; font-weight: 700; }
-  .bk-consent { margin: 4px 0 14px; }
+  .bk-dur label[hidden] { display: none; }
+  .bk-hint { font-family: var(--font-ui); font-size: 14px; color: var(--muted); margin: 0; }
+  .bk-quote { margin-top: 16px; padding: 18px 20px; background: var(--sand); border-radius: var(--radius-sm); font-family: var(--font-ui); display: grid; gap: 10px; }
+  .bk-quote[hidden] { display: none; }
+  .bk-quote p { margin: 0; }
+  .bk-qline { font-weight: 700; }
+  .bk-total { font-size: clamp(18px, 2vw, 22px); }
+  .bk-qnote { font-size: 14px; color: var(--muted); }
+  .bk-qbtns { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+  #s-details .btn, #s-price > .btn { justify-self: start; }
+  .bk-sum .bk-now { color: var(--ink); font-size: 1.08em; }
+  .bk-cond { font-family: var(--font-ui); font-size: 14px; margin: 0 0 14px; }
+  .bk-cond p { margin: 0 0 6px; } .bk-cond ul { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; }
+  .bk-legal { font-family: var(--font-ui); font-size: 14px; margin: 12px 0 0; }
+  #s-price { display: grid; gap: 4px; }
+  #s-price[hidden] { display: none; }
   .bk .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
   .bk-go { margin-top: 12px; }
   .bk-msg { font-weight: 700; font-family: var(--font-ui); min-height: 1.4em; }

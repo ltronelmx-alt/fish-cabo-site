@@ -6,7 +6,8 @@
     "build": "node scripts/check-reports.mjs && node scripts/images.mjs && astro build && node scripts/postbuild.mjs",
     "build:prod": "node scripts/check-reports.mjs && node scripts/images.mjs && PUBLIC_SITE_ENV=production astro build && PUBLIC_SITE_ENV=production node scripts/postbuild.mjs",
     "preview": "npm run build && wrangler dev",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "dev:worker": "npm run build && wrangler dev --port 8787 --var ADMIN_PASSWORD:local-admin --var CONTACT_TO:owner@example.test"
   },
   "dependencies": {
     "@fontsource/syne": "^5.3.0",

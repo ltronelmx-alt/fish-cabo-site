@@ -1,9 +1,9 @@
-// Owner dashboard API (/admin/bookings). Password = Cloudflare secret ADMIN_PASSWORD (set by the owner, never in code).
+// Owner dashboard API (/booking-admin — separate from Sveltia CMS at /admin/). Password = Cloudflare secret ADMIN_PASSWORD (set by the owner, never in code).
 // Session: signed HttpOnly cookie (Secure, SameSite=Strict, 12 h). POSTs also require same Origin + a custom header (CSRF).
 // Every change is written to audit_log. An override never confirms a booking by itself: payment must still be verified.
 import { getSettings } from './schema';
 import { json, nowIso, newId, newRef, newToken, hmacHex, sha256Hex, safeEqual, rateLimit, isDate, localToday, addDays } from './util';
-import { db, boats, audit, loadRes, sweepStmt, notifyConfirmed, sendLogged, chargeCents, dayStates, type BEnv } from './core';
+import { db, boats, audit, loadRes, sweepStmt, notifyConfirmed, sendLogged, chargeCents, dayStates, priceOf, durationsOf, BOOKED_MSG, TERMS_VERSION, type BEnv, type Boat } from './core';
 import * as M from './emails';
 import type { Res } from './emails';
 import { ADMIN_HTML } from './admin-page';
@@ -12,7 +12,7 @@ const COOKIE = 'efc_admin';
 const TTL = 12 * 3600;
 const STATUSES = ['DRAFT', 'HELD', 'AWAITING_PAYMENT', 'AWAITING_PAYMENT_VERIFICATION', 'CONFIRMED', 'CANCELED', 'EXPIRED', 'PAYMENT_EXCEPTION', 'REFUND_PENDING', 'REFUNDED'];
 const SETTING_RANGES: Record<string, [number, number]> = {
-  min_lead_hours: [0, 240], departure_hour_local: [0, 23], booking_window_days: [7, 730], stripe_fee_pct: [0, 20],
+  min_lead_hours: [0, 240], departure_hour_local: [0, 23], departure_minute_local: [0, 59], booking_window_days: [7, 730], stripe_fee_pct: [0, 20],
   stripe_hold_minutes: [31, 120], wise_hold_hours: [1, 168], override_hold_hours: [1, 336],
 };
 
@@ -120,6 +120,7 @@ export async function adminApi(request: Request, env: BEnv): Promise<Response> {
 
   if (path === 'action') return action(request, env, d, body);
   if (path === 'second-trip') return secondTrip(request, env, d, body);
+  if (path === 'phone-booking') return phoneBooking(request, env, d, body);
   if (path === 'block') {
     const boat = String(body.boat || ''), date = String(body.date || ''), on = !!body.block;
     if (!(boat === '*' || /^boat-\d{2}$/.test(boat)) || !isDate(date)) return json({ ok: false, error: 'Bad request' }, 400);
@@ -250,14 +251,14 @@ async function secondTrip(request: Request, env: BEnv, d: D1Database, b: Record<
   if (b.confirm !== 'SECOND TRIP') return fail('Type SECOND TRIP to confirm that you personally checked a second trip is possible.');
   const boat = (await boats(d)).find((x) => x.id === b.boat);
   if (!boat) return fail('Choose a boat');
-  const date = String(b.date || ''), hours = Number(b.hours), people = Number(b.people), total = Number(b.total);
+  const date = String(b.date || ''), hours = Number(b.hours), people = Number(b.people);
+  const total = priceOf(boat, hours); // approved price for that boat and duration (never typed by hand)
   const str = (k: string, max: number) => String(b[k] ?? '').trim().slice(0, max);
   const f = { first: str('fname', 80), last: str('lname', 80), email: str('email', 120), phone: str('phone', 40), message: str('message', 5000) || '(second trip recorded by the owner)' };
   if (!isDate(date) || date < localToday()) return fail('Choose a future date');
-  if (hours !== 6 && hours !== 8) return fail('Duration 6 or 8 hours');
+  if (total == null) return fail(`Boat #${boat.number} offers ${durationsOf(boat).join(' or ')}-hour trips only.`);
   if (!f.first || !f.last || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email) || (f.phone.match(/\d/g) || []).length < 6) return fail('Customer name, valid email and phone are required');
   if (!Number.isInteger(people) || people < 1 || people > boat.capacity) return fail(`People: 1–${boat.capacity}`);
-  if (!Number.isInteger(total) || total < boat.deposit_usd) return fail(`Total price (whole USD, at least the ${boat.deposit_usd} deposit) is required`);
   if (b.payment !== 'stripe' && b.payment !== 'wise') return fail('Payment method?');
   const first = await d.prepare(`SELECT status FROM reservations WHERE boat_id = ? AND date = ? AND slot = 0 AND holds_slot = 1`).bind(boat.id, date).first<{ status: string }>();
   if (!first) return fail('This boat has no booking on that date: the customer can book online normally (no override needed).');
@@ -271,10 +272,10 @@ async function secondTrip(request: Request, env: BEnv, d: D1Database, b: Record<
   try {
     await d.batch([
       d.prepare(`INSERT INTO reservations (id, ref, token, boat_id, date, hours, slot, holds_slot, hold_expires_at, status, payment_method, total_usd, deposit_usd, balance_usd,
-        fee_cents, charge_cents, first_name, last_name, email, phone, people, message, consent_at, lang, is_test, source, created_at, updated_at)
-        VALUES (?,?,?,?,?,?,?,1,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'en',?,'override',?,?)`)
+        fee_cents, charge_cents, first_name, last_name, email, phone, people, message, consent_at, terms_version, lang, is_test, source, created_at, updated_at)
+        VALUES (?,?,?,?,?,?,?,1,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'en',?,'override',?,?)`)
         .bind(id, ref, token, boat.id, date, hours, slot, new Date(Date.now() + s.override_hold_hours * 3600e3).toISOString(), b.payment === 'stripe' ? 'AWAITING_PAYMENT' : 'AWAITING_PAYMENT_VERIFICATION',
-          b.payment, total, boat.deposit_usd, total - boat.deposit_usd, fee, boat.deposit_usd * 100 + fee, f.first, f.last, f.email, f.phone, people, f.message, now, isTest, now, now),
+          b.payment, total, boat.deposit_usd, total - boat.deposit_usd, fee, boat.deposit_usd * 100 + fee, f.first, f.last, f.email, f.phone, people, f.message, now, TERMS_VERSION, isTest, now, now),
       audit(d, 'admin', 'second_trip_override', id, { boat: boat.id, date, hours, slot, existing_status: first.status, payment: b.payment, total }),
     ]);
   } catch (e) { if (/UNIQUE/i.test(String(e))) return json({ ok: false, error: 'Conflict, please retry' }, 409); throw e; }
@@ -282,4 +283,70 @@ async function secondTrip(request: Request, env: BEnv, d: D1Database, b: Record<
   const payUrl = `${u.origin}/api/booking/pay?ref=${ref}&t=${token}`;
   const sent = b.notify === false ? false : await sendLogged(env, d, r, 'customer_payment_request', r.email, M.customerPaymentRequest(r, payUrl), env.CONTACT_TO);
   return json({ ok: true, id, ref, slot, status: r.status, payUrl, emailSent: sent, statusUrl: `${u.origin}/book-now/confirmation?ref=${ref}&t=${token}` });
+}
+
+/** Telephone booking by the owner (about one minute): boat, duration, date, customer, how the deposit is paid.
+ * Same rules as the website: valid boat/duration only (Boat #1 = 6 h), approved price, one trip per boat per day
+ * (a booked day needs the explicit SECOND TRIP override instead). Payment options:
+ *  - stripe: the customer gets a card payment link (deposit + fee); CONFIRMED only after the verified webhook;
+ *  - wise: date held, the owner confirms after checking Wise (like online Wise bookings);
+ *  - received: the owner already has the deposit (cash, Wise, …) and types VERIFIED → CONFIRMED + emails now. */
+async function phoneBooking(request: Request, env: BEnv, d: D1Database, b: Record<string, any>) {
+  const fail = (error: string, status = 400) => json({ ok: false, error }, status);
+  const boat = (await boats(d)).find((x) => x.id === b.boat) as Boat | undefined;
+  if (!boat || !boat.active) return fail('Choose a boat');
+  const date = String(b.date || ''), hours = Number(b.hours), people = Number(b.people);
+  const total = priceOf(boat, hours);
+  if (total == null) return fail(`Boat #${boat.number} offers ${durationsOf(boat).join(' or ')}-hour trips only.`);
+  if (!isDate(date) || date < localToday()) return fail('Choose today or a future date');
+  const str = (k: string, max: number) => String(b[k] ?? '').trim().slice(0, max);
+  const f = { first: str('fname', 80), last: str('lname', 80), email: str('email', 120), phone: str('phone', 40), message: str('message', 5000) || '(telephone booking)' };
+  if (!f.first || (f.phone.match(/\d/g) || []).length < 6) return fail('Customer first name and phone are required');
+  if (f.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email)) return fail('Email address looks wrong (leave it empty if the customer has none)');
+  if ((b.payment === 'stripe' || b.payment === 'wise') && !f.email) return fail('An email is needed to send the payment instructions (or choose "deposit already received").');
+  if (!Number.isInteger(people) || people < 1 || people > boat.capacity) return fail(`People: 1–${boat.capacity}`);
+  if (!['stripe', 'wise', 'received'].includes(b.payment)) return fail('How is the deposit paid?');
+  let amountCents = 0;
+  if (b.payment === 'received') {
+    if (b.confirm !== 'VERIFIED') return fail('Type VERIFIED to confirm you have received the deposit.');
+    amountCents = Math.round(Number(b.amount) * 100);
+    if (!Number.isFinite(amountCents) || amountCents < boat.deposit_usd * 100) return fail(`Amount received must be at least the deposit (${boat.deposit_usd} USD).`);
+  }
+  const s = await getSettings(d);
+  // normal availability rules (blocked day, already booked) — the lead-time rule does not apply to the owner
+  const state = (await dayStates(d, boat.id, date, date))[date];
+  if (state === 'blocked') return fail('This day is blocked for this boat (unblock it in the calendar first).', 409);
+  if (state === 'booked' || state === 'pending') return fail(`${BOOKED_MSG} Use “Record second trip” if you have personally checked that a second trip is possible.`, 409);
+  if (state === 'closed') return fail('Date beyond the booking window.', 409);
+  const method = b.payment === 'received' ? 'other' : b.payment;
+  const fee = method === 'stripe' ? chargeCents(boat.deposit_usd, s.stripe_fee_pct) - boat.deposit_usd * 100 : 0;
+  const id = newId(), ref = newRef(), token = newToken(), now = nowIso();
+  const status = method === 'other' ? 'CONFIRMED' : method === 'stripe' ? 'AWAITING_PAYMENT' : 'AWAITING_PAYMENT_VERIFICATION';
+  const holdH = method === 'wise' ? s.wise_hold_hours : s.override_hold_hours;
+  const u = new URL(request.url);
+  const isTest = u.hostname.endsWith('.workers.dev') || u.hostname === '127.0.0.1' || u.hostname === 'localhost' || (env.STRIPE_SECRET_KEY || '').includes('_test_') ? 1 : 0;
+  try {
+    const stmts = [
+      d.prepare(`INSERT INTO reservations (id, ref, token, boat_id, date, hours, slot, holds_slot, hold_expires_at, status, payment_method, total_usd, deposit_usd, balance_usd,
+        fee_cents, charge_cents, first_name, last_name, email, phone, people, message, consent_at, terms_version, lang, is_test, source, created_at, updated_at)
+        VALUES (?,?,?,?,?,?,0,1,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'en',?,'phone',?,?)`)
+        .bind(id, ref, token, boat.id, date, hours, method === 'other' ? null : new Date(Date.now() + holdH * 3600e3).toISOString(), status, method,
+          total, boat.deposit_usd, total - boat.deposit_usd, fee, boat.deposit_usd * 100 + fee, f.first, f.last, f.email, f.phone, people, f.message, now, TERMS_VERSION, isTest, now, now),
+      audit(d, 'admin', 'phone_booking', id, { boat: boat.id, date, hours, payment: b.payment }),
+    ];
+    if (method === 'other') {
+      stmts.push(d.prepare(`INSERT INTO payments (reservation_id, provider, amount_cents, currency, status, external_id, created_at) VALUES (?, 'other', ?, 'usd', 'verified', ?, ?)`).bind(id, amountCents, str('payRef', 100) || 'received by owner', now));
+      stmts.push(audit(d, 'admin', 'deposit_verified', id, { amount_cents: amountCents, how: str('payRef', 100) || null }));
+    }
+    await d.batch(stmts);
+  } catch (e) { if (/UNIQUE/i.test(String(e))) return fail(BOOKED_MSG, 409); throw e; }
+  const r = (await loadRes(d, 'r.id = ?', id)) as Res;
+  const payUrl = `${u.origin}/api/booking/pay?ref=${ref}&t=${token}`;
+  let emailSent = false;
+  if (method === 'other') {
+    await notifyConfirmed(env, d, id); // owner record + customer confirmation (if an email was given)
+    emailSent = !!f.email;
+  } else if (method === 'stripe') emailSent = await sendLogged(env, d, r, 'customer_payment_request', r.email, M.customerPaymentRequest(r, payUrl), env.CONTACT_TO);
+  else emailSent = await sendLogged(env, d, r, 'customer_wise_pending', r.email, M.customerWisePending(r));
+  return json({ ok: true, id, ref, status, total, deposit: boat.deposit_usd, balance: total - boat.deposit_usd, payUrl: method === 'stripe' ? payUrl : null, emailSent });
 }

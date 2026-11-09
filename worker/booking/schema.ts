@@ -1,8 +1,9 @@
 // D1 schema + migrations for the booking engine. Applied automatically (idempotent) on first use, so no manual
 // database step is needed after deploy. Each migration runs once; the applied version is stored in `meta`.
 import catalogue from '../../src/data/boats.json';
+import { PRICING } from './pricing';
 
-type Boat = { id: string; number: number; name: string; sizeFt: number; slug: string; url: string; capacity: number; depositUsd: number; price6Usd: number | null; price8Usd: number | null };
+type Boat = { id: string; number: number; name: string; sizeFt: number; slug: string; url: string; capacity: number };
 
 const M1 = `
 CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT NOT NULL);
@@ -27,13 +28,13 @@ CREATE TABLE IF NOT EXISTS reservations (
   id TEXT PRIMARY KEY, ref TEXT NOT NULL UNIQUE, token TEXT NOT NULL,
   boat_id TEXT NOT NULL REFERENCES boats(id), date TEXT NOT NULL, hours INTEGER NOT NULL CHECK (hours IN (6, 8)),
   slot INTEGER NOT NULL DEFAULT 0, holds_slot INTEGER NOT NULL DEFAULT 0, hold_expires_at TEXT,
-  status TEXT NOT NULL, payment_method TEXT NOT NULL CHECK (payment_method IN ('stripe', 'wise')),
+  status TEXT NOT NULL, payment_method TEXT NOT NULL CHECK (payment_method IN ('stripe', 'wise', 'other')), -- other = deposit received outside the site (phone booking, verified by the owner)
   total_usd INTEGER NOT NULL, deposit_usd INTEGER NOT NULL, balance_usd INTEGER NOT NULL,
   fee_cents INTEGER NOT NULL DEFAULT 0, charge_cents INTEGER NOT NULL,
   first_name TEXT NOT NULL, last_name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL, people INTEGER NOT NULL,
-  message TEXT NOT NULL, consent_at TEXT NOT NULL, lang TEXT,
+  message TEXT NOT NULL, consent_at TEXT NOT NULL, terms_version TEXT, lang TEXT,
   stripe_session_id TEXT, stripe_payment_intent TEXT, is_test INTEGER NOT NULL DEFAULT 0,
-  source TEXT NOT NULL DEFAULT 'online', -- 'online' (customer on the website) | 'override' (second trip recorded by the owner)
+  source TEXT NOT NULL DEFAULT 'online', -- 'online' (customer on the website) | 'phone' (owner, telephone customer) | 'override' (second trip authorised by the owner)
   owner_notified_at TEXT, customer_notified_at TEXT, expiry_notified_at TEXT, admin_note TEXT,
   created_at TEXT NOT NULL, updated_at TEXT NOT NULL
 );
@@ -67,7 +68,8 @@ const MIGRATIONS = [M1];
 
 const DEFAULT_SETTINGS: Record<string, string> = {
   min_lead_hours: '24', // owner: bookings at least 24 h before departure
-  departure_hour_local: '6', // site states departure 6:30 AM → 6 (conservative) is the reference for the 24 h rule (editable in the dashboard)
+  departure_hour_local: '6', // owner: customers arrive at 6:30 AM (customer email) → reference departure 6:30 local for the 24 h rule
+  departure_minute_local: '30',
   booking_window_days: '365',
   stripe_fee_pct: '6', // owner: card deposits = deposit + 6 %
   stripe_hold_minutes: '35', // Stripe Checkout sessions expire after 30 min (minimum allowed by Stripe)
@@ -99,11 +101,16 @@ async function seed(db: D1Database) {
   const now = new Date().toISOString();
   const stmts: D1PreparedStatement[] = [];
   for (const b of (catalogue as { boats: Boat[] }).boats) {
+    const p = PRICING[b.id];
+    if (!p) throw new Error(`No price configuration for ${b.id}`);
     // boats: insert once; never overwrite values the owner edited in the dashboard
     stmts.push(db.prepare(`INSERT OR IGNORE INTO boats (id, number, name, slug, url, size_ft, capacity, deposit_usd) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
-      .bind(b.id, b.number, b.name, b.slug, b.url, b.sizeFt, b.capacity, b.depositUsd));
-    stmts.push(db.prepare(`INSERT OR IGNORE INTO prices (boat_id, hours, price_usd, updated_at) VALUES (?, 6, ?, ?)`).bind(b.id, b.price6Usd, now));
-    stmts.push(db.prepare(`INSERT OR IGNORE INTO prices (boat_id, hours, price_usd, updated_at) VALUES (?, 8, ?, ?)`).bind(b.id, b.price8Usd, now));
+      .bind(b.id, b.number, b.name, b.slug, b.url, b.sizeFt, b.capacity, p.deposit));
+    for (const h of [6, 8] as const) {
+      // price rows: inserted once; an empty price from an earlier seed is filled with the approved price (never overwrites an owner edit)
+      stmts.push(db.prepare(`INSERT INTO prices (boat_id, hours, price_usd, updated_at) VALUES (?, ?, ?, ?)
+        ON CONFLICT(boat_id, hours) DO UPDATE SET price_usd = excluded.price_usd, updated_at = excluded.updated_at WHERE prices.price_usd IS NULL AND excluded.price_usd IS NOT NULL`).bind(b.id, h, p[h], now));
+    }
   }
   for (const [k, v] of Object.entries(DEFAULT_SETTINGS)) stmts.push(db.prepare(`INSERT OR IGNORE INTO settings (k, v) VALUES (?, ?)`).bind(k, v));
   await db.batch(stmts);

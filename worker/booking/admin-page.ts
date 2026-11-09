@@ -1,4 +1,5 @@
-// Owner dashboard (single page, no external resources, noindex). Served by the Worker at /admin/bookings.
+// Owner dashboard (single page, no external resources, noindex). Served by the Worker at /booking-admin
+// (Sveltia CMS keeps /admin/). Works on desktop and Android (responsive, large touch targets).
 export const ADMIN_HTML = /* html */ `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow"><title>Bookings — Exotic Fish Cabo</title>
 <style>
@@ -21,9 +22,10 @@ tr.click{cursor:pointer}tr.click:hover{background:#fff7ef}.row{display:flex;gap:
 #detail .card{max-width:860px;width:100%}.kv{display:grid;grid-template-columns:200px 1fr;gap:4px 12px;font-size:14px}.kv div:nth-child(odd){color:var(--mut)}
 .actions{display:grid;gap:10px;margin-top:14px}.actions fieldset{border:1px solid var(--line);border-radius:10px;padding:10px}.actions legend{font-weight:700}
 .hide{display:none!important}small{color:var(--mut)}
+@media(max-width:640px){main{padding:10px}.kv{grid-template-columns:1fr}.kv div:nth-child(odd){margin-top:6px}.row label,.row input,.row select{width:100%}button.b{min-height:44px}nav button{padding:10px 12px}#detail{padding:8px}}
 </style></head><body>
 <header><b>EXOTIC FISH CABO · BOOKINGS</b><nav id="nav" class="hide">
-<button data-t="list" class="on">Bookings</button><button data-t="cal">Calendar</button><button data-t="second">Record second trip</button>
+<button data-t="list" class="on">Bookings</button><button data-t="cal">Calendar</button><button data-t="phone">New phone booking</button><button data-t="second">Record second trip</button>
 <button data-t="boats">Boats &amp; prices</button><button data-t="settings">Settings</button><button data-t="audit">Audit log</button>
 <button id="csv">Export CSV</button><button id="logout">Sign out</button></nav></header>
 <main>
@@ -35,17 +37,27 @@ tr.click{cursor:pointer}tr.click:hover{background:#fff7ef}.row{display:flex;gap:
 <section id="t-cal" class="hide"><div class="card"><div class="row"><button class="b l" id="cprev">◀</button><b id="cmonth"></b><button class="b l" id="cnext">▶</button>
 <small>Click a cell: free → block/unblock · booked → open the booking. Green = confirmed, yellow = awaiting payment, grey = blocked. Orange outline = second trip.</small></div>
 <div class="cal" id="cal"></div></div></section>
+<section id="t-phone" class="hide"><div class="card"><h2>New phone booking</h2>
+<p>For a customer on the phone or WhatsApp. Same rules as the website: valid boat/duration only (Boat #1 = 6 hours), approved price, one trip per boat per day. The price is filled in automatically.</p>
+<form id="pf" class="actions"><div class="row"><label>Boat<select name="boat" id="pb" required></select></label><label>Duration<select name="hours" id="ph"></select></label><label>Date<input type="date" name="date" id="pd" required></label>
+<label>People<input type="number" name="people" min="1" max="10" value="2" required></label></div>
+<p class="msg" id="pprice"></p>
+<div class="row"><label>First name<input name="fname" required autocomplete="off"></label><label>Last name<input name="lname" autocomplete="off"></label><label>Phone<input name="phone" required autocomplete="off"></label><label>Email <small>(for the confirmation)</small><input type="email" name="email" autocomplete="off"></label></div>
+<label style="display:grid;gap:4px;font-weight:600;font-size:13px">Notes<textarea name="message" rows="2"></textarea></label>
+<div class="row"><label>Deposit<select name="payment" id="pp"><option value="received">Already received (cash, Wise…) → confirm now</option><option value="stripe">Send a card payment link (Stripe, +6%)</option><option value="wise">Customer will pay by Wise (I verify later)</option></select></label>
+<label class="rcv">Amount received (USD)<input type="number" name="amount" step="0.01" id="pa"></label><label class="rcv">How / reference<input name="payRef" placeholder="cash, Wise #…"></label><label class="rcv">Type <code>VERIFIED</code><input name="confirm" autocomplete="off"></label></div>
+<div class="row"><button class="b o">Create booking</button></div><p class="msg" id="pmsg"></p></form></div></section>
 <section id="t-second" class="hide"><div class="card"><h2>Record an approved second trip</h2>
 <p>Only when the boat already has a booking that day and <b>you have personally checked</b> a second trip is possible. The existing booking is not touched. The customer receives a payment request; the booking becomes <b>CONFIRMED</b> (and you get the confirmation email) only once the deposit is paid by card or you verify the Wise payment.</p>
 <form id="sf" class="actions"><div class="row"><label>Boat<select name="boat" id="sb" required></select></label><label>Date<input type="date" name="date" required></label>
 <label>Duration<select name="hours"><option value="6">3/4 day (6 hours)</option><option value="8">Full day (8 hours)</option></select></label>
-<label>People<input type="number" name="people" min="1" max="10" value="2" required></label><label>Total price (USD)<input type="number" name="total" min="1" step="1" required></label>
+<label>People<input type="number" name="people" min="1" max="10" value="2" required></label>
 <label>Deposit by<select name="payment"><option value="stripe">Card (Stripe, +6%)</option><option value="wise">Wise</option></select></label></div>
 <div class="row"><label>First name<input name="fname" required></label><label>Last name<input name="lname" required></label><label>Email<input type="email" name="email" required></label><label>Phone<input name="phone" required></label></div>
 <label style="display:grid;gap:4px;font-weight:600;font-size:13px">Message / notes<textarea name="message" rows="3"></textarea></label>
 <div class="row"><label>Type <code>SECOND TRIP</code> to confirm<input name="confirm" required autocomplete="off"></label><button class="b o">Record second trip &amp; send payment request</button></div>
 <p class="msg" id="smsg"></p></form></div></section>
-<section id="t-boats" class="hide"><div class="card" style="overflow:auto"><p><small>Empty price = “price on request”: online booking is disabled for that duration. Every change is recorded (history + audit log).</small></p>
+<section id="t-boats" class="hide"><div class="card" style="overflow:auto"><p><small>Approved prices (USD). Empty price = that duration is not offered (Boat #1: 6 hours only). Every change is recorded (history + audit log). Prices are never shown as a list on the website: customers see one price at a time (SHOW MY PRICE).</small></p>
 <table><thead><tr><th>#</th><th>Boat</th><th>6 h price</th><th>8 h price</th><th>Deposit</th><th>Capacity</th><th>Online</th></tr></thead><tbody id="brows"></tbody></table><p class="msg" id="bmsg"></p></div></section>
 <section id="t-settings" class="hide"><div class="card"><form id="setf" class="row"></form><p class="msg" id="setmsg"></p><p><small>Times use the business timezone America/Mazatlan.</small></p></div></section>
 <section id="t-audit" class="hide"><div class="card" style="overflow:auto"><table><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Booking</th><th>Details</th></tr></thead><tbody id="arows"></tbody></table></div></section>
@@ -54,17 +66,17 @@ tr.click{cursor:pointer}tr.click:hover{background:#fff7ef}.row{display:flex;gap:
 <script>
 const $=s=>document.querySelector(s),H=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const api=async(p,body)=>{const r=await fetch('/api/admin/'+p,body===undefined?{credentials:'same-origin'}:{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json','x-efc-admin':'1'},body:JSON.stringify(body)});const j=await r.json().catch(()=>({ok:false,error:'HTTP '+r.status}));if(r.status===401&&p!=='login'){show(false)}return j};
-const SET_LABELS={min_lead_hours:'Minimum notice (hours before departure)',departure_hour_local:'Reference departure hour (0–23)',booking_window_days:'Bookable up to (days ahead)',stripe_fee_pct:'Card fee (%)',stripe_hold_minutes:'Card checkout hold (minutes)',wise_hold_hours:'Wise hold (hours)',override_hold_hours:'Second-trip payment hold (hours)'};
+const SET_LABELS={min_lead_hours:'Minimum notice (hours before departure)',departure_hour_local:'Reference departure hour (0–23)',departure_minute_local:'Reference departure minutes (0–59)',booking_window_days:'Bookable up to (days ahead)',stripe_fee_pct:'Card fee (%)',stripe_hold_minutes:'Card checkout hold (minutes)',wise_hold_hours:'Wise hold (hours)',override_hold_hours:'Second-trip payment hold (hours)'};
 let O=null,month=null;
 const pill=(s,t)=>'<span class="pill '+H(s)+'">'+H(s)+'</span>'+(t?' <span class="pill test">TEST</span>':'');
 const money=c=>'$'+(c/100).toFixed(2);
 function show(on){$('#login').classList.toggle('hide',on);$('#nav').classList.toggle('hide',!on);if(!on)document.querySelectorAll('main>section[id^=t-]').forEach(s=>s.classList.add('hide'));}
 async function boot(){const o=await api('overview');if(!o.ok){show(false);return}O=o;show(true);month=o.today.slice(0,7);
  $('#fs').innerHTML='<option value="">All</option>'+o.statuses.map(s=>'<option>'+s+'</option>').join('');
- const bo=o.boats.map(b=>'<option value="'+b.id+'">#'+b.number+' '+H(b.name)+'</option>').join('');$('#fb').innerHTML='<option value="">All</option>'+bo;$('#sb').innerHTML=bo;
+ const bo=o.boats.map(b=>'<option value="'+b.id+'">#'+b.number+' '+H(b.name)+'</option>').join('');$('#fb').innerHTML='<option value="">All</option>'+bo;$('#sb').innerHTML=bo;$('#pb').innerHTML=bo;
  tab('list')}
 function tab(t){document.querySelectorAll('#nav button[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===t));document.querySelectorAll('main>section[id^=t-]').forEach(s=>s.classList.toggle('hide',s.id!=='t-'+t));
- ({list,cal,boats:boatsTab,settings:settingsTab,audit:auditTab,second:()=>{}})[t]()}
+ ({list,cal,boats:boatsTab,settings:settingsTab,audit:auditTab,second:()=>{},phone:phoneTab})[t]()}
 async function list(){const p=new URLSearchParams({q:$('#q').value,status:$('#fs').value,boat:$('#fb').value,from:$('#ff').value,to:$('#ft').value});const j=await api('bookings?'+p);
  $('#rows').innerHTML=(j.bookings||[]).map(b=>'<tr class="click" data-id="'+b.id+'"><td><b>'+H(b.ref)+'</b>'+(b.source==='override'?' <span class="pill">2nd trip</span>':'')+'</td><td>'+H(b.date)+'</td><td>#'+b.boat_number+' '+H(b.boat_name)+'</td><td><b>'+b.hours+' HOURS</b></td><td>'+H(b.first_name+' '+b.last_name)+'<br><small>'+H(b.email)+' · '+H(b.phone)+'</small></td><td>'+b.people+'</td><td>'+H(b.payment_method)+'<br><small>'+money(b.charge_cents)+'</small></td><td>'+pill(b.status,b.is_test)+'</td></tr>').join('')||'<tr><td colspan="8">No bookings.</td></tr>';}
 $('#rows').onclick=e=>{const tr=e.target.closest('tr[data-id]');if(tr)detail(tr.dataset.id)};
@@ -105,11 +117,19 @@ $('#brows').onchange=async e=>{const i=e.target;const id=i.closest('tr').dataset
 async function settingsTab(){const o=await api('overview');$('#setf').innerHTML=Object.entries(SET_LABELS).map(([k,l])=>'<label>'+l+'<input type="number" name="'+k+'" value="'+o.settings[k]+'"></label>').join('')+'<button class="b">Save</button>'}
 $('#setf').onsubmit=async e=>{e.preventDefault();const r=await api('settings',Object.fromEntries(new FormData(e.target)));$('#setmsg').className='msg '+(r.ok?'okm':'err');$('#setmsg').textContent=r.ok?'Saved.':r.error};
 async function auditTab(){const j=await api('audit');$('#arows').innerHTML=j.audit.map(a=>'<tr><td>'+H(a.at)+'</td><td>'+H(a.actor)+'</td><td>'+H(a.action)+'</td><td>'+H(a.ref||'')+'</td><td><small>'+H(a.details)+'</small></td></tr>').join('')}
-$('#sf').onsubmit=async e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));f.hours=+f.hours;f.people=+f.people;f.total=+f.total;
+$('#sf').onsubmit=async e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));f.hours=+f.hours;f.people=+f.people;
  if(!confirm('Record a SECOND trip for this boat on '+f.date+'? The customer will receive a deposit payment request.'))return;const r=await api('second-trip',f);
  $('#smsg').className='msg '+(r.ok?'okm':'err');$('#smsg').innerHTML=r.ok?'Recorded '+H(r.ref)+' (status '+H(r.status)+'). Payment request '+(r.emailSent?'emailed':'NOT emailed — send this link yourself')+': <a href="'+H(r.payUrl)+'">'+H(r.payUrl)+'</a>':H(r.error);if(r.ok)e.target.reset()};
 $('#nav').onclick=e=>{const t=e.target.dataset&&e.target.dataset.t;if(t)tab(t)};$('#go').onclick=list;$('#q').onkeydown=e=>{if(e.key==='Enter')list()};
 $('#csv').onclick=()=>{location.href='/api/admin/export.csv'};$('#logout').onclick=async()=>{await api('logout',{});show(false)};
 $('#lf').onsubmit=async e=>{e.preventDefault();const r=await api('login',{password:$('#pw').value});$('#pw').value='';if(r.ok)boot();else $('#lmsg').textContent=r.error};
+function phoneTab(){phoneSync()}
+function phoneSync(){const b=O.boats.find(x=>x.id===$('#pb').value)||O.boats[0];const cur=$('#ph').value;const ds=[6,8].filter(h=>(h===6?b.p6:b.p8)!=null);
+ $('#ph').innerHTML=ds.map(h=>'<option value="'+h+'">'+h+' hours</option>').join('');if(ds.includes(+cur))$('#ph').value=cur;const h=+$('#ph').value,tot=h===6?b.p6:b.p8;
+ $('#pprice').textContent=tot!=null?'Price '+tot+' USD · deposit '+b.deposit_usd+' USD · balance '+(tot-b.deposit_usd)+' USD cash on the day':'';if(!$('#pa').value)$('#pa').value=b.deposit_usd;
+ document.querySelectorAll('#pf .rcv').forEach(x=>x.classList.toggle('hide',$('#pp').value!=='received'))}
+$('#pb').onchange=()=>{$('#pa').value='';phoneSync()};$('#ph').onchange=phoneSync;$('#pp').onchange=phoneSync;
+$('#pf').onsubmit=async e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));f.hours=+f.hours;f.people=+f.people;const r=await api('phone-booking',f);
+ $('#pmsg').className='msg '+(r.ok?'okm':'err');$('#pmsg').innerHTML=r.ok?'Created '+H(r.ref)+' — '+H(r.status)+' · total '+r.total+' USD, balance '+r.balance+' USD.'+(r.payUrl?' Card payment link '+(r.emailSent?'emailed':'NOT emailed')+': <a href="'+H(r.payUrl)+'">'+H(r.payUrl)+'</a>':'')+(r.status==='CONFIRMED'?(r.emailSent?' Confirmation emailed.':' No customer email given.'):''):H(r.error);if(r.ok){e.target.reset();phoneSync()}};
 boot();
 </script></body></html>`;

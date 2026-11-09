@@ -2,13 +2,16 @@
 //
 // Owner rules (2026-11-06):
 // - ONE automatically confirmed trip per boat per calendar day (6 h or 8 h), America/Mazatlan dates.
-// - Boat already booked that day → the customer is sent to the contact form ("REQUEST AVAILABILITY"); no deposit,
-//   no automatic second trip. Only the owner can record a second trip (admin override, see admin.ts).
+// - Boat already booked that day → "REQUEST AVAILABILITY" opens a prefilled WhatsApp chat (customer presses Send);
+//   no deposit, no automatic second trip. Only the owner can record a second trip (admin override, see admin.ts).
+// - Prices (2026-11-08): server-side only (pricing.ts → D1). The public API returns ONE quote at a time (SHOW MY PRICE),
+//   never the grid. Boat #1 = 6 hours only (19 valid combinations).
 // - Stripe = deposit + 6 %; Wise = deposit, 24 h hold, manual verification; bookings ≥ 24 h before departure.
 // - Owner email ONLY once the deposit is verified and the booking CONFIRMED (deduplicated).
 // Concurrency: the unique index (boat_id, date, slot) WHERE holds_slot = 1 guarantees one holder per slot.
 import { ensureSchema, getSettings } from './schema';
 import { json, nowIso, newId, newRef, newToken, hmacHex, safeEqual, rateLimit, localToday, localTs, isDate, addDays } from './util';
+import { cardChargeCents } from './pricing';
 import * as M from './emails';
 import type { Res } from './emails';
 
@@ -26,11 +29,18 @@ export interface BEnv {
 }
 
 export const HOLDING = ['HELD', 'AWAITING_PAYMENT', 'AWAITING_PAYMENT_VERIFICATION'] as const;
-const TEST_TURNSTILE_SECRET = '1x0000000000000000000000000000000AA';
+const TEST_TURNSTILE_SECRET = '1x0000000000000000000000000000000AA'; // Cloudflare's public test secret (pairs with test site key 1x00000000000000000000AA)
 const isLocal = (u: URL) => u.hostname === '127.0.0.1' || u.hostname === 'localhost';
 const isStaging = (u: URL) => u.hostname.endsWith('.workers.dev') || isLocal(u);
+export const isProductionHost = (u: URL) => u.hostname === 'fish-cabo.com' || u.hostname === 'www.fish-cabo.com';
+/** Terms & Privacy versions the customer accepts by completing a booking ("Last updated" dates of the published pages). */
+export const TERMS_VERSION = 'terms:2026-03;privacy:2026-02';
+/** Public boat reference: "Boat #3 (27 ft)" — boat numbers and sizes only, never vessel or captain names. */
+export const boatLabel = (r: { boat_number: number; boat_size_ft: number }) => `Boat #${r.boat_number} (${r.boat_size_ft} ft)`;
 
-export type Boat = { id: string; number: number; name: string; slug: string; url: string; capacity: number; deposit_usd: number; active: number; p6: number | null; p8: number | null };
+export type Boat = { id: string; number: number; name: string; slug: string; url: string; size_ft: number; capacity: number; deposit_usd: number; active: number; p6: number | null; p8: number | null };
+export const priceOf = (b: Boat, hours: number) => (hours === 6 ? b.p6 : hours === 8 ? b.p8 : null);
+export const durationsOf = (b: Boat) => ([6, 8] as const).filter((h) => priceOf(b, h) != null);
 
 export async function db(env: BEnv) {
   if (!env.DB) throw new Error('DB binding missing');
@@ -54,8 +64,10 @@ export const sweepStmt = (d: D1Database, now = nowIso()) =>
 export const audit = (d: D1Database, actor: string, action: string, reservationId: string | null, details: unknown = null) =>
   d.prepare(`INSERT INTO audit_log (at, actor, action, reservation_id, details) VALUES (?, ?, ?, ?, ?)`).bind(nowIso(), actor, action, reservationId, details == null ? null : JSON.stringify(details));
 
+export const RES_COLS = `r.*, b.name boat_name, b.number boat_number, b.size_ft boat_size_ft,
+  (SELECT external_id FROM payments p WHERE p.reservation_id = r.id AND p.status IN ('paid','verified') ORDER BY p.id DESC LIMIT 1) payment_ref`;
 export async function loadRes(d: D1Database, where: string, ...args: unknown[]): Promise<Res | null> {
-  return d.prepare(`SELECT r.*, b.name boat_name, b.size_ft boat_size_ft FROM reservations r JOIN boats b ON b.id = r.boat_id WHERE ${where}`).bind(...args).first<Res>();
+  return d.prepare(`SELECT ${RES_COLS} FROM reservations r JOIN boats b ON b.id = r.boat_id WHERE ${where}`).bind(...args).first<Res>();
 }
 
 // ---------- availability ----------
@@ -77,24 +89,68 @@ export async function dayStates(d: D1Database, boatId: string, from: string, to:
     else if (day > lastDay) out[day] = 'closed';
     else if (bl.has(day)) out[day] = 'blocked';
     else if (tk.has(day)) out[day] = tk.get(day) === 'CONFIRMED' ? 'booked' : 'pending';
-    else if (localTs(day, s.departure_hour_local) - Date.now() < s.min_lead_hours * 3600e3) out[day] = 'too_soon';
+    else if (localTs(day, s.departure_hour_local + (s.departure_minute_local || 0) / 60) - Date.now() < s.min_lead_hours * 3600e3) out[day] = 'too_soon';
     else out[day] = 'available';
   }
   return out;
 }
 
+/** Public catalogue: boats, capacities and the durations offered. NO prices and NO deposits (see apiQuote). */
 export async function apiBoats(env: BEnv) {
   const d = await db(env);
   const s = await getSettings(d);
   return json({
     ok: true,
     stripeFeePct: s.stripe_fee_pct, minLeadHours: s.min_lead_hours, wiseHoldHours: s.wise_hold_hours, today: localToday(), timezone: 'America/Mazatlan',
-    boats: (await boats(d)).map((b) => ({
-      id: b.id, number: b.number, name: b.name, url: b.url, capacity: b.capacity, deposit: b.deposit_usd, active: !!b.active,
-      prices: { 6: b.p6, 8: b.p8 }, bookable: !!b.active && (b.p6 != null || b.p8 != null),
-    })),
+    boats: (await boats(d)).map((b) => ({ id: b.id, number: b.number, sizeFt: b.size_ft, capacity: b.capacity, durations: durationsOf(b), bookable: !!b.active && durationsOf(b).length > 0 })),
   });
 }
+
+/** SHOW MY PRICE: one quote for one boat + duration + date. Discreet anti-scraping: same-origin browser request
+ * (custom header), per-IP limits, no price grid anywhere. A person can still read prices one by one — that is accepted. */
+export async function apiQuote(request: Request, env: BEnv) {
+  if (request.method !== 'POST') return json({ ok: false, error: 'Method not allowed' }, 405);
+  const o = request.headers.get('origin');
+  if (!o || new URL(o).host !== new URL(request.url).host || request.headers.get('x-efc-quote') !== '1') return json({ ok: false, error: 'Forbidden' }, 403);
+  const body = (await request.json().catch(() => ({}))) as { boat?: string; hours?: number | string; date?: string };
+  const boatId = String(body.boat || ''), hours = Number(body.hours), date = String(body.date || '');
+  if (!/^boat-\d{2}$/.test(boatId) || (hours !== 6 && hours !== 8) || !isDate(date)) return json({ ok: false, error: 'Please choose a boat, a trip duration and a date.' }, 400);
+  const d = await db(env);
+  const ip = request.headers.get('cf-connecting-ip') || 'local';
+  // generous for real customers (comparing every boat and both durations takes 19 quotes), tight for bulk collection
+  if (!(await rateLimit(d, `quote:h:${ip}`, 40, 3600)) || !(await rateLimit(d, `quote:d:${ip}`, 120, 86400))) {
+    await audit(d, 'system', 'quote_rate_limited', null, { ip: ip.replace(/[\d]+$/, 'x') }).run();
+    return json({ ok: false, error: 'You have checked many prices in a short time. Please try again later, or message us on WhatsApp +52 624 122 3506 and we will help you right away.' }, 429);
+  }
+  const boat = (await boats(d)).find((b) => b.id === boatId);
+  if (!boat || !boat.active) return json({ ok: false, error: 'This boat is not available online. Please contact us.' }, 404);
+  const total = priceOf(boat, hours);
+  if (total == null) return json({ ok: false, code: 'DURATION', error: `Boat #${boat.number} offers ${durationsOf(boat).map((h) => h + '-hour').join(' or ')} trips only.` }, 409);
+  const state = (await dayStates(d, boat.id, date, date))[date];
+  if (state === 'booked' || state === 'pending') return json({ ok: false, code: 'BOOKED', error: BOOKED_MSG }, 409);
+  if (state !== 'available') return json({ ok: false, code: 'DATE', error: 'This date cannot be booked online. Please choose another date or contact us on WhatsApp.' }, 409);
+  const s = await getSettings(d);
+  return json({ ok: true, boat: boat.id, number: boat.number, hours, date, total, cardFeePct: s.stripe_fee_pct });
+}
+
+/** Deposit + amounts for the final payment summary (asked only after the customer accepted the quote). */
+export async function apiSummary(request: Request, env: BEnv) {
+  if (request.method !== 'POST') return json({ ok: false, error: 'Method not allowed' }, 405);
+  const o = request.headers.get('origin');
+  if (!o || new URL(o).host !== new URL(request.url).host || request.headers.get('x-efc-quote') !== '1') return json({ ok: false, error: 'Forbidden' }, 403);
+  const body = (await request.json().catch(() => ({}))) as { boat?: string; hours?: number | string };
+  const d = await db(env);
+  const ip = request.headers.get('cf-connecting-ip') || 'local';
+  if (!(await rateLimit(d, `quote:h:${ip}`, 40, 3600))) return json({ ok: false, error: 'Please try again later.' }, 429);
+  const boat = (await boats(d)).find((b) => b.id === String(body.boat || ''));
+  const total = boat ? priceOf(boat, Number(body.hours)) : null;
+  if (!boat || total == null) return json({ ok: false, error: 'Please choose a boat and a trip duration.' }, 400);
+  const s = await getSettings(d);
+  const card = cardChargeCents(boat.deposit_usd, s.stripe_fee_pct);
+  return json({ ok: true, total, deposit: boat.deposit_usd, balance: total - boat.deposit_usd, cardFeePct: s.stripe_fee_pct, cardFeeCents: card - boat.deposit_usd * 100, cardChargeCents: card, wiseChargeCents: boat.deposit_usd * 100 });
+}
+
+export const BOOKED_MSG = 'This boat already has a booking on your selected date. A second trip may be possible upon request. Please contact us to check availability.';
 
 export async function apiAvailability(request: Request, env: BEnv) {
   const u = new URL(request.url);
@@ -109,11 +165,15 @@ export async function apiAvailability(request: Request, env: BEnv) {
 }
 
 // ---------- reservation ----------
+/** Turnstile (final booking step only, never before the price). fish-cabo.com: the real secret is REQUIRED.
+ * Other hosts (local, *.workers.dev previews) use Cloudflare's public test pair, so the check still runs end-to-end. */
 async function human(request: Request, env: BEnv, token: string) {
   const u = new URL(request.url);
-  if (isLocal(u) || (isStaging(u) && !env.TURNSTILE_SECRET)) return true; // staging is password-protected
+  if (isProductionHost(u) && !env.TURNSTILE_SECRET) return false;
+  if (isLocal(u)) return true; // no network in local tests
+  const secret = isProductionHost(u) ? env.TURNSTILE_SECRET! : TEST_TURNSTILE_SECRET;
   const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-    method: 'POST', body: new URLSearchParams({ secret: env.TURNSTILE_SECRET || TEST_TURNSTILE_SECRET, response: token, remoteip: request.headers.get('cf-connecting-ip') || '' }),
+    method: 'POST', body: new URLSearchParams({ secret, response: token, remoteip: request.headers.get('cf-connecting-ip') || '' }),
   }).then((x) => x.json() as Promise<{ success: boolean }>).catch(() => ({ success: false }));
   return !!r.success;
 }
@@ -123,7 +183,7 @@ function sameOrigin(request: Request) {
   return !o || new URL(o).host === new URL(request.url).host;
 }
 
-export const chargeCents = (deposit: number, feePct: number) => Math.round(deposit * 100 * (1 + feePct / 100));
+export const chargeCents = cardChargeCents;
 
 /** Stripe key gate: a live key is refused unless the owner set BOOKING_LIVE=approved. */
 export function stripeMode(env: BEnv): 'test' | 'live' | 'off' | 'blocked' {
@@ -149,7 +209,7 @@ export async function apiReserve(request: Request, env: BEnv) {
   const f = {
     firstName: get('fname', 80), lastName: get('lname', 80), email: get('email', 120), phone: get('phone', 40), date: get('date', 10),
     people: Number(get('people', 3)), hours: Number(get('duration', 2)), boatId: get('boat', 10), message: get('message', 5000),
-    payment: get('payment', 10), consent: get('consent', 5), lang: get('lang', 5) || 'en',
+    payment: get('payment', 10), lang: get('lang', 5) || 'en',
   };
   const err = (error: string, field?: string, status = 400) => json({ ok: false, error, field }, status);
   if (!f.firstName || !f.lastName) return err('Please enter your first and last name.', 'fname');
@@ -157,15 +217,15 @@ export async function apiReserve(request: Request, env: BEnv) {
   if (!/^[+()\-.\s\d]{6,40}$/.test(f.phone) || (f.phone.match(/\d/g) || []).length < 6) return err('Please enter a valid phone number.', 'phone');
   if (!isDate(f.date)) return err('Please choose a date.', 'date');
   if (f.hours !== 6 && f.hours !== 8) return err('Please choose a trip duration.', 'duration');
-  if (!f.message) return err('Please enter a message.', 'message');
   if (f.payment !== 'stripe' && f.payment !== 'wise') return err('Please choose a payment method.', 'payment');
-  if (f.consent !== 'yes') return err('Please accept the Terms & Conditions.', 'consent');
+  // No checkbox (owner, 2026-11-08): the statement next to the pay button says completing the booking = acceptance.
+  // The accepted versions and the time are recorded with the reservation (terms_version, consent_at).
   if (!(await human(request, env, String(fd.get('cf-turnstile-response') ?? '')))) return err('Verification failed. Please try again.', undefined, 403);
 
   const boat = (await boats(d)).find((b) => b.id === f.boatId);
   if (!boat || !boat.active) return err('Please choose a boat.', 'boat');
-  const total = f.hours === 6 ? boat.p6 : boat.p8;
-  if (total == null) return err('Online booking is not available for this trip yet. Please contact us for the price.', 'duration', 409);
+  const total = priceOf(boat, f.hours);
+  if (total == null) return err(`Boat #${boat.number} offers ${durationsOf(boat).map((h) => h + '-hour').join(' or ')} trips only.`, 'duration', 400);
   if (!Number.isInteger(f.people) || f.people < 1 || f.people > Math.min(boat.capacity, 10)) return err(`This boat takes up to ${boat.capacity} people.`, 'people');
   if (f.payment === 'stripe') {
     const m = stripeMode(env);
@@ -174,7 +234,7 @@ export async function apiReserve(request: Request, env: BEnv) {
 
   const s = await getSettings(d);
   const state = (await dayStates(d, boat.id, f.date, f.date))[f.date];
-  if (state === 'booked' || state === 'pending') return json({ ok: false, code: 'BOOKED', state, error: 'This boat already has a booking on your selected date. A second trip may be possible upon request. Please contact us to check availability.' }, 409);
+  if (state === 'booked' || state === 'pending') return json({ ok: false, code: 'BOOKED', state, error: BOOKED_MSG }, 409);
   if (state !== 'available') return err(state === 'too_soon' ? `Online bookings must be made at least ${s.min_lead_hours} hours before the trip. Please contact us on WhatsApp for last-minute trips.` : 'This date cannot be booked online.', 'date', 409);
 
   const id = newId(), ref = newRef(), token = newToken(), now = nowIso();
@@ -185,14 +245,14 @@ export async function apiReserve(request: Request, env: BEnv) {
     await d.batch([
       sweepStmt(d, now),
       d.prepare(`INSERT INTO reservations (id, ref, token, boat_id, date, hours, slot, holds_slot, hold_expires_at, status, payment_method,
-        total_usd, deposit_usd, balance_usd, fee_cents, charge_cents, first_name, last_name, email, phone, people, message, consent_at, lang,
-        is_test, source, created_at, updated_at) VALUES (?,?,?,?,?,?,0,1,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'online',?,?)`)
+        total_usd, deposit_usd, balance_usd, fee_cents, charge_cents, first_name, last_name, email, phone, people, message, consent_at, terms_version, lang,
+        is_test, source, created_at, updated_at) VALUES (?,?,?,?,?,?,0,1,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'online',?,?)`)
         .bind(id, ref, token, boat.id, f.date, f.hours, new Date(Date.now() + holdMs).toISOString(), f.payment === 'stripe' ? 'HELD' : 'AWAITING_PAYMENT_VERIFICATION', f.payment,
-          total, boat.deposit_usd, total - boat.deposit_usd, fee, boat.deposit_usd * 100 + fee, f.firstName, f.lastName, f.email, f.phone, f.people, f.message, now, f.lang, isTest, now, now),
-      audit(d, 'customer', 'reserve', id, { payment: f.payment, boat: boat.id, date: f.date, hours: f.hours }),
+          total, boat.deposit_usd, total - boat.deposit_usd, fee, boat.deposit_usd * 100 + fee, f.firstName, f.lastName, f.email, f.phone, f.people, f.message, now, TERMS_VERSION, f.lang, isTest, now, now),
+      audit(d, 'customer', 'reserve', id, { payment: f.payment, boat: boat.id, date: f.date, hours: f.hours, terms_accepted: TERMS_VERSION }),
     ]);
   } catch (e) {
-    if (/UNIQUE/i.test(String(e))) return json({ ok: false, code: 'BOOKED', state: 'pending', error: 'This boat already has a booking on your selected date. A second trip may be possible upon request. Please contact us to check availability.' }, 409);
+    if (/UNIQUE/i.test(String(e))) return json({ ok: false, code: 'BOOKED', state: 'pending', error: BOOKED_MSG }, 409);
     throw e;
   }
   const r = (await loadRes(d, 'r.id = ?', id))!;
@@ -237,18 +297,18 @@ export async function createCheckout(env: BEnv, d: D1Database, r: Res, origin: s
     'line_items[0][quantity]': '1',
     'line_items[0][price_data][currency]': 'usd',
     'line_items[0][price_data][unit_amount]': String(r.charge_cents),
-    'line_items[0][price_data][product_data][name]': `Deposit — ${r.boat_name}, ${r.date}, ${r.hours}-hour trip — ${r.ref}`,
+    'line_items[0][price_data][product_data][name]': `Deposit — ${boatLabel(r)}, ${r.date}, ${r.hours}-hour trip — ${r.ref}`,
     'line_items[0][price_data][product_data][description]': `Deposit $${r.deposit_usd} + ${Math.round((r.fee_cents / (r.deposit_usd * 100)) * 100)}% card processing fee`,
     customer_email: r.email,
     client_reference_id: r.ref,
     'metadata[ref]': r.ref,
     'metadata[reservation_id]': r.id,
     'metadata[trip_duration_hours]': String(r.hours),
-    'metadata[boat]': r.boat_name,
+    'metadata[boat]': `Boat #${r.boat_number}`,
     'metadata[fishing_date]': r.date,
     'payment_intent_data[metadata][ref]': r.ref,
     'payment_intent_data[metadata][trip_duration_hours]': String(r.hours),
-    'payment_intent_data[metadata][boat]': r.boat_name,
+    'payment_intent_data[metadata][boat]': `Boat #${r.boat_number}`,
     'payment_intent_data[metadata][fishing_date]': r.date,
     'payment_intent_data[description]': `Exotic Fish Cabo deposit ${r.ref}`,
     success_url: `${origin}/book-now/confirmation?${back}`,
@@ -376,10 +436,10 @@ export async function notifyConfirmed(env: BEnv, d: D1Database, id: string) {
   const r = await loadRes(d, `r.id = ? AND r.status = 'CONFIRMED'`, id);
   if (!r) return;
   if (env.CONTACT_TO && (await d.prepare(`UPDATE reservations SET owner_notified_at = ? WHERE id = ? AND owner_notified_at IS NULL RETURNING id`).bind(nowIso(), id).first())) {
-    if (!(await sendLogged(env, d, r, 'owner_confirmed', env.CONTACT_TO, M.ownerConfirmed(r), r.email)))
+    if (!(await sendLogged(env, d, r, 'owner_confirmed', env.CONTACT_TO, M.ownerConfirmed(r), r.email || undefined)))
       await d.prepare(`UPDATE reservations SET owner_notified_at = NULL WHERE id = ?`).bind(id).run();
   }
-  if (await d.prepare(`UPDATE reservations SET customer_notified_at = ? WHERE id = ? AND customer_notified_at IS NULL RETURNING id`).bind(nowIso(), id).first()) {
+  if (r.email && await d.prepare(`UPDATE reservations SET customer_notified_at = ? WHERE id = ? AND customer_notified_at IS NULL RETURNING id`).bind(nowIso(), id).first()) {
     if (!(await sendLogged(env, d, r, 'customer_confirmed', r.email, M.customerConfirmed(r), env.CONTACT_TO)))
       await d.prepare(`UPDATE reservations SET customer_notified_at = NULL WHERE id = ?`).bind(id).run();
   }
@@ -399,7 +459,7 @@ export async function apiStatus(request: Request, env: BEnv) {
   const r = await byRefToken(d, u.searchParams.get('ref') || '', u.searchParams.get('t') || '');
   if (!r) return json({ ok: false, error: 'Booking not found' }, 404);
   return json({
-    ok: true, ref: r.ref, status: r.status, boat: r.boat_name, date: r.date, hours: r.hours, people: r.people, firstName: r.first_name,
+    ok: true, ref: r.ref, status: r.status, boat: boatLabel(r), date: r.date, hours: r.hours, people: r.people, firstName: r.first_name,
     total: r.total_usd, deposit: r.deposit_usd, balance: r.balance_usd, chargeCents: r.charge_cents, feeCents: r.fee_cents, payment: r.payment_method,
     holdExpiresAt: r.hold_expires_at, wiseUrl: r.payment_method === 'wise' ? M.WISE_PAY_URL : null, test: !!r.is_test,
     canPay: r.payment_method === 'stripe' && r.status === 'AWAITING_PAYMENT' && !!r.hold_expires_at && Date.parse(r.hold_expires_at) > Date.now(),
@@ -450,14 +510,14 @@ export async function cron(env: BEnv) {
   const d = await db(env);
   await sweepStmt(d).run();
   // Wise reservations released after 24 h: tell the customer once
-  const { results: expired } = await d.prepare(`SELECT r.*, b.name boat_name, b.size_ft boat_size_ft FROM reservations r JOIN boats b ON b.id = r.boat_id
+  const { results: expired } = await d.prepare(`SELECT ${RES_COLS} FROM reservations r JOIN boats b ON b.id = r.boat_id
      WHERE r.status = 'EXPIRED' AND r.payment_method = 'wise' AND r.expiry_notified_at IS NULL AND r.updated_at > ? LIMIT 20`).bind(new Date(Date.now() - 3 * 864e5).toISOString()).all<Res>();
   for (const r of expired) {
     if (await d.prepare(`UPDATE reservations SET expiry_notified_at = ? WHERE id = ? AND expiry_notified_at IS NULL RETURNING id`).bind(nowIso(), r.id).first())
       await sendLogged(env, d, r, 'customer_wise_expired', r.email, M.customerWiseExpired(r));
   }
   // confirmation emails whose delivery failed earlier
-  const { results: unsent } = await d.prepare(`SELECT id FROM reservations WHERE status = 'CONFIRMED' AND (owner_notified_at IS NULL OR customer_notified_at IS NULL) AND updated_at > ? LIMIT 20`)
+  const { results: unsent } = await d.prepare(`SELECT id FROM reservations WHERE status = 'CONFIRMED' AND (owner_notified_at IS NULL OR (customer_notified_at IS NULL AND email <> '')) AND updated_at > ? LIMIT 20`)
     .bind(new Date(Date.now() - 3 * 864e5).toISOString()).all<{ id: string }>();
   for (const { id } of unsent) await notifyConfirmed(env, d, id);
   // housekeeping (free-plan friendly)
