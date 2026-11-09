@@ -520,6 +520,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
   .bk-help { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 18px; font-family: var(--font-ui); font-size: 13px; color: var(--muted); }
   .bk-help a { display: inline-flex; align-items: center; justify-content: center; width: 150px; min-height: 44px; padding: 0 12px; border: 1.5px solid var(--line); border-radius: 999px; background: var(--white); color: var(--ink); font-weight: 700; letter-spacing: .04em; text-decoration: none; }
   .bk-help a:hover { border-color: var(--orange); }
+  @media (max-width: 640px) { .bk-help span { flex-basis: 100%; } .bk-help a { flex: 1 1 0; width: auto; } }
   .bk-alts { margin-top: 12px; padding: 14px 16px; background: #fff7ef; border-left: 4px solid var(--orange); border-radius: var(--radius-sm); font-family: var(--font-ui); display: flex; flex-wrap: wrap; gap: 8px; }
   .bk-alts[hidden] { display: none; }
   .bk-alts p { flex-basis: 100%; margin: 0; }
