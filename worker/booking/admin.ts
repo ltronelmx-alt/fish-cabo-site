@@ -3,7 +3,7 @@
 // Every change is written to audit_log. An override never confirms a booking by itself: payment must still be verified.
 import { getSettings } from './schema';
 import { json, nowIso, newId, newRef, newToken, hmacHex, sha256Hex, safeEqual, rateLimit, isDate, localToday, addDays } from './util';
-import { db, boats, audit, loadRes, sweepStmt, notifyConfirmed, sendLogged, chargeCents, dayStates, priceOf, durationsOf, BOOKED_MSG, TERMS_VERSION, type BEnv, type Boat } from './core';
+import { db, boats, audit, loadRes, runSweep, cron, isProductionHost, notifyConfirmed, sendLogged, chargeCents, dayStates, priceOf, durationsOf, BOOKED_MSG, TERMS_VERSION, type BEnv, type Boat } from './core';
 import * as M from './emails';
 import type { Res } from './emails';
 import { ADMIN_HTML } from './admin-page';
@@ -58,7 +58,7 @@ export async function adminApi(request: Request, env: BEnv): Promise<Response> {
   }
   if (!(await sessionOk(request, env))) return json({ ok: false, error: 'Not signed in' }, 401);
   if (path === 'logout') return json({ ok: true }, 200, { 'set-cookie': `${COOKIE}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${secure(request)}` });
-  await sweepStmt(d).run();
+  await runSweep(d);
 
   if (path === 'overview' && request.method === 'GET') {
     const s = await getSettings(d);
@@ -129,6 +129,15 @@ export async function adminApi(request: Request, env: BEnv): Promise<Response> {
   if (request.method !== 'POST') return json({ ok: false, error: 'Not found' }, 404);
   const body = (await request.json().catch(() => ({}))) as Record<string, any>;
 
+  if (path === 'run-hourly-job') {
+    // STAGING ONLY (owner request 2026-11-09): run the existing hourly job on demand, because crons never run on
+    // Cloudflare Previews. Same code as the cron; deadlines and one-time claims apply. Does not exist on fish-cabo.com.
+    if (isProductionHost(u) || (env as any).SITE_ENV === 'production') return json({ ok: false, error: 'Not found' }, 404);
+    if (request.method !== 'POST') return json({ ok: false, error: 'POST only' }, 405);
+    const summary = await cron(env);
+    await audit(d, 'admin', 'hourly_job_run_manually', null, { ...summary, host: u.hostname }).run();
+    return json({ ok: true, summary });
+  }
   if (path === 'action') return action(request, env, d, body);
   if (path === 'second-trip') return secondTrip(request, env, d, body);
   if (path === 'phone-booking') return phoneBooking(request, env, d, body);

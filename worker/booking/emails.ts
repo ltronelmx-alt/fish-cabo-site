@@ -124,6 +124,28 @@ export function ownerWisePending(r: Res, adminUrl = ADMIN_URL) {
   return { subject, text, html };
 }
 
+/** Owner notice when an unpaid Wise booking expires (owner request 2026-11-09). Sent once, with the customer notice. */
+export function ownerWiseExpired(r: Res) {
+  const deadline = r.hold_expires_at ? localDateTime(r.hold_expires_at) : '(not recorded)';
+  const warn = 'No payment was verified. The booking has expired and the date has been released (it is available again for booking).';
+  const rows: [string, string][] = [
+    ['Status', 'EXPIRED — no payment verified, date released'],
+    ['Booking reference', r.ref],
+    ['Customer', `${r.first_name} ${r.last_name}`.trim()],
+    ['CUSTOMER EMAIL', r.email || '(no email given)'],
+    ['Phone / WhatsApp', r.phone || '(not given)'],
+    ['Boat', B(r)],
+    ['Fishing date', longDate(r.date)],
+    ['TRIP DURATION', DUR(r.hours)],
+    ['Expected Wise deposit', usd(r.deposit_usd)],
+    ['Expired at (payment deadline)', deadline],
+  ];
+  const subject = `${test(r)}WISE — EXPIRED ${r.ref} — DATE RELEASED`;
+  const text = `${test(r)}WISE — EXPIRED — DATE RELEASED\n\n${warn}\nThe customer has been told by email that the date was released. If the deposit arrives later, you can still confirm it from the booking dashboard while the date is free.\n\n${lines(rows)}\n\nBooking dashboard: ${ADMIN_URL}`;
+  const html = wrap('WISE — EXPIRED — DATE RELEASED', `<p style="font-size:17px;font-weight:800;margin:0 0 10px;padding:12px 14px;background:#fee2e2;border-left:5px solid #b42318">${esc(warn)}</p><p style="margin:0 0 16px">The customer has been told by email that the date was released. If the deposit arrives later, you can still confirm it from the booking dashboard while the date is free.</p>${table(rows)}`);
+  return { subject, text, html };
+}
+
 /** Automatic customer email after a verified deposit (owner decision 2026-11-08): a deposit RECEIPT only.
  * No meeting time, no marina directions, not the official confirmation (Loïc sends that one personally). */
 export function customerDepositReceipt(r: Res) {

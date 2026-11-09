@@ -27,7 +27,7 @@ tr.click{cursor:pointer}tr.click:hover{background:#fff7ef}.row{display:flex;gap:
 <header><b>EXOTIC FISH CABO · BOOKINGS</b><nav id="nav" class="hide">
 <button data-t="list" class="on">Bookings</button><button data-t="cal">Calendar</button><button data-t="phone">New phone booking</button><button data-t="second">Record second trip</button>
 <button data-t="clients">Clients</button><button data-t="boats">Boats &amp; prices</button><button data-t="settings">Settings</button><button data-t="audit">Audit log</button>
-<button id="csv">Export CSV</button><button id="logout">Sign out</button></nav></header>
+<button id="runjob" class="hide" title="Staging only: runs the hourly job now (expires holds past their deadline, sends the expiry notices once)">Run hourly job (staging)</button><button id="csv">Export CSV</button><button id="logout">Sign out</button></nav></header>
 <main>
 <section id="login" class="card" style="max-width:420px;margin:40px auto"><h2>Sign in</h2><form id="lf"><div class="row"><label>Password<input type="password" id="pw" autocomplete="current-password" required></label><button class="b o">Sign in</button></div></form><p class="msg err" id="lmsg"></p></section>
 <section id="t-list" class="hide"><div class="card"><div class="row">
@@ -123,7 +123,9 @@ $('#sf').onsubmit=async e=>{e.preventDefault();const f=Object.fromEntries(new Fo
  if(!confirm('Record a SECOND trip for this boat on '+f.date+'? The customer will receive a deposit payment request.'))return;const r=await api('second-trip',f);
  $('#smsg').className='msg '+(r.ok?'okm':'err');$('#smsg').innerHTML=r.ok?'Recorded '+H(r.ref)+' (status '+H(r.status)+'). Payment request '+(r.emailSent?'emailed':'NOT emailed — send this link yourself')+': <a href="'+H(r.payUrl)+'">'+H(r.payUrl)+'</a>':H(r.error);if(r.ok)e.target.reset()};
 $('#nav').onclick=e=>{const t=e.target.dataset&&e.target.dataset.t;if(t)tab(t)};$('#go').onclick=list;$('#q').onkeydown=e=>{if(e.key==='Enter')list()};
-$('#csv').onclick=()=>{location.href='/api/admin/export.csv'};$('#logout').onclick=async()=>{await api('logout',{});show(false)};
+$('#csv').onclick=()=>{location.href='/api/admin/export.csv'};
+if(!/(^|\\.)fish-cabo\\.com$/.test(location.hostname)){$('#runjob').classList.remove('hide');$('#runjob').onclick=async()=>{if(!confirm('STAGING: run the hourly job now?\\nOnly bookings already past their deadline are expired; each expiry notice is sent once.'))return;const r=await api('run-hourly-job',{});alert(r.ok?('Done.\\nExpired now: '+r.summary.expired+'\\nCustomer expiry emails: '+r.summary.customerExpiryEmails+'\\nOwner expiry emails: '+r.summary.ownerExpiryEmails+'\\nConfirmation retries: '+r.summary.confirmationRetries):('Error: '+(r.error||'unknown')));list()}}
+$('#logout').onclick=async()=>{await api('logout',{});show(false)};
 $('#lf').onsubmit=async e=>{e.preventDefault();const r=await api('login',{password:$('#pw').value});$('#pw').value='';if(r.ok)boot();else $('#lmsg').textContent=r.error};
 function phoneTab(){phoneSync()}
 function phoneSync(){const b=O.boats.find(x=>x.id===$('#pb').value)||O.boats[0];const cur=$('#ph').value;const ds=[6,8].filter(h=>(h===6?b.p6:b.p8)!=null);

@@ -57,9 +57,18 @@ export async function boats(d: D1Database): Promise<Boat[]> {
 }
 
 /** Release every hold that has expired (also run by the hourly cron). */
-export const sweepStmt = (d: D1Database, now = nowIso()) =>
-  d.prepare(`UPDATE reservations SET holds_slot = 0, status = 'EXPIRED', updated_at = ?1
-             WHERE holds_slot = 1 AND status IN ('HELD','AWAITING_PAYMENT','AWAITING_PAYMENT_VERIFICATION') AND hold_expires_at IS NOT NULL AND hold_expires_at < ?1`).bind(now);
+const EXPIRING = `holds_slot = 1 AND status IN ('HELD','AWAITING_PAYMENT','AWAITING_PAYMENT_VERIFICATION') AND hold_expires_at IS NOT NULL AND hold_expires_at < ?1`;
+/** Release holds whose deadline has passed (never before it). One atomic batch: the audit entry is written for exactly
+ * the rows that this UPDATE expires, so a booking is expired — and logged — once, whoever runs the sweep first. */
+export const sweep = (d: D1Database, now = nowIso()) => [
+  d.prepare(`INSERT INTO audit_log (at, actor, action, reservation_id, details)
+             SELECT ?1, 'system', 'hold_expired', id, json_object('ref', ref, 'payment', payment_method, 'deadline', hold_expires_at,
+               'reason', CASE WHEN payment_method = 'wise' THEN 'No Wise deposit verified before the 24-hour deadline; date released.'
+                              ELSE 'Card payment not completed before the hold deadline; date released.' END)
+             FROM reservations WHERE ${EXPIRING}`).bind(now),
+  d.prepare(`UPDATE reservations SET holds_slot = 0, status = 'EXPIRED', updated_at = ?1 WHERE ${EXPIRING}`).bind(now),
+];
+export const runSweep = (d: D1Database, now = nowIso()) => d.batch(sweep(d, now));
 
 export const audit = (d: D1Database, actor: string, action: string, reservationId: string | null, details: unknown = null) =>
   d.prepare(`INSERT INTO audit_log (at, actor, action, reservation_id, details) VALUES (?, ?, ?, ?, ?)`).bind(nowIso(), actor, action, reservationId, details == null ? null : JSON.stringify(details));
@@ -256,7 +265,7 @@ export async function apiReserve(request: Request, env: BEnv) {
   const isTest = isStaging(u) || stripeMode(env) === 'test' ? 1 : 0;
   try {
     await d.batch([
-      sweepStmt(d, now),
+      ...sweep(d, now),
       d.prepare(`INSERT INTO reservations (id, ref, token, boat_id, date, hours, slot, holds_slot, hold_expires_at, status, payment_method,
         total_usd, deposit_usd, balance_usd, fee_cents, charge_cents, first_name, last_name, email, phone, people, message, consent_at, terms_version, lang,
         is_test, source, created_at, updated_at) VALUES (?,?,?,?,?,?,0,1,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'online',?,?)`)
@@ -478,7 +487,7 @@ async function byRefToken(d: D1Database, ref: string, token: string) {
 export async function apiStatus(request: Request, env: BEnv) {
   const u = new URL(request.url);
   const d = await db(env);
-  await sweepStmt(d).run();
+  await runSweep(d);
   const r = await byRefToken(d, u.searchParams.get('ref') || '', u.searchParams.get('t') || '');
   if (!r) return json({ ok: false, error: 'Booking not found' }, 404);
   return json({
@@ -515,7 +524,7 @@ export async function apiCancelCheckout(request: Request, env: BEnv) {
 export async function apiPay(request: Request, env: BEnv) {
   const u = new URL(request.url);
   const d = await db(env);
-  await sweepStmt(d).run();
+  await runSweep(d);
   const r = await byRefToken(d, u.searchParams.get('ref') || '', u.searchParams.get('t') || '');
   const back = (msg: string) => Response.redirect(`${u.origin}/book-now/confirmation?ref=${encodeURIComponent(u.searchParams.get('ref') || '')}&t=${encodeURIComponent(u.searchParams.get('t') || '')}&m=${msg}`, 303);
   if (!r) return back('notfound');
@@ -530,20 +539,26 @@ export async function apiPay(request: Request, env: BEnv) {
 
 // ---------- cron ----------
 export async function cron(env: BEnv) {
-  if (!env.DB) return;
+  const summary = { expired: 0, customerExpiryEmails: 0, ownerExpiryEmails: 0, confirmationRetries: 0 };
+  if (!env.DB) return summary;
   const d = await db(env);
-  await sweepStmt(d).run();
+  const sw = await runSweep(d);
+  summary.expired = (sw[1] as any)?.meta?.changes ?? 0;
   // Wise reservations released after 24 h: tell the customer once
   const { results: expired } = await d.prepare(`SELECT ${RES_COLS} FROM reservations r JOIN boats b ON b.id = r.boat_id
      WHERE r.status = 'EXPIRED' AND r.payment_method = 'wise' AND r.expiry_notified_at IS NULL AND r.updated_at > ? LIMIT 20`).bind(new Date(Date.now() - 3 * 864e5).toISOString()).all<Res>();
   for (const r of expired) {
-    if (await d.prepare(`UPDATE reservations SET expiry_notified_at = ? WHERE id = ? AND expiry_notified_at IS NULL RETURNING id`).bind(nowIso(), r.id).first())
-      await sendLogged(env, d, r, 'customer_wise_expired', r.email, M.customerWiseExpired(r));
+    // one atomic claim per expiration → the customer notice and the owner notice are each sent once
+    if (await d.prepare(`UPDATE reservations SET expiry_notified_at = ? WHERE id = ? AND expiry_notified_at IS NULL RETURNING id`).bind(nowIso(), r.id).first()) {
+      if (r.email && (await sendLogged(env, d, r, 'customer_wise_expired', r.email, M.customerWiseExpired(r)))) summary.customerExpiryEmails++;
+      if (env.CONTACT_TO && (await sendLogged(env, d, r, 'owner_wise_expired', env.CONTACT_TO, M.ownerWiseExpired(r), r.email || undefined))) summary.ownerExpiryEmails++;
+    }
   }
   // confirmation emails whose delivery failed earlier
   const { results: unsent } = await d.prepare(`SELECT id FROM reservations WHERE status = 'CONFIRMED' AND (owner_notified_at IS NULL OR (customer_notified_at IS NULL AND email <> '')) AND updated_at > ? LIMIT 20`)
     .bind(new Date(Date.now() - 3 * 864e5).toISOString()).all<{ id: string }>();
-  for (const { id } of unsent) await notifyConfirmed(env, d, id);
+  for (const { id } of unsent) { await notifyConfirmed(env, d, id); summary.confirmationRetries++; }
   // housekeeping (free-plan friendly)
   await d.prepare(`DELETE FROM rate_limits WHERE window_start < ?`).bind(Math.floor(Date.now() / 1000) - 86400).run();
+  return summary;
 }

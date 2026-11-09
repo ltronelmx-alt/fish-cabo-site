@@ -1,7 +1,7 @@
 // End-to-end tests of the booking system against `wrangler dev` (local D1) + a mock Stripe API (no network, no real money).
 // Usage: node tests/booking.mjs   (starts its own mock Stripe on :8788; expects wrangler dev on :8787 started with
 //   --var ADMIN_PASSWORD:test-admin-pass STRIPE_SECRET_KEY:sk_test_local STRIPE_WEBHOOK_SECRET:whsec_local
-//         STRIPE_API_BASE:http://127.0.0.1:8788 CONTACT_TO:owner@example.test --test-scheduled --persist-to $PERSIST)
+//         STRIPE_API_BASE:http://127.0.0.1:8788 CONTACT_TO:owner@example.test SITE_ENV:staging --test-scheduled --persist-to $PERSIST)
 import http from 'node:http';
 import { createHmac, randomBytes } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
@@ -372,7 +372,34 @@ try {
   const wq2 = qs(j.redirect);
   sql(`UPDATE reservations SET hold_expires_at = '2000-01-01T00:00:00.000Z' WHERE ref = '${wq2.ref}'`);
   await fetch(BASE + '/__scheduled?cron=17+*+*+*+*'); await fetch(BASE + '/__scheduled?cron=17+*+*+*+*');
-  t('Wise not paid in 24 h → EXPIRED by the hourly job, customer told once, owner not emailed', (await status(j.redirect)).status === 'EXPIRED' && emails(wq2.ref, 'customer_wise_expired').length === 1 && emails(wq2.ref, 'owner_confirmed').length === 0);
+  t('Wise not paid in 24 h → EXPIRED by the hourly job, customer told once, owner "WISE — EXPIRED" once, no CONFIRMED email', (await status(j.redirect)).status === 'EXPIRED' && emails(wq2.ref, 'customer_wise_expired').length === 1 && emails(wq2.ref, 'owner_wise_expired').length === 1 && emails(wq2.ref, 'owner_wise_expired')[0].recipient === 'owner@example.test' && emails(wq2.ref, 'owner_confirmed').length === 0);
+  {
+    const oe = sql(`SELECT e.subject, e.body FROM email_log e JOIN reservations r ON r.id=e.reservation_id WHERE r.ref='${wq2.ref}' AND e.kind='owner_wise_expired'`)[0] || {};
+    t('owner expiry email: subject "[TEST] WISE — EXPIRED EFC-… — DATE RELEASED", no payment verified, date released, all fields', oe.subject === `[TEST] WISE — EXPIRED ${wq2.ref} — DATE RELEASED`
+      && oe.body.includes('No payment was verified.') && oe.body.includes('the date has been released') && oe.body.includes(`Booking reference: ${wq2.ref}`) && oe.body.includes('Customer: Test Customer')
+      && oe.body.includes('CUSTOMER EMAIL: customer@example.test') && oe.body.includes('Boat: Boat #8') && oe.body.includes('Expected Wise deposit: $') && oe.body.includes('Expired at (payment deadline):'), (oe.subject || '') + ' | ' + (oe.body || '').slice(0, 300));
+    const ae = sql(`SELECT a.at, a.actor, a.details FROM audit_log a JOIN reservations r ON r.id=a.reservation_id WHERE r.ref='${wq2.ref}' AND a.action='hold_expired'`);
+    const ad = ae[0] ? JSON.parse(ae[0].details) : {};
+    t('expiration recorded once in the audit log (time, reference, reason)', ae.length === 1 && ae[0].actor === 'system' && !!ae[0].at && ad.ref === wq2.ref && /No Wise deposit verified before the 24-hour deadline/.test(ad.reason) && ad.deadline === '2000-01-01T00:00:00.000Z', JSON.stringify(ae));
+    t('the date is available again after the expiry', (await avail('boat-08', day(42))) === 'available');
+  }
+  section = 'Staging hourly-job button';
+  {
+    // a Wise hold NOT yet due must never be touched; an overdue one is expired + notified once, even if run twice
+    const [, nj] = await reserve(customer('boat-09', day(44), 6, 'wise')); const notDue = qs(nj.redirect);
+    const [, oj] = await reserve(customer('boat-10', day(44), 8, 'wise')); const due = qs(oj.redirect);
+    sql(`UPDATE reservations SET hold_expires_at = '${new Date(Date.now() - 60e3).toISOString()}' WHERE ref = '${due.ref}'`);
+    t('run-hourly-job without the admin session → 401', (await fetch(BASE + '/api/admin/run-hourly-job', { method: 'POST', headers: { 'content-type': 'application/json', 'x-efc-admin': '1', ...H }, body: '{}' })).status === 401);
+    t('run-hourly-job without the CSRF header → 403', (await admin('run-hourly-job', {}, { 'x-efc-admin': '0' }))[0] === 403);
+    const [r1s, r1] = await admin('run-hourly-job', {});
+    const [r2s, r2] = await admin('run-hourly-job', {});
+    t('run-hourly-job (staging): runs the existing job and reports it', r1s === 200 && r1.ok && r1.summary.ownerExpiryEmails >= 1 && r1.summary.customerExpiryEmails >= 1, JSON.stringify(r1));
+    t('second run: nothing expired or sent again', r2s === 200 && r2.summary.expired === 0 && r2.summary.ownerExpiryEmails === 0 && r2.summary.customerExpiryEmails === 0, JSON.stringify(r2));
+    t('overdue Wise hold → EXPIRED, exactly 1 customer + 1 owner expiry email, 1 audit entry', sql(`SELECT status FROM reservations WHERE ref='${due.ref}'`)[0].status === 'EXPIRED' && emails(due.ref, 'customer_wise_expired').length === 1 && emails(due.ref, 'owner_wise_expired').length === 1
+      && sql(`SELECT COUNT(*) n FROM audit_log a JOIN reservations r ON r.id=a.reservation_id WHERE r.ref='${due.ref}' AND a.action='hold_expired'`)[0].n === 1);
+    t('hold not yet due → untouched (still awaiting verification, date still held, no expiry email)', sql(`SELECT status, holds_slot FROM reservations WHERE ref='${notDue.ref}'`)[0].status === 'AWAITING_PAYMENT_VERIFICATION' && emails(notDue.ref, 'customer_wise_expired').length === 0 && emails(notDue.ref, 'owner_wise_expired').length === 0 && (await avail('boat-09', day(44))) === 'unavailable');
+    t('manual runs are logged in the audit log', sql(`SELECT COUNT(*) n FROM audit_log WHERE action='hourly_job_run_manually'`)[0].n >= 2);
+  }
   const wid2 = sql(`SELECT id FROM reservations WHERE ref='${wq2.ref}'`)[0].id;
   [s] = await admin('action', { id: wid2, action: 'confirm_wise', amount: 500, confirm: 'VERIFIED' });
   t('payment found after expiry, date still free → owner can still confirm', s === 200 && (await status(j.redirect)).status === 'CONFIRMED');
@@ -499,7 +526,7 @@ try {
   const perRes = sql(`SELECT reservation_id, COUNT(*) n FROM email_log WHERE kind='owner_confirmed' GROUP BY reservation_id HAVING n > 1`);
   t('owner confirmation emails exist only for paid+confirmed bookings', all.length > 0 && all.every((e) => ['CONFIRMED', 'REFUND_PENDING', 'REFUNDED'].includes(e.status)));
   t('never two owner confirmations for the same booking', perRes.length === 0);
-  t('no owner email for pending / expired / canceled attempts (except the "WISE — PENDING PAYMENT" alert)', sql(`SELECT COUNT(*) n FROM email_log e JOIN reservations r ON r.id=e.reservation_id WHERE e.recipient='owner@example.test' AND r.status IN ('EXPIRED','CANCELED','AWAITING_PAYMENT','AWAITING_PAYMENT_VERIFICATION','HELD') AND e.kind NOT IN ('owner_exception','owner_wise_pending')`)[0].n === 0);
+  t('no owner email for pending / expired / canceled attempts (except the "WISE — PENDING PAYMENT" alert and the "WISE — EXPIRED" notice)', sql(`SELECT COUNT(*) n FROM email_log e JOIN reservations r ON r.id=e.reservation_id WHERE e.recipient='owner@example.test' AND r.status IN ('EXPIRED','CANCELED','AWAITING_PAYMENT','AWAITING_PAYMENT_VERIFICATION','HELD') AND e.kind NOT IN ('owner_exception','owner_wise_pending','owner_wise_expired')`)[0].n === 0);
   t('"WISE — PENDING PAYMENT" alerts: Wise website bookings only, never twice for one booking', sql(`SELECT COUNT(*) n FROM email_log e JOIN reservations r ON r.id=e.reservation_id WHERE e.kind='owner_wise_pending' AND (r.payment_method <> 'wise' OR r.source <> 'online')`)[0].n === 0
     && sql(`SELECT COUNT(*) n FROM (SELECT reservation_id FROM email_log WHERE kind='owner_wise_pending' GROUP BY reservation_id HAVING COUNT(*) > 1)`)[0].n === 0
     && sql(`SELECT COUNT(*) n FROM email_log WHERE kind='owner_wise_pending'`)[0].n > 0);

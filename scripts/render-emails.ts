@@ -11,6 +11,7 @@ const out: Record<string, { subject: string; html: string; text: string }> = {
   'owner-wise': M.ownerConfirmed({ ...base, payment_method: 'wise', fee_cents: 0, charge_cents: 20000, payment_ref: 'Wise TR-88213', payment_amount_cents: 20000 }),
   'owner-missing': M.ownerConfirmed({ ...base, source: 'phone', payment_method: 'other', email: '', message: '', fee_cents: 0, charge_cents: 20000, payment_ref: 'cash', payment_amount_cents: 20000 }),
   'owner-wise-pending': M.ownerWisePending({ ...base, status: 'AWAITING_PAYMENT_VERIFICATION', payment_method: 'wise', fee_cents: 0, charge_cents: 20000, hold_expires_at: '2026-11-10T19:09:45.093Z' }, 'https://booking-system-fish-cabo.small-boat-4235.workers.dev/booking-admin'),
+  'owner-wise-expired': M.ownerWiseExpired({ ...base, status: 'EXPIRED', payment_method: 'wise', fee_cents: 0, charge_cents: 20000, hold_expires_at: '2026-11-10T19:09:45.093Z' }),
   'customer-receipt': M.customerDepositReceipt(base),
   'owner-exception': M.ownerException({ ...base, status: 'PAYMENT_EXCEPTION' }, 'Deposit received after the reservation had expired, and the date is no longer available. Please refund the customer or offer another date.'),
 };
