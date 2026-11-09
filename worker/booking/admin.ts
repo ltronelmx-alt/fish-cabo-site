@@ -85,7 +85,9 @@ export async function adminApi(request: Request, env: BEnv): Promise<Response> {
       d.prepare(`SELECT provider, amount_cents, currency, status, external_id, created_at FROM payments WHERE reservation_id = ? ORDER BY id`).bind(r.id).all(),
     ]);
     const { token, ...safe } = r; void token;
-    return json({ ok: true, booking: safe, audit: a.results, emails: e.results, payments: p.results });
+    // the owner's official confirmation, pre-filled for copy/paste (never sent automatically)
+    const official = r.status === 'CONFIRMED' ? M.customerConfirmed(r) : null;
+    return json({ ok: true, booking: safe, audit: a.results, emails: e.results, payments: p.results, official: official && { subject: official.subject.replace(/^\[TEST\] /, ''), text: official.text } });
   }
   if (path === 'calendar' && request.method === 'GET') {
     const month = u.searchParams.get('month') || localToday().slice(0, 7);
@@ -235,8 +237,9 @@ async function action(request: Request, env: BEnv, d: D1Database, body: Record<s
     }
     case 'resend_confirmation': {
       if (r.status !== 'CONFIRMED') return fail('Only confirmed bookings');
-      await sendLogged(env, d, r, 'customer_confirmed_resend', r.email, M.customerConfirmed(r), env.CONTACT_TO);
-      await audit(d, 'admin', 'resend_confirmation', r.id).run();
+      if (!r.email) return fail('No customer email on this booking');
+      await sendLogged(env, d, r, 'customer_deposit_receipt_resend', r.email, M.customerDepositReceipt(r), env.CONTACT_TO);
+      await audit(d, 'admin', 'resend_deposit_receipt', r.id).run();
       return json({ ok: true });
     }
   }

@@ -21,6 +21,10 @@ async function run(label, ctxOpts, boatId, number, hours, total, deposit) {
   if (number !== 1) await p.locator(`input[name=duration][value="${hours}"]`).check();
   await p.waitForSelector('#s-date:not([hidden]) .day.s-available');
   t(`${label}: SHOW MY PRICE hidden until a date is chosen`, await p.locator('#s-price').isHidden());
+  const todayL = await p.evaluate(() => fetch('/api/booking/boats').then((r) => r.json()).then((j) => j.today));
+  const ds = await p.locator('.day[data-d]').evaluateAll((els) => els.map((e) => e.getAttribute('data-d')));
+  t(`${label}: calendar — previous month disabled, no past day selectable`, (await p.locator('.bk-nav[data-m="-1"]').isDisabled()) && ds.every((d) => d >= todayL), ds.slice(0, 3).join(','));
+  t(`${label}: legend = Available / Unavailable only`, (await p.locator('.bk-legend').innerText()).replace(/\s+/g, ' ').trim() === 'Available Unavailable');
   // next month, first available day (well beyond the 24 h notice)
   await p.locator('.bk-nav[data-m="1"]').click(); await p.waitForTimeout(400);
   const day = p.locator('.day.s-available').first(); const date = await day.getAttribute('data-d'); await day.click();
@@ -71,6 +75,8 @@ async function run(label, ctxOpts, boatId, number, hours, total, deposit) {
 import { mkdirSync } from 'node:fs'; mkdirSync(SHOTS, { recursive: true });
 await run('desktop-boat1', { viewport: { width: 1366, height: 900 } }, 'boat-01', 1, 6, 350, 100);
 await run('mobile-boat7', { ...devices['Pixel 7'] }, 'boat-07', 7, 8, 1900, 400);
+{ const ctx = await browser.newContext(); const p = await ctx.newPage(); await p.goto(`${BASE}/book-now?boat=4`, { waitUntil: 'networkidle' });
+  t('short link /book-now?boat=4 preselects Boat #4 (link the owner can send)', await p.locator('input[name=boat][value=boat-04]').isChecked()); await ctx.close(); }
 await browser.close();
 console.log(`\n${results.filter(Boolean).length}/${results.length} passed`);
 process.exit(results.every(Boolean) ? 0 : 1);

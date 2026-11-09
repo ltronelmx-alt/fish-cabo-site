@@ -71,11 +71,11 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
           <div class="bk-cal" aria-live="polite">
             <div class="bk-calhead"><button type="button" class="bk-nav" data-m="-1" aria-label="Previous month">‹</button><b id="cal-month"></b><button type="button" class="bk-nav" data-m="1" aria-label="Next month">›</button></div>
             <div class="bk-grid" id="cal-grid"></div>
-            <p class="bk-legend"><i class="l-av"></i>Available <i class="l-bk"></i>Booked <i class="l-na"></i>Not bookable online</p>
+            <p class="bk-legend"><i class="l-av"></i>Available <i class="l-bk"></i>Unavailable</p>
           </div>
           <input type="hidden" name="date" />
           <div class="bk-alert" id="booked" hidden>
-            <p><strong>This boat already has a booking on your selected date. A second trip may be possible upon request. Please contact us to check availability.</strong></p>
+            <p><strong>This date is not available online for this boat. A trip may still be possible upon request — please contact us to check availability.</strong></p>
             <a class="btn btn-primary no-arrow" id="req" href={`https://wa.me/${wa}`} target="_blank" rel="noopener" data-track="request_availability_whatsapp">REQUEST AVAILABILITY</a>
             <small>Opens WhatsApp with your request ready — just press Send.</small>
           </div>
@@ -114,7 +114,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
           <div class="bk-cond">
             <p><b>Booking and cancellation conditions</b></p>
             <ul>
-              <li>Your booking is confirmed by email once your deposit payment has been verified.</li>
+              <li>Once your deposit has been verified, your date is reserved and you receive a deposit receipt by email. Loïc then sends you your official confirmation personally, with your meeting time, meeting point and marina directions.</li>
               <li>The remaining balance is paid in cash on the fishing day (there is no ATM at the marina).</li>
               <li>Deposits are not refunded if you cancel or do not show up. If bad weather or a port closure prevents the trip, it is rescheduled; if rescheduling is not possible, a voucher is issued for a future trip.</li>
             </ul>
@@ -143,7 +143,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
   const cents = (c: number) => '$' + (c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' USD';
   const longDate = (d: string) => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
   const POST = (url: string, body: unknown) => fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', 'x-efc-quote': '1' }, body: JSON.stringify(body) }).then(async (r) => [r.status, await r.json().catch(() => ({}))] as const);
-  let boats: B[] = [], today = '', month = '', days: Record<string, string> = {};
+  let boats: B[] = [], today = '', month = '', lastMonth = '', days: Record<string, string> = {};
   let quote: Q | null = null, sum: S | null = null;
   const q = new URLSearchParams(location.search);
   const boat = () => boats.find((b) => b.id === (f.elements.namedItem('boat') as RadioNodeList).value);
@@ -177,7 +177,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     try {
       const r = await fetch('/api/booking/boats'); const j = await r.json();
       if (!j.ok) throw 0;
-      boats = j.boats; today = j.today; month = today.slice(0, 7);
+      boats = j.boats; today = j.today; month = today.slice(0, 7); lastMonth = j.lastMonth || '';
     } catch {
       const m = document.createElement('p'); m.className = 'bk-msg';
       m.innerHTML = 'Online booking is not available right now. Please <a href="/contact">contact us</a> or WhatsApp +52 624 122 3506.';
@@ -189,7 +189,8 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
       if (!b || !b.bookable) { el.classList.add('off'); (el.querySelector('input') as HTMLInputElement).disabled = true; p.textContent = 'Not available online'; return; }
       p.textContent = b.durations.length === 2 ? '6-hour or 8-hour trips' : `${b.durations[0]}-hour trips only`;
     });
-    const pre = q.get('boat');
+    // ?boat=boat-03 (boat page buttons) or ?boat=3 (short link the owner can send)
+    const raw = q.get('boat') || ''; const pre = /^\d{1,2}$/.test(raw) ? `boat-${raw.padStart(2, '0')}` : raw;
     if (pre) { const r = f.querySelector<HTMLInputElement>(`input[name=boat][value="${CSS.escape(pre)}"]`); if (r && !r.disabled) { r.checked = true; pickBoat(); r.closest('.bk-boat')?.scrollIntoView({ block: 'center' }); } }
   }
 
@@ -222,17 +223,25 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     const [y, m] = month.split('-').map(Number);
     document.getElementById('cal-month')!.textContent = new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
     const lead = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7;
-    const labels: Record<string, string> = { available: 'available', booked: 'already booked', pending: 'already booked', blocked: 'not available', too_soon: 'less than 24 h away — contact us', past: 'past', closed: 'not open yet' };
-    grid.innerHTML = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((d) => `<span class="dow">${d}</span>`).join('') + '<span></span>'.repeat(lead) +
-      Object.entries(days).map(([d, s]) => `<button type="button" class="day s-${s}${d === val('date') ? ' sel' : ''}" data-d="${d}" ${['available', 'booked', 'pending'].includes(s) ? '' : 'disabled'} aria-label="${new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })}: ${labels[s]}">${+d.slice(8)}</button>`).join('');
+    const dim = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    // public calendar: only Available / Unavailable, never a past day (the server returns nothing before today)
+    let cells = '';
+    for (let k = 1; k <= dim; k++) {
+      const d = `${month}-${String(k).padStart(2, '0')}`, s = days[d];
+      const label = new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
+      cells += !s ? `<button type="button" class="day s-past" disabled aria-label="${label}: not available">${k}</button>`
+        : `<button type="button" class="day s-${s}${d === val('date') ? ' sel' : ''}" data-d="${d}" aria-label="${label}: ${s === 'available' ? 'available' : 'not available online'}">${k}</button>`;
+    }
+    grid.innerHTML = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((d) => `<span class="dow">${d}</span>`).join('') + '<span></span>'.repeat(lead) + cells;
     grid.removeAttribute('aria-busy');
     (f.querySelector('.bk-nav[data-m="-1"]') as HTMLButtonElement).disabled = month <= today.slice(0, 7);
+    (f.querySelector('.bk-nav[data-m="1"]') as HTMLButtonElement).disabled = !!lastMonth && month >= lastMonth;
   }
   function pickDay(d: string) {
     (f.elements.namedItem('date') as HTMLInputElement).value = d;
     f.querySelectorAll('.day.sel').forEach((x) => x.classList.remove('sel'));
     f.querySelector(`.day[data-d="${d}"]`)?.classList.add('sel');
-    const taken = days[d] === 'booked' || days[d] === 'pending';
+    const taken = days[d] === 'unavailable';
     show('booked', taken); ($('#req') as HTMLAnchorElement).href = waUrl();
     resetQuote();
     if (taken) document.getElementById('booked')!.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -248,7 +257,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     if (b !== boat() || h !== dur() || d !== val('date')) return;
     if (!j.ok) {
       $('#qmsg').textContent = j.error || 'Sorry, the price could not be loaded. Please try again or contact us on WhatsApp.';
-      if (j.code === 'BOOKED') { await loadMonth(); pickDay(d); }
+      if (j.code === 'UNAVAILABLE') { await loadMonth(); pickDay(d); }
       return;
     }
     quote = j as Q; $('#qmsg').textContent = '';
@@ -314,7 +323,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
       const r = await fetch('/api/booking/reserve', { method: 'POST', body: fd });
       const j = await r.json().catch(() => ({}));
       if (j.ok && j.redirect) { msg.textContent = 'Redirecting…'; navigator.sendBeacon?.('/api/event', new Blob([JSON.stringify({ event: 'booking_started_' + val('payment'), page: location.pathname })], { type: 'application/json' })); location.href = j.redirect; return; }
-      if (j.code === 'BOOKED') { await loadMonth(); pickDay(val('date')); }
+      if (j.code === 'UNAVAILABLE') { await loadMonth(); pickDay(val('date')); }
       msg.textContent = j.error || 'Sorry, something went wrong. Please try again or contact us on WhatsApp.';
       (window as any).turnstile?.reset?.();
     } catch { msg.textContent = 'Network error. Please try again.'; }
@@ -357,7 +366,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
   .bk-grid .dow { text-align: center; font-size: 12px; color: var(--muted); font-weight: 700; }
   .bk-grid .day { min-height: 44px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--white); font: inherit; font-weight: 700; cursor: pointer; }
   .bk-grid .day.s-available { border-color: #9ad5a8; background: #f0fbf3; }
-  .bk-grid .day.s-booked, .bk-grid .day.s-pending { background: #f2f2f2; color: #888; text-decoration: line-through; }
+  .bk-grid .day.s-unavailable { background: #f2f2f2; color: #888; text-decoration: line-through; }
   .bk-grid .day:disabled { background: transparent; color: #c4c4c4; border-color: transparent; cursor: default; }
   .bk-grid .day.sel { outline: 3px solid var(--orange); outline-offset: 1px; }
   .bk-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 12px 0 0; }

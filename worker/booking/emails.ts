@@ -62,10 +62,15 @@ function customerRows(r: Res): [string, string][] {
 
 const DUR = (h: number) => `${h} HOURS`; // owner rule: trip duration always spelled out, never derived from the deposit
 
-/** ONE owner email per confirmed + paid booking (all contact-form fields + booking details). Duration shown first. */
+/** ONE owner email per verified deposit (all contact-form fields + booking details). Duration and the customer's
+ * email address come first: the owner sends the official confirmation personally (owner decision 2026-11-08). */
 export function ownerConfirmed(r: Res) {
+  const email = r.email || '(no email given)';
   const rows: [string, string][] = [
     ['TRIP DURATION', `${DUR(r.hours)} (${r.hours === 6 ? '3/4 day' : 'full day'})`],
+    ['CUSTOMER EMAIL', email],
+    ['Customer', `${r.first_name} ${r.last_name}`.trim()],
+    ['Phone / WhatsApp', r.phone],
     ['Status', 'CONFIRMED — deposit verified'],
     ['Booking reference', r.ref],
     ['Boat', B(r)],
@@ -78,13 +83,39 @@ export function ownerConfirmed(r: Res) {
     ['Booked via', r.source === 'online' ? 'Website' : r.source === 'phone' ? 'Owner (telephone booking)' : 'Owner (authorised second trip)'],
   ];
   const subject = `${test(r)}✅ CONFIRMED ${r.ref} — ${DUR(r.hours)} — Boat #${r.boat_number}, ${r.date}`;
-  const text = `${test(r)}New CONFIRMED booking (deposit verified)\n\nTRIP DURATION: ${DUR(r.hours)}\n\n${lines(rows)}\n\nCustomer (contact form fields)\n${lines(customerRows(r))}\n\nManage: ${ADMIN_URL}`;
-  const html = wrap('New confirmed booking — deposit verified', `<p style="font-size:22px;font-weight:800;margin:0 0 16px;padding:12px 14px;background:#fff3e0;border-left:5px solid #fb7704">TRIP DURATION: ${DUR(r.hours)}</p>${table(rows)}<h2 style="font-size:16px;margin:22px 0 8px">Customer</h2>${table(customerRows(r))}<p style="margin-top:20px"><a href="${ADMIN_URL}" style="color:#111">Open the booking dashboard</a></p>`);
+  const text = `${test(r)}New CONFIRMED booking (deposit verified)\n\nTRIP DURATION: ${DUR(r.hours)}\nCUSTOMER EMAIL: ${email}\n\nThe customer received an automatic deposit receipt only. Send your official confirmation email personally.\n\n${lines(rows)}\n\nCustomer (contact form fields)\n${lines(customerRows(r))}\n\nManage: ${ADMIN_URL}`;
+  const mail = r.email ? `<a href="mailto:${esc(r.email)}" style="color:#111">${esc(r.email)}</a>` : esc(email);
+  const html = wrap('New confirmed booking — deposit verified', `<p style="font-size:22px;font-weight:800;margin:0 0 10px;padding:12px 14px;background:#fff3e0;border-left:5px solid #fb7704">TRIP DURATION: ${DUR(r.hours)}</p><p style="font-size:18px;font-weight:700;margin:0 0 6px;padding:12px 14px;background:#f4f1ea;border-left:5px solid #111;user-select:all">CUSTOMER EMAIL: ${mail}</p><p style="margin:0 0 16px;font-size:13px;color:#555">The customer received an automatic deposit receipt only. Send your official confirmation email personally.</p>${table(rows)}<h2 style="font-size:16px;margin:22px 0 8px">Customer</h2>${table(customerRows(r))}<p style="margin-top:20px"><a href="${ADMIN_URL}" style="color:#111">Open the booking dashboard</a></p>`);
   return { subject, text, html };
 }
 
+/** Automatic customer email after a verified deposit (owner decision 2026-11-08): a deposit RECEIPT only.
+ * No meeting time, no marina directions, not the official confirmation (Loïc sends that one personally). */
+export function customerDepositReceipt(r: Res) {
+  const received = r.payment_method === 'stripe'
+    ? `${usdCents(r.deposit_usd * 100)} (card payment of ${usdCents(r.charge_cents)} including the ${usdCents(r.fee_cents)} processing fee)`
+    : usdCents(r.deposit_usd * 100);
+  const rows: [string, string][] = [
+    ['Booking reference', r.ref],
+    ['Boat', `Boat #${r.boat_number}`],
+    ['Trip date', longDate(r.date)],
+    ['Trip duration', `${r.hours} hours`],
+    ['Total charter price', usd(r.total_usd)],
+    ['Deposit received', received],
+    ['Remaining balance', usd(r.balance_usd)],
+  ];
+  const p1 = 'Thank you for your deposit. Your booking has been received and your fishing date has been reserved.';
+  const p2 = 'Loïc from Exotic Fish Cabo will personally send you a separate official confirmation email containing your meeting time, meeting point, marina directions, and all necessary information for your fishing trip.';
+  const p3 = 'Please wait for this personal confirmation email before making your way to the marina.';
+  const text = `Dear ${r.first_name},\n\n${p1}\n\n${lines(rows)}\n\n${p2}\n\n${p3}\n\nExotic Fish Cabo\nWhatsApp ${WHATSAPP} · contact@fish-cabo.com`;
+  const html = wrap('Deposit received', `<p>Dear ${esc(r.first_name)},</p><p>${esc(p1)}</p>${table(rows)}<p style="margin-top:18px">${esc(p2)}</p><p><strong>${esc(p3)}</strong></p><p>Exotic Fish Cabo<br>WhatsApp ${WHATSAPP} · contact@fish-cabo.com</p>`);
+  return { subject: `${test(r)}Exotic Fish Cabo — Deposit Received`, text, html };
+}
+
 export const MARINA_URL = 'https://maps.app.goo.gl/CXbVM7vW1abnT1cbA';
-/** Owner's official customer confirmation (wording kept exactly; only the bracketed values are replaced). */
+/** Owner's official customer confirmation (wording kept exactly; only the bracketed values are replaced).
+ * NOT sent automatically any more (owner decision 2026-11-08): Loïc sends it personally. Kept as the reference text,
+ * shown pre-filled in /booking-admin so he can copy it. Protected by tests/fixtures/customer-confirmation-template.txt. */
 export function customerConfirmed(r: Res) {
   const amount = `$${r.balance_usd.toLocaleString('en-US')}`;
   const text = `Dear ${r.first_name},
@@ -119,7 +150,7 @@ Loïc`;
 export function customerWisePending(r: Res) {
   const amount = usd(r.deposit_usd);
   const intro = `Hi ${r.first_name}, we have reserved ${B(r)} on ${longDate(r.date)} for you while we wait for your Wise deposit.`;
-  const steps = `1. Pay ${amount} with Wise: ${WISE_PAY_URL}\n2. Write your booking reference ${r.ref} in the payment note.\n3. Your booking is confirmed by email once we have verified the payment.\nThe date is held until ${localDateTime(r.hold_expires_at!)} (24 hours). After that it is released.`;
+  const steps = `1. Pay ${amount} with Wise: ${WISE_PAY_URL}\n2. Write your booking reference ${r.ref} in the payment note.\n3. Once we have verified the payment, you receive a deposit receipt by email, and Loïc then sends you your official confirmation personally.\nThe date is held until ${localDateTime(r.hold_expires_at!)} (24 hours). After that it is released.`;
   return {
     subject: `${test(r)}Complete your deposit with Wise — ${r.ref}`,
     text: `${intro}\n\n${steps}\n\n${lines(tripRows(r))}`,
@@ -134,7 +165,7 @@ export function customerPaymentRequest(r: Res, payUrl: string) {
     ? `Pay ${usdCents(r.charge_cents)} by card (deposit ${usd(r.deposit_usd)} + 6% card fee): ${payUrl}`
     : `Pay ${usd(r.deposit_usd)} with Wise: ${WISE_PAY_URL} — write ${r.ref} in the payment note.`;
   const btn = r.payment_method === 'stripe' ? payUrl : WISE_PAY_URL;
-  return { subject: `${test(r)}Your date is available — pay your deposit (${r.ref})`, text: `${intro}\n\n${pay}\nYour booking is confirmed by email once the deposit is received.\n\n${lines(tripRows(r))}`, html: wrap('Your date is available', `<p>${esc(intro)}</p><p><a href="${btn}" style="display:inline-block;background:#111;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:700">Pay the deposit</a></p><p>${esc(pay)}</p><p>Your booking is confirmed by email once the deposit is received.</p>${table(tripRows(r))}`) };
+  return { subject: `${test(r)}Your date is available — pay your deposit (${r.ref})`, text: `${intro}\n\n${pay}\nYou receive a deposit receipt by email once the deposit is received.\n\n${lines(tripRows(r))}`, html: wrap('Your date is available', `<p>${esc(intro)}</p><p><a href="${btn}" style="display:inline-block;background:#111;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:700">Pay the deposit</a></p><p>${esc(pay)}</p><p>You receive a deposit receipt by email once the deposit is received.</p>${table(tripRows(r))}`) };
 }
 
 export function customerCanceled(r: Res, reason: string) {

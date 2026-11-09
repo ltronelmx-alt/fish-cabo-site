@@ -29,15 +29,15 @@ import Base from '../../layouts/Base.astro';
     const test = j.test ? '<p class="bs-test">Test booking — no real payment.</p>' : '';
     let html = '';
     switch (j.status) {
-      case 'CONFIRMED': html = `<h1>Your charter is confirmed ✅</h1><p>Thank you ${esc(j.firstName)}! Your deposit has been received. A confirmation email is on its way.</p>${rows}<p>Departure: Puerto Los Cabos Marina, San José del Cabo. Questions? WhatsApp +52 624 122 3506.</p>`; break;
+      case 'CONFIRMED': html = `<h1>Deposit received ✅</h1><p>Thank you ${esc(j.firstName)}! Your booking has been received and your fishing date has been reserved. A deposit receipt is on its way by email.</p>${rows}<p>Loïc from Exotic Fish Cabo will personally send you a separate official confirmation email with your meeting time, meeting point, marina directions and everything you need for your trip. Please wait for this personal confirmation email before making your way to the marina. Questions? WhatsApp +52 624 122 3506.</p>`; break;
       case 'AWAITING_PAYMENT':
       case 'HELD':
         if (j.canPay && tries === 0 && !q.has('m') && !document.referrer.includes('stripe.com')) html = `<h1>Pay your deposit</h1><p>Your date is held until ${when(j.holdExpiresAt)}.</p>${rows}<a class="btn btn-primary no-arrow" href="/api/booking/pay?ref=${encodeURIComponent(ref)}&t=${encodeURIComponent(t)}">PAY ${cents(j.chargeCents)} BY CARD</a>`;
         else if (tries < 40) { html = `<h1>Confirming your payment…</h1><p>This usually takes a few seconds. Please keep this page open.</p>${rows}`; setTimeout(load, 3000); }
-        else html = `<h1>Payment not confirmed yet</h1><p>If you completed the payment, you will receive a confirmation email shortly. Otherwise you can try again${j.canPay ? ` — <a href="/api/booking/pay?ref=${encodeURIComponent(ref)}&t=${encodeURIComponent(t)}">pay the deposit</a>` : ''}.</p>${rows}`;
+        else html = `<h1>Payment not confirmed yet</h1><p>If you completed the payment, you will receive a deposit receipt by email shortly. Otherwise you can try again${j.canPay ? ` — <a href="/api/booking/pay?ref=${encodeURIComponent(ref)}&t=${encodeURIComponent(t)}">pay the deposit</a>` : ''}.</p>${rows}`;
         tries++; break;
       case 'AWAITING_PAYMENT_VERIFICATION': html = `<h1>Almost done: pay your deposit with Wise</h1>
-        <ol><li>Pay <b>${money(j.deposit)}</b> with Wise.</li><li>Write your booking reference <b>${esc(j.ref)}</b> in the payment note.</li><li>We confirm your booking by email once we have checked the payment.</li></ol>
+        <ol><li>Pay <b>${money(j.deposit)}</b> with Wise.</li><li>Write your booking reference <b>${esc(j.ref)}</b> in the payment note.</li><li>Once we have checked the payment, you receive a deposit receipt by email, then Loïc sends you your official confirmation personally.</li></ol>
         <p><a class="btn btn-primary no-arrow" href="${esc(j.wiseUrl)}" target="_blank" rel="noopener">PAY ${money(j.deposit)} WITH WISE</a></p>
         <p>Your date is held until <b>${when(j.holdExpiresAt)}</b>. We also sent these instructions to your email.</p>${rows}`; break;
       case 'PAYMENT_EXCEPTION': html = `<h1>We received your payment</h1><p>There is a problem with this booking that we need to check personally (for example the date is no longer available). We will contact you very soon — or WhatsApp us on +52 624 122 3506.</p>${rows}`; break;

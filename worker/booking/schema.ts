@@ -94,7 +94,35 @@ export async function ensureSchema(db: D1Database): Promise<void> {
     await db.prepare(`INSERT INTO meta (k, v) VALUES ('schema_version', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v`).bind(String(i + 1)).run();
   }
   await seed(db);
+  await importManualBookings(db);
   ready = true;
+}
+
+/** Reservations the owner took by hand BEFORE online booking (owner, 2026-11-08). No customer, price or payment is
+ * invented: each one is a blocked day for that boat, labelled MANUAL BOOKING (unavailable on /book-now, visible in
+ * /booking-admin). Runs once per database; skips a day that already has a booking or a block. No email, no charge. */
+export const MANUAL_BOOKINGS: { boat: string; date: string }[] = [
+  { boat: 'boat-02', date: '2026-11-26' },
+  { boat: 'boat-04', date: '2026-12-15' },
+  { boat: 'boat-06', date: '2027-01-19' },
+];
+export const MANUAL_REASON = 'MANUAL BOOKING — taken by the owner before online booking (imported 2026-11-08)';
+async function importManualBookings(db: D1Database) {
+  const KEY = 'import:manual-bookings-2026-11-08';
+  if (await db.prepare(`SELECT 1 FROM meta WHERE k = ?`).bind(KEY).first()) return;
+  const now = new Date().toISOString();
+  const stmts: D1PreparedStatement[] = [];
+  const result: Record<string, string> = {};
+  for (const m of MANUAL_BOOKINGS) {
+    const res = await db.prepare(`SELECT ref FROM reservations WHERE boat_id = ? AND date = ? AND holds_slot = 1 LIMIT 1`).bind(m.boat, m.date).first<{ ref: string }>();
+    const blk = await db.prepare(`SELECT reason FROM blocked_dates WHERE boat_id IN (?, '*') AND date = ? LIMIT 1`).bind(m.boat, m.date).first();
+    if (res || blk) { result[`${m.boat} ${m.date}`] = res ? `skipped: booking ${res.ref} exists` : 'skipped: already blocked'; continue; }
+    stmts.push(db.prepare(`INSERT OR IGNORE INTO blocked_dates (boat_id, date, reason, created_at) VALUES (?, ?, ?, ?)`).bind(m.boat, m.date, MANUAL_REASON, now));
+    result[`${m.boat} ${m.date}`] = 'imported';
+  }
+  stmts.push(db.prepare(`INSERT INTO audit_log (at, actor, action, reservation_id, details) VALUES (?, 'system', 'import_manual_bookings', NULL, ?)`).bind(now, JSON.stringify(result)));
+  stmts.push(db.prepare(`INSERT INTO meta (k, v) VALUES (?, ?)`).bind(KEY, now));
+  await db.batch(stmts);
 }
 
 async function seed(db: D1Database) {

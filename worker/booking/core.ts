@@ -101,7 +101,7 @@ export async function apiBoats(env: BEnv) {
   const s = await getSettings(d);
   return json({
     ok: true,
-    stripeFeePct: s.stripe_fee_pct, minLeadHours: s.min_lead_hours, wiseHoldHours: s.wise_hold_hours, today: localToday(), timezone: 'America/Mazatlan',
+    stripeFeePct: s.stripe_fee_pct, minLeadHours: s.min_lead_hours, wiseHoldHours: s.wise_hold_hours, today: localToday(), lastMonth: addDays(localToday(), s.booking_window_days).slice(0, 7), timezone: 'America/Mazatlan',
     boats: (await boats(d)).map((b) => ({ id: b.id, number: b.number, sizeFt: b.size_ft, capacity: b.capacity, durations: durationsOf(b), bookable: !!b.active && durationsOf(b).length > 0 })),
   });
 }
@@ -127,8 +127,7 @@ export async function apiQuote(request: Request, env: BEnv) {
   const total = priceOf(boat, hours);
   if (total == null) return json({ ok: false, code: 'DURATION', error: `Boat #${boat.number} offers ${durationsOf(boat).map((h) => h + '-hour').join(' or ')} trips only.` }, 409);
   const state = (await dayStates(d, boat.id, date, date))[date];
-  if (state === 'booked' || state === 'pending') return json({ ok: false, code: 'BOOKED', error: BOOKED_MSG }, 409);
-  if (state !== 'available') return json({ ok: false, code: 'DATE', error: 'This date cannot be booked online. Please choose another date or contact us on WhatsApp.' }, 409);
+  if (state !== 'available') return json({ ok: false, code: 'UNAVAILABLE', error: UNAVAILABLE_MSG }, 409);
   const s = await getSettings(d);
   return json({ ok: true, boat: boat.id, number: boat.number, hours, date, total, cardFeePct: s.stripe_fee_pct });
 }
@@ -150,19 +149,32 @@ export async function apiSummary(request: Request, env: BEnv) {
   return json({ ok: true, total, deposit: boat.deposit_usd, balance: total - boat.deposit_usd, cardFeePct: s.stripe_fee_pct, cardFeeCents: card - boat.deposit_usd * 100, cardChargeCents: card, wiseChargeCents: boat.deposit_usd * 100 });
 }
 
-export const BOOKED_MSG = 'This boat already has a booking on your selected date. A second trip may be possible upon request. Please contact us to check availability.';
-
+/** Public calendar (owner decision 2026-11-08): only "available" / "unavailable" — never why (booked, pending,
+ * blocked, too soon), never a past month, never counts or identities. The owner sees everything in /booking-admin. */
 export async function apiAvailability(request: Request, env: BEnv) {
   const u = new URL(request.url);
   const boatId = u.searchParams.get('boat') || '';
-  const month = u.searchParams.get('month') || localToday().slice(0, 7);
+  const today = localToday();
+  const month = u.searchParams.get('month') || today.slice(0, 7);
   if (!/^boat-\d{2}$/.test(boatId) || !/^\d{4}-\d{2}$/.test(month)) return json({ ok: false, error: 'Bad request' }, 400);
   const d = await db(env);
-  if (!(await d.prepare(`SELECT 1 FROM boats WHERE id = ?`).bind(boatId).first())) return json({ ok: false, error: 'Unknown boat' }, 404);
-  const from = `${month}-01`;
-  const next = new Date(Date.UTC(+month.slice(0, 4), +month.slice(5, 7), 1)).toISOString().slice(0, 10);
-  return json({ ok: true, boat: boatId, month, days: await dayStates(d, boatId, from, addDays(next, -1)) });
+  const s = await getSettings(d);
+  const lastMonth = addDays(today, s.booking_window_days).slice(0, 7);
+  if (month < today.slice(0, 7) || month > lastMonth) return json({ ok: false, error: 'This month cannot be booked online.' }, 400);
+  const ip = request.headers.get('cf-connecting-ip') || 'local';
+  if (!(await rateLimit(d, `avail:${ip}`, 90, 3600))) return json({ ok: false, error: 'Too many requests. Please try again later or contact us on WhatsApp.' }, 429);
+  if (!(await d.prepare(`SELECT 1 FROM boats WHERE id = ? AND active = 1`).bind(boatId).first())) return json({ ok: false, error: 'Unknown boat' }, 404);
+  const from = `${month}-01` < today ? today : `${month}-01`; // nothing before today is ever computed or returned
+  const end = addDays(new Date(Date.UTC(+month.slice(0, 4), +month.slice(5, 7), 1)).toISOString().slice(0, 10), -1);
+  const states = await dayStates(d, boatId, from, end);
+  const days: Record<string, 'available' | 'unavailable'> = {};
+  for (const [day, st] of Object.entries(states)) days[day] = st === 'available' ? 'available' : 'unavailable';
+  return json({ ok: true, boat: boatId, month, today, days });
 }
+
+/** Public wording for any date that cannot be booked online (never says why). */
+export const UNAVAILABLE_MSG = 'This date is not available online for this boat. A trip may still be possible upon request — please contact us to check availability.';
+export const BOOKED_MSG = 'This boat already has a booking on your selected date. A second trip may be possible upon request. Please contact us to check availability.';
 
 // ---------- reservation ----------
 /** Turnstile (final booking step only, never before the price). fish-cabo.com: the real secret is REQUIRED.
@@ -234,8 +246,7 @@ export async function apiReserve(request: Request, env: BEnv) {
 
   const s = await getSettings(d);
   const state = (await dayStates(d, boat.id, f.date, f.date))[f.date];
-  if (state === 'booked' || state === 'pending') return json({ ok: false, code: 'BOOKED', state, error: BOOKED_MSG }, 409);
-  if (state !== 'available') return err(state === 'too_soon' ? `Online bookings must be made at least ${s.min_lead_hours} hours before the trip. Please contact us on WhatsApp for last-minute trips.` : 'This date cannot be booked online.', 'date', 409);
+  if (state !== 'available') return json({ ok: false, code: 'UNAVAILABLE', field: 'date', error: UNAVAILABLE_MSG }, 409);
 
   const id = newId(), ref = newRef(), token = newToken(), now = nowIso();
   const fee = f.payment === 'stripe' ? chargeCents(boat.deposit_usd, s.stripe_fee_pct) - boat.deposit_usd * 100 : 0;
@@ -252,7 +263,7 @@ export async function apiReserve(request: Request, env: BEnv) {
       audit(d, 'customer', 'reserve', id, { payment: f.payment, boat: boat.id, date: f.date, hours: f.hours, terms_accepted: TERMS_VERSION }),
     ]);
   } catch (e) {
-    if (/UNIQUE/i.test(String(e))) return json({ ok: false, code: 'BOOKED', state: 'pending', error: BOOKED_MSG }, 409);
+    if (/UNIQUE/i.test(String(e))) return json({ ok: false, code: 'UNAVAILABLE', field: 'date', error: UNAVAILABLE_MSG }, 409);
     throw e;
   }
   const r = (await loadRes(d, 'r.id = ?', id))!;
@@ -431,7 +442,7 @@ export async function sendLogged(env: BEnv, d: D1Database, r: Res | null, kind: 
   return res.ok;
 }
 
-/** Owner + customer confirmation, each sent at most once (atomic claim; released again if the send fails → retried by the cron). */
+/** Owner notification + customer deposit receipt, each sent at most once (atomic claim; released again if the send fails → retried by the cron). */
 export async function notifyConfirmed(env: BEnv, d: D1Database, id: string) {
   const r = await loadRes(d, `r.id = ? AND r.status = 'CONFIRMED'`, id);
   if (!r) return;
@@ -440,7 +451,8 @@ export async function notifyConfirmed(env: BEnv, d: D1Database, id: string) {
       await d.prepare(`UPDATE reservations SET owner_notified_at = NULL WHERE id = ?`).bind(id).run();
   }
   if (r.email && await d.prepare(`UPDATE reservations SET customer_notified_at = ? WHERE id = ? AND customer_notified_at IS NULL RETURNING id`).bind(nowIso(), id).first()) {
-    if (!(await sendLogged(env, d, r, 'customer_confirmed', r.email, M.customerConfirmed(r), env.CONTACT_TO)))
+    // automatic customer email = deposit RECEIPT only; the official confirmation is sent personally by the owner
+    if (!(await sendLogged(env, d, r, 'customer_deposit_receipt', r.email, M.customerDepositReceipt(r), env.CONTACT_TO)))
       await d.prepare(`UPDATE reservations SET customer_notified_at = NULL WHERE id = ?`).bind(id).run();
   }
 }

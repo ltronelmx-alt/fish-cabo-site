@@ -159,13 +159,36 @@ try {
   t('price edits from the dashboard are recorded (history)', sql(`SELECT COUNT(*) n FROM price_history WHERE boat_id='boat-02'`)[0].n === 2 && (await quote({ boat: 'boat-02', hours: 6, date: day(201) }))[1].total === 550);
 
   // ---------------- validation & lead time ----------------
+  section = 'Public calendar privacy';
+  const pm = day(-35).slice(0, 7);
+  [s, j] = await get(`/api/booking/availability?boat=boat-02&month=${pm}`);
+  t('past month → refused (400), nothing returned', s === 400 && !j.days);
+  [s, j] = await get(`/api/booking/availability?boat=boat-02&month=${todayLocal.slice(0, 7)}`);
+  t('current month: no day before today is returned', s === 200 && Object.keys(j.days).every((k) => k >= todayLocal) && Object.keys(j.days)[0] === todayLocal);
+  t('only "available" / "unavailable", no reason, no counts, no identities', Object.values(j.days).every((v) => v === 'available' || v === 'unavailable') && !/ref|status|name|email|booked|pending|blocked|too_soon|count|total/i.test(JSON.stringify(j.days)));
+  [s, j] = await get(`/api/booking/availability?boat=boat-02&month=${day(400).slice(0, 7)}`);
+  t('beyond the booking window → refused', s === 400);
+  [s, j] = await get('/book-now');
+  t('/book-now legend: Available / Unavailable only', /Available <i class="l-bk"><\/i>Unavailable/.test(j) && !/>Booked</.test(j));
+
+  section = 'Imported manual bookings';
+  const MANUAL = [['boat-02', '2026-11-26'], ['boat-04', '2026-12-15'], ['boat-06', '2027-01-19']];
+  for (const [b, d] of MANUAL) {
+    const pub = d >= todayLocal ? await avail(b, d) : 'past';
+    const [qs2, qj2] = d >= todayLocal ? await quote({ boat: b, hours: 6, date: d }) : [409, {}];
+    const [, cal] = await get(`/api/admin/calendar?month=${d.slice(0, 7)}`, { admin: true });
+    const blk = (cal.blocks || []).find((x) => x.boat_id === b && x.date === d);
+    t(`#${+b.slice(5)} ${d}: unavailable on /book-now, quote refused, visible in /booking-admin as MANUAL BOOKING`, (pub === 'unavailable' || pub === 'past') && qs2 === 409 && !!blk && /^MANUAL BOOKING/.test(blk.reason) && cal.states[b][d] === 'blocked', JSON.stringify({ pub, qs2, blk }));
+  }
+  t('imported once (no duplicates), no customer/price/payment invented, no reservation, no email', sql(`SELECT COUNT(*) n FROM blocked_dates WHERE reason LIKE 'MANUAL BOOKING%'`)[0].n === 3 && sql(`SELECT COUNT(*) n FROM reservations`)[0].n === 0 && sql(`SELECT COUNT(*) n FROM email_log`)[0].n === 0 && sql(`SELECT COUNT(*) n FROM audit_log WHERE action='import_manual_bookings'`)[0].n === 1);
+  t('other boats stay available on those dates', (await avail('boat-03', '2026-12-15')) === 'available');
+
   section = 'Validation';
   [s, j] = await reserve(customer('boat-01', day(-1)));
   t('past date refused', s === 409);
   [s, j] = await reserve(customer('boat-01', day(0)));
-  t('today refused (24 h minimum notice)', s === 409 && /24 hours/.test(j.error));
-  t('availability: yesterday=past, today=too_soon', (await avail('boat-01', day(-1))) === 'past' || day(-1).slice(0, 7) !== day(0).slice(0, 7));
-  t('availability today = too_soon', (await avail('boat-01', day(0))) === 'too_soon');
+  t('today refused (24 h minimum notice), neutral message', s === 409 && j.code === 'UNAVAILABLE');
+  t('availability today (< 24 h) = unavailable, reason not disclosed', (await avail('boat-01', day(0))) === 'unavailable');
   [s, j] = await reserve(customer('boat-01', day(6), 6, 'stripe', { email: 'nope' })); t('bad email refused', s === 400 && j.field === 'email');
   [s, j] = await reserve(customer('boat-01', day(6), 6, 'stripe', { people: 3 })); t('people > boat capacity refused (#1 = 2)', s === 400 && j.field === 'people');
   [s, j] = await reserve(customer('boat-01', day(6), 7)); t('duration must be 6 or 8', s === 400);
@@ -199,19 +222,32 @@ try {
     t(`${tag}: before payment → no email at all`, st1.status === 'AWAITING_PAYMENT' && emails(st1.ref).length === 0);
     const other = price(id, hours === 6 ? 8 : 6) != null ? (hours === 6 ? 8 : 6) : hours; // Boat #1: 6 h only → same duration again
     const [s2, j2] = await reserve(customer(id, date, other));
-    t(`${tag}: same day, ${other} h → BOOKED + request-availability message`, s2 === 409 && j2.code === 'BOOKED' && j2.error === 'This boat already has a booking on your selected date. A second trip may be possible upon request. Please contact us to check availability.');
+    t(`${tag}: same day, ${other} h → refused with the neutral "not available online" message (reason not disclosed)`, s2 === 409 && j2.code === 'UNAVAILABLE' && j2.error === 'This date is not available online for this boat. A trip may still be possible upon request — please contact us to check availability.');
     const [w] = await webhook('checkout.session.completed', sess);
     const st2 = await status(sess.params.success_url);
     const em = emails(st2.ref);
-    t(`${tag}: verified webhook → CONFIRMED, exactly 1 owner + 1 customer email`, w === 200 && st2.status === 'CONFIRMED' && em.filter((e) => e.kind === 'owner_confirmed' && e.recipient === 'owner@example.test').length === 1 && em.filter((e) => e.kind === 'customer_confirmed' && e.recipient === 'customer@example.test').length === 1 && em.length === 2, JSON.stringify(em));
+    t(`${tag}: verified webhook → CONFIRMED, exactly 1 owner email + 1 customer deposit receipt`, w === 200 && st2.status === 'CONFIRMED' && em.filter((e) => e.kind === 'owner_confirmed' && e.recipient === 'owner@example.test').length === 1 && em.filter((e) => e.kind === 'customer_deposit_receipt' && e.recipient === 'customer@example.test').length === 1 && em.length === 2, JSON.stringify(em));
     const ob = body(st2.ref, 'owner_confirmed')[0];
     t(`${tag}: owner email shows "${hours} HOURS" first + all contact-form fields + amounts`, ob.subject.includes(`${hours} HOURS`) && ob.body.includes(`TRIP DURATION: ${hours} HOURS`) && ob.body.indexOf(`TRIP DURATION: ${hours} HOURS`) < ob.body.indexOf('Booking reference') &&
       ['First name: Test', 'Last name: Customer', 'Email: customer@example.test', 'Phone: +1 555 010 0000', `Date: ${date}`, 'People aboard: 2', `Duration: ${hours === 6 ? '3/4 day (6 hours)' : 'Full day (8 hours)'}`, 'Message: Test booking', `Booking reference: ${st2.ref}`, `Boat: Boat #${i + 1} (${SIZE[id]} ft)`, `Total charter price: $${total.toLocaleString('en-US')} USD`, `Deposit paid: $${deposit.toLocaleString('en-US')}.00 USD`, `Remaining balance: $${balance.toLocaleString('en-US')} USD`, 'Payment method: Card via Stripe', `Payment reference: ${sess.payment_intent}`, 'Status: CONFIRMED'].every((x) => ob.body.includes(x)), ob.body);
     t(`${tag}: no vessel name in customer-facing texts (Stripe line item, customer email)`, sess.params['line_items[0][price_data][product_data][name]'].includes(`Boat #${i + 1} (${SIZE[id]} ft)`) && !/Panga|Console|Cuddy|Flybridge|Catamaran|Machine/.test(sess.params['line_items[0][price_data][product_data][name]'] + sess.params['metadata[boat]']));
-    const cb = body(st2.ref, 'customer_confirmed')[0];
-    const expected = TEMPLATE.replace("[Customer's Name]", 'Test').replace('[Date]', longDate(date)).replace('[X]', String(hours)).replace('[Size]', String(SIZE[id])).replace('[Amount]', '$' + balance.toLocaleString('en-US'));
-    t(`${tag}: customer receives the EXACT owner template (name, date, ${hours}-hour, ${SIZE[id]} ft, balance $${balance})`, cb.subject === '[TEST] Your Fishing Trip Confirmation – Exotic Fish Cabo' && cb.body === expected, cb.body);
-    t(`${tag}: availability shows "booked"`, (await avail(id, date)) === 'booked');
+    const cb = body(st2.ref, 'customer_deposit_receipt')[0];
+    const fee = (deposit * 0.06).toFixed(2), chargeTxt = (deposit * 1.06).toLocaleString('en-US', { minimumFractionDigits: 2 });
+    t(`${tag}: customer gets the DEPOSIT RECEIPT (subject, name, ref, Boat #${i + 1}, date, ${hours} hours, total, deposit received, balance, wait-for-Loïc text)`,
+      cb.subject === '[TEST] Exotic Fish Cabo — Deposit Received' && cb.body.startsWith('Dear Test,') &&
+      ['Thank you for your deposit. Your booking has been received and your fishing date has been reserved.', `Booking reference: ${st2.ref}`, `Boat: Boat #${i + 1}`, `Trip date: ${longDate(date)}`, `Trip duration: ${hours} hours`,
+        `Total charter price: $${total.toLocaleString('en-US')} USD`, `Deposit received: $${deposit.toLocaleString('en-US')}.00 USD (card payment of $${chargeTxt} USD including the $${fee} USD processing fee)`, `Remaining balance: $${balance.toLocaleString('en-US')} USD`,
+        'Loïc from Exotic Fish Cabo will personally send you a separate official confirmation email containing your meeting time, meeting point, marina directions, and all necessary information for your fishing trip.',
+        'Please wait for this personal confirmation email before making your way to the marina.'].every((x) => cb.body.includes(x)), cb.body);
+    t(`${tag}: the automatic receipt is NOT the official confirmation (no marina link, no meeting time, no TORO)`, !cb.body.includes('maps.app.goo.gl') && !/6:30am|TORO|Logistics:/.test(cb.body) && emails(st2.ref).every((e) => e.kind !== 'customer_confirmed'));
+    t(`${tag}: owner email shows the customer email address at the top`, ob.body.split('\n').slice(0, 4).join('\n').includes('CUSTOMER EMAIL: customer@example.test') && ob.body.includes('Phone / WhatsApp: +1 555 010 0000'));
+    t(`${tag}: public calendar shows the day as "unavailable"`, (await avail(id, date)) === 'unavailable');
+    if (id === 'boat-03' && hours === 6) {
+      const bid = sql(`SELECT id FROM reservations WHERE ref='${st2.ref}'`)[0].id;
+      const [, dj] = await get(`/api/admin/booking?id=${bid}`, { admin: true });
+      const expected = TEMPLATE.replace("[Customer's Name]", 'Test').replace('[Date]', longDate(date)).replace('[X]', String(hours)).replace('[Size]', String(SIZE[id])).replace('[Amount]', '$' + balance.toLocaleString('en-US'));
+      t('owner-approved official confirmation kept word for word, offered pre-filled in /booking-admin (never sent automatically)', dj.official?.text === expected && dj.official.subject === 'Your Fishing Trip Confirmation – Exotic Fish Cabo', dj.official?.text);
+    }
     if (hours === 6) confirmed[id] = { date, sess, url: sess.params.success_url, ref: st2.ref };
   }
   t('refused same-day attempts created no reservation', sql(`SELECT COUNT(*) n FROM reservations`)[0].n === 19);
@@ -272,7 +308,7 @@ try {
 
   section = 'Concurrency';
   const burst = await Promise.all(Array.from({ length: 8 }, (_, k) => reserve(customer('boat-06', day(40), k % 2 ? 8 : 6, k % 3 ? 'stripe' : 'wise'))));
-  t('8 simultaneous attempts, same boat/day → exactly 1 succeeds', burst.filter(([x]) => x === 200).length === 1 && burst.filter(([x, y]) => x === 409 && y.code === 'BOOKED').length === 7, JSON.stringify(burst.map(([x]) => x)));
+  t('8 simultaneous attempts, same boat/day → exactly 1 succeeds', burst.filter(([x]) => x === 200).length === 1 && burst.filter(([x, y]) => x === 409 && y.code === 'UNAVAILABLE').length === 7, JSON.stringify(burst.map(([x]) => x)));
   t('database: one active reservation for that boat/day', sql(`SELECT COUNT(*) n FROM reservations WHERE boat_id='boat-06' AND date='${day(40)}' AND holds_slot=1`)[0].n === 1);
 
   section = 'Wise';
@@ -280,7 +316,7 @@ try {
   const wq = qs(j.redirect); let wst = await status(j.redirect);
   t('Wise → AWAITING_PAYMENT_VERIFICATION, 24 h hold, deposit without fee', s === 200 && wst.status === 'AWAITING_PAYMENT_VERIFICATION' && wst.chargeCents === 40000 && wst.feeCents === 0 && Math.abs(Date.parse(wst.holdExpiresAt) - Date.now() - 24 * 3600e3) < 120e3 && wst.wiseUrl === 'https://wise.com/pay/me/loict92');
   t('Wise pending → customer instructions only, NO owner email', emails(wq.ref, 'customer_wise_pending').length === 1 && emails(wq.ref).every((e) => e.recipient !== 'owner@example.test'));
-  t('Wise pending blocks the day', (await avail('boat-07', day(41))) === 'pending' && (await reserve(customer('boat-07', day(41))))[0] === 409);
+  t('Wise pending blocks the day', (await avail('boat-07', day(41))) === 'unavailable' && (await reserve(customer('boat-07', day(41))))[0] === 409);
   const wid = sql(`SELECT id FROM reservations WHERE ref='${wq.ref}'`)[0].id;
   [s, j] = await admin('action', { id: wid, action: 'confirm_wise', amount: 400, confirm: 'yes' });
   t('admin confirm without typing VERIFIED → refused', s === 409);
@@ -288,7 +324,7 @@ try {
   t('amount below the deposit → refused', s === 409);
   [s, j] = await admin('action', { id: wid, action: 'confirm_wise', amount: 400, confirm: 'VERIFIED', wiseRef: 'TR-1' });
   wst = await status(j.ok ? `/x?ref=${wq.ref}&t=${wq.t}` : '/x');
-  t('owner verifies the Wise payment → CONFIRMED, 1 owner email + 1 customer email', s === 200 && wst.status === 'CONFIRMED' && emails(wq.ref, 'owner_confirmed').length === 1 && emails(wq.ref, 'customer_confirmed').length === 1);
+  t('owner verifies the Wise payment → CONFIRMED, 1 owner email + 1 customer deposit receipt', s === 200 && wst.status === 'CONFIRMED' && emails(wq.ref, 'owner_confirmed').length === 1 && emails(wq.ref, 'customer_deposit_receipt').length === 1);
   [s] = await admin('action', { id: wid, action: 'confirm_wise', amount: 400, confirm: 'VERIFIED' });
   t('confirming twice → refused, still one owner email', s === 409 && emails(wq.ref, 'owner_confirmed').length === 1);
   // Wise expiry + cron
@@ -319,12 +355,12 @@ try {
   t('existing confirmed trip untouched', firstStill.status === 'CONFIRMED' && sql(`SELECT slot FROM reservations WHERE ref='${c9.ref}'`)[0].slot === 0);
   t('customer gets a payment request; owner gets no confirmation yet', emails(ov.ref, 'customer_payment_request').length === 1 && emails(ov.ref, 'owner_confirmed').length === 0);
   t('audit log records the override', sql(`SELECT COUNT(*) n FROM audit_log a JOIN reservations r ON r.id=a.reservation_id WHERE r.ref='${ov.ref}' AND a.action='second_trip_override' AND a.actor='admin'`)[0].n === 1);
-  t('public availability for that day still "booked" (no automatic second trip)', (await avail('boat-09', c9.date)) === 'booked' && (await reserve(customer('boat-09', c9.date)))[0] === 409);
+  t('public availability for that day still unavailable (no automatic second trip)', (await avail('boat-09', c9.date)) === 'unavailable' && (await reserve(customer('boat-09', c9.date)))[0] === 409);
   let [pst, , phd] = await get(new URL(ov.payUrl).pathname + new URL(ov.payUrl).search);
   const so = sessions.get((phd.get('location') || '').split('/pay/')[1]);
   t('payment link → Stripe Checkout for deposit + 6%', pst === 303 && so && so.amount_total === 53000);
   [w1, wj] = await webhook('checkout.session.completed', so);
-  t('second trip confirmed only after the verified payment, owner + customer emailed once', wj.result === 'confirmed' && (await status(ov.statusUrl)).status === 'CONFIRMED' && emails(ov.ref, 'owner_confirmed').length === 1 && emails(ov.ref, 'customer_confirmed').length === 1);
+  t('second trip confirmed only after the verified payment, owner + customer emailed once', wj.result === 'confirmed' && (await status(ov.statusUrl)).status === 'CONFIRMED' && emails(ov.ref, 'owner_confirmed').length === 1 && emails(ov.ref, 'customer_deposit_receipt').length === 1);
   t('first trip still confirmed, 2 active trips that day', (await status(c9.url)).status === 'CONFIRMED' && sql(`SELECT COUNT(*) n FROM reservations WHERE boat_id='boat-09' AND date='${c9.date}' AND holds_slot=1 AND status='CONFIRMED'`)[0].n === 2);
   // override paid by Wise
   [s, j] = await admin('second-trip', { ...base2, boat: 'boat-01', date: confirmed['boat-01'].date, hours: 8, people: 2, confirm: 'SECOND TRIP' });
@@ -353,12 +389,12 @@ try {
   [s, j] = await admin('phone-booking', { ...pb, payment: 'received', amount: 300, confirm: 'VERIFIED', payRef: 'cash' });
   const pr = j;
   t('deposit received → CONFIRMED at the approved price, balance computed', s === 200 && pr.status === 'CONFIRMED' && pr.total === 1800 && pr.balance === 1500, JSON.stringify(j));
-  t('…owner record email + customer confirmation, once each', emails(pr.ref, 'owner_confirmed').length === 1 && emails(pr.ref, 'customer_confirmed').length === 1);
-  t('…the day is now booked for customers', (await avail('boat-05', pb.date)) === 'booked' && (await reserve(customer('boat-05', pb.date, 6)))[0] === 409);
+  t('…owner record email + customer deposit receipt, once each', emails(pr.ref, 'owner_confirmed').length === 1 && emails(pr.ref, 'customer_deposit_receipt').length === 1);
+  t('…the day is now unavailable for customers', (await avail('boat-05', pb.date)) === 'unavailable' && (await reserve(customer('boat-05', pb.date, 6)))[0] === 409);
   [s, j] = await admin('phone-booking', { ...pb, hours: 6, payment: 'received', amount: 300, confirm: 'VERIFIED' });
   t('same boat/day again → refused (second trip needs the explicit override)', s === 409 && /SECOND TRIP|second trip/i.test(j.error));
   [s, j] = await admin('phone-booking', { ...pb, date: day(161), email: '', payment: 'received', amount: 300, confirm: 'VERIFIED' });
-  t('no email given → confirmed, owner record only (no customer email)', s === 200 && emails(j.ref, 'customer_confirmed').length === 0 && emails(j.ref, 'owner_confirmed').length === 1);
+  t('no email given → confirmed, owner record only (no customer email)', s === 200 && emails(j.ref, 'customer_deposit_receipt').length === 0 && emails(j.ref, 'owner_confirmed').length === 1);
   [s, j] = await admin('phone-booking', { ...pb, date: day(162), payment: 'stripe' });
   const pst2 = j;
   t('card link → AWAITING_PAYMENT, payment request sent, nothing confirmed', s === 200 && pst2.status === 'AWAITING_PAYMENT' && !!pst2.payUrl && emails(pst2.ref, 'customer_payment_request').length === 1 && emails(pst2.ref, 'owner_confirmed').length === 0);
@@ -382,21 +418,21 @@ try {
   const c4 = confirmed['boat-04'];
   const c4id = sql(`SELECT id FROM reservations WHERE ref='${c4.ref}'`)[0].id;
   [s, j] = await admin('action', { id: c4id, action: 'move_date', date: confirmed['boat-04'].date === day(13) ? day(70) : day(70) });
-  t('move date to a free day', s === 200 && (await avail('boat-04', day(70))) === 'booked' && (await avail('boat-04', c4.date)) === 'available');
+  t('move date to a free day', s === 200 && (await avail('boat-04', day(70))) === 'unavailable' && (await avail('boat-04', c4.date)) === 'available');
   [s, j] = await admin('action', { id: c4id, action: 'move_date', date: day(32) === day(32) && confirmed['boat-04'] ? day(70) : day(70) });
   [s, j] = await reserve(customer('boat-04', day(71)));
   [s, j] = await admin('action', { id: c4id, action: 'move_date', date: day(71) });
   t('move onto a booked day → refused', s === 409);
   [s, j] = await admin('block', { boat: 'boat-01', date: day(80), block: true, reason: 'maintenance' });
-  t('block a day → not bookable', s === 200 && (await avail('boat-01', day(80))) === 'blocked' && (await reserve(customer('boat-01', day(80))))[0] === 409);
+  t('block a day → not bookable', s === 200 && (await avail('boat-01', day(80))) === 'unavailable' && (await reserve(customer('boat-01', day(80))))[0] === 409);
   [s, j] = await admin('block', { boat: '*', date: day(81), block: true });
-  t('block a day for all boats', (await avail('boat-07', day(81))) === 'blocked');
+  t('block a day for all boats', (await avail('boat-07', day(81))) === 'unavailable');
   [s, j] = await admin('block', { boat: 'boat-01', date: day(80), block: false });
   t('unblock', (await avail('boat-01', day(80))) === 'available');
   [s, j] = await admin('settings', { wise_hold_hours: 9999 });
   t('settings validated', s === 400);
   [s, j] = await admin('settings', { min_lead_hours: 48 });
-  t('settings saved (minimum notice 48 h)', s === 200 && (await avail('boat-01', day(1))) === 'too_soon');
+  t('settings saved (minimum notice 48 h)', s === 200 && (await avail('boat-01', day(1))) === 'unavailable');
   await admin('settings', { min_lead_hours: 24 });
   [s, j] = await reserve(customer('boat-08', day(84), 6, 'stripe', { message: '=HYPERLINK("http://x")' }));
   const csv = await (await fetch(BASE + '/api/admin/export.csv', { headers: { cookie } })).text();
@@ -417,7 +453,8 @@ try {
   t('no owner email for pending / expired / canceled attempts', sql(`SELECT COUNT(*) n FROM email_log e JOIN reservations r ON r.id=e.reservation_id WHERE e.recipient='owner@example.test' AND r.status IN ('EXPIRED','CANCELED','AWAITING_PAYMENT','AWAITING_PAYMENT_VERIFICATION','HELD') AND e.kind <> 'owner_exception'`)[0].n === 0);
   t('owner subjects all carry the trip duration and the boat number', sql(`SELECT subject FROM email_log WHERE kind='owner_confirmed'`).every((m) => /CONFIRMED EFC-[A-Z0-9]{6} — [68] HOURS — Boat #\d+, /.test(m.subject)));
   t('no vessel names in any email sent to a customer', sql(`SELECT body FROM email_log WHERE recipient <> 'owner@example.test'`).every((m) => !/Panga|Center Console|Cuddy|Flybridge|Catamaran|Fishing Machine/.test(m.body)));
-  t('customer template contains "TORO, my partner" exactly once per confirmation', sql(`SELECT body FROM email_log WHERE kind='customer_confirmed'`).every((m) => m.body.split('just ask for TORO, my partner, he').length === 2));
+  t('no automatic email ever contains the official confirmation (TORO / marina directions)', sql(`SELECT body FROM email_log`).every((m) => !m.body.includes('just ask for TORO') && !m.body.includes('maps.app.goo.gl/CXbVM7vW1abnT1cbA')));
+  t('the full confirmation template is never sent automatically', sql(`SELECT COUNT(*) n FROM email_log WHERE kind LIKE 'customer_confirmed%'`)[0].n === 0);
 
   section = 'Rate limit';
   let qlimited = false;

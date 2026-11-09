@@ -1,5 +1,5 @@
 {
-  "_doc": "Owner-approved text corrections (2026-11-04). Applied once to src/data/original/*.json by scripts/apply_content_edits.py and applied to the Squarespace export by scripts/verify-original.py, so the verbatim check accepts exactly these edits and nothing else. 2026-11-08 (owner, master prompt §3.1 + answer of 2026-11-08): per-boat prices removed from the 10 boat pages — visible text, <title>, og/twitter titles and meta descriptions. Customers get their price on /book-now (SHOW MY PRICE). 2026-11-08 homepage SEO audit (master prompt §10): owner-approved reputation wording added as the first H3 of 'Why Choose Exotic Fish Cabo?'; one About sentence that repeated 'Why Choose' removed; '$600USD' spacing fixed in the 8-hour H3. (No export_find: the Squarespace export is not in this environment — see docs/BOOKING-AND-SEO-REPORT.md.)",
+  "_doc": "Owner-approved text corrections (2026-11-04). Applied once to src/data/original/*.json by scripts/apply_content_edits.py and applied to the Squarespace export by scripts/verify-original.py, so the verbatim check accepts exactly these edits and nothing else. 2026-11-08 (owner, master prompt §3.1 + answer of 2026-11-08): per-boat prices removed from the 10 boat pages — visible text, <title>, og/twitter titles and meta descriptions. Customers get their price on /book-now (SHOW MY PRICE). 2026-11-08 homepage SEO audit (master prompt §10): owner-approved reputation wording added as the first H3 of 'Why Choose Exotic Fish Cabo?'; one About sentence that repeated 'Why Choose' removed. (No export_find: the Squarespace export is not in this environment — see docs/BOOKING-AND-SEO-REPORT.md.)",
   "edits": [
     {
       "page": "contact",
@@ -147,11 +147,6 @@
       "page": "home",
       "find": "<p>From your first questions about boat options to your confirmed departure instructions, our team is here to help you prepare for your trip.</p>",
       "replace": ""
-    },
-    {
-      "page": "home",
-      "find": "<h3>8-Hour Private Fishing Charter – From $600USD</h3>",
-      "replace": "<h3>8-Hour Private Fishing Charter – From $600 USD</h3>"
     }
   ]
 }
