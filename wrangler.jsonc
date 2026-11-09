@@ -16,7 +16,7 @@
   "observability": { "enabled": true },
   // Booking system: Cloudflare D1 (free plan: 5 GB, 5M reads + 100k writes per day). Wrangler creates the database
   // automatically on the first deploy (no database_id needed). Tables are created by the Worker itself (worker/booking/schema.ts).
-  "d1_databases": [{ "binding": "DB", "database_name": "fish-cabo-bookings" }],
+  "d1_databases": [{ "binding": "DB", "database_name": "fish-cabo-bookings", "database_id": "80275ccc-e82f-4ccd-ba5f-fc947bbc481d" }],
   // Hourly: release expired holds, Wise expiry notices, retry confirmation emails that failed (free plan: 5 cron triggers).
   "triggers": { "crons": ["17 * * * *"] },
   // Enable after creating the dataset (free): uncomment to store click counts.
