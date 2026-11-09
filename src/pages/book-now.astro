@@ -182,6 +182,26 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     } catch { /* private mode: nothing kept */ }
   }
 
+  // ---- guided scrolling (owner, 2026-11-09): each choice brings the next step into view ----
+  // Runs after the next paint (target rendered), below the fixed header, instant when the visitor prefers reduced
+  // motion, never while a saved booking is being restored, and only the latest request runs (no loops or double jumps).
+  let scrollSeq = 0;
+  const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  function goTo(id: string, force = false) {
+    if (restoring && !force) return;
+    const seq = ++scrollSeq;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (seq !== scrollSeq) return;
+      const el = document.getElementById(id);
+      if (!el || el.hidden || !el.getClientRects().length) return;
+      const hdr = document.getElementById('header');
+      const offset = Math.max(hdr ? hdr.getBoundingClientRect().bottom : 0, 68) + 16;
+      const top = Math.max(0, el.getBoundingClientRect().top + window.scrollY - offset);
+      if (Math.abs(top - window.scrollY) < 4) return;
+      window.scrollTo({ top, behavior: reducedMotion() ? 'auto' : 'smooth' });
+    }));
+  }
+
   /** Prefilled WhatsApp message (free click-to-chat; the customer presses Send). */
   function waUrl() {
     const b = boat(); const lines = ['Hello Exotic Fish Cabo, I would like to request availability:'];
@@ -255,11 +275,11 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
       if (s.payment === 'stripe' || s.payment === 'wise') { const p = f.querySelector<HTMLInputElement>(`input[name=payment][value="${s.payment}"]`); if (p) { p.checked = true; summary(); wiseNote(); } }
       if (note) $('#pmsg').textContent = note;
       const last = ['s-pay', 's-details', 's-price', 's-date', 's-dur'].find((id) => !document.getElementById(id)!.hidden);
-      if (last) document.getElementById(last)!.scrollIntoView({ block: 'start' });
+      if (last) { restoring = false; goTo(last, true); }
     } finally { restoring = false; save(); }
   }
 
-  async function pickBoat() {
+  async function pickBoat(scroll = false) {
     const b = boat(); if (!b) return;
     show('s-dur', true);
     // only the durations this boat offers (Boat #1 = 6 hours only)
@@ -273,12 +293,13 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     sel.innerHTML = '<option value="">Select an option</option>' + Array.from({ length: Math.min(b.capacity, 10) }, (_, i) => `<option value="${i + 1}">${i + 1} ${i ? 'people' : 'person'}</option>`).join('');
     if (+cur <= b.capacity) sel.value = cur;
     (f.elements.namedItem('date') as HTMLInputElement).value = ''; show('booked', false);
-    resetQuote(); await onDuration();
+    resetQuote(); await onDuration(false);
+    if (scroll) goTo('s-dur'); // 1. boat chosen → duration (Boat #1: its single 6-hour option)
   }
-  async function onDuration() {
+  async function onDuration(scroll = false) {
     show('s-date', !!boat() && !!dur());
     resetQuote();
-    if (boat() && dur()) await loadMonth();
+    if (boat() && dur()) { await loadMonth(); if (scroll) goTo('s-date'); } // 2. duration chosen → calendar, once it is drawn
   }
   async function fetchMonth(b: B, m: string): Promise<Record<string, string>> {
     const j = await fetch(`/api/booking/availability?boat=${b.id}&month=${m}`).then((r) => r.json()).catch(() => ({ ok: false }));
@@ -313,8 +334,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     show('booked', taken); ($('#req') as HTMLAnchorElement).href = waUrl();
     resetQuote();
     if (!scroll) return;
-    if (taken) document.getElementById('booked')!.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    else document.getElementById('s-price')!.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    goTo(taken ? 'booked' : 's-price'); // 3. date chosen → SHOW MY PRICE (or the request-availability box)
   }
 
   /** Next available dates for this boat (this month and the next two), for a customer whose date was just taken. */
@@ -341,7 +361,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     if (keepPay) await toPay(false);
     ['qalts', 'dalts', 'palts'].forEach((id) => show(id, false));
     $('#pmsg').textContent = `New date: ${longDate(d)} — available. Please review and pay your deposit.`;
-    document.getElementById(keepPay ? 's-pay' : keepDetails ? 's-details' : 's-price')!.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    goTo(keepPay ? 's-pay' : keepDetails ? 's-details' : 's-price');
   }
 
   async function showPrice() {
@@ -362,9 +382,10 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
       <p class="bk-qnote">Private charter price for the boat. A deposit secures your date and the remaining balance is paid in cash on the fishing day. Card payments carry a ${quote.cardFeePct}% processing fee on the deposit; Wise has no fee. You will see every amount before you pay.</p>
       <div class="bk-qbtns"><button type="button" class="btn btn-primary no-arrow" id="continue">CONTINUE TO BOOKING</button><button type="button" class="btn no-arrow" id="change">CHANGE MY SELECTION</button></div>`;
     show('quote', true); save();
+    goTo('quote'); // 4. SHOW MY PRICE → the price
   }
 
-  function details(scroll = true) { show('s-details', true); save(); if (scroll) document.getElementById('s-details')!.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+  function details(scroll = true) { show('s-details', true); save(); if (scroll) goTo('s-details'); }
 
   async function toPay(scroll = true) {
     const need = ['fname', 'lname', 'email', 'phone', 'people'];
@@ -381,7 +402,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     const [, j] = await POST('/api/booking/summary', { boat: quote.boat, hours: quote.hours }).catch(() => [0, {}] as const);
     if (!j.ok) { $('#dmsg').textContent = j.error || 'Please try again.'; return; }
     sum = j as S; summary(); show('s-pay', true); save();
-    if (scroll) document.getElementById('s-pay')!.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    if (scroll) goTo('s-pay');
   }
   /** Wise: deposits can take up to 24 h to arrive and be verified — shown as soon as Wise is chosen (owner, 2026-11-09). */
   function wiseNote() { show('wise-note', val('payment') === 'wise'); }
@@ -398,8 +419,8 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
 
   f.addEventListener('change', (e) => {
     const t = e.target as HTMLInputElement;
-    if (t.name === 'boat') pickBoat();
-    if (t.name === 'duration') onDuration();
+    if (t.name === 'boat') pickBoat(true);
+    if (t.name === 'duration') onDuration(true);
     if (t.name === 'payment') { summary(); save(); wiseNote(); }
     if (FIELDS.includes(t.name)) { ($('#req') as HTMLAnchorElement).href = waUrl(); save(); }
   });
@@ -415,7 +436,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     if (t.dataset.alt) useAlt(t.dataset.alt);
     if (t.id === 'show-price') showPrice();
     if (t.id === 'continue') details();
-    if (t.id === 'change') { resetQuote(); f.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+    if (t.id === 'change') { resetQuote(); goTo('bk'); }
     if (t.id === 'to-pay') toPay();
   });
   f.addEventListener('submit', async (e) => {
@@ -449,7 +470,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
         const d = val('date'); await loadMonth(); pickDay(d, false); show('s-price', true);
         $('#quote').hidden = true; msg.textContent = '';
         $('#qmsg').textContent = `${UNAVAILABLE} Your details are kept.`;
-        await alternatives('qalts', d, { details: true, pay: true }); document.getElementById('s-price')!.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        await alternatives('qalts', d, { details: true, pay: true }); goTo('s-price');
       } else msg.textContent = j.error || 'Sorry, something went wrong. Please try again or contact us on WhatsApp.';
       (window as any).turnstile?.reset?.();
     } catch { msg.textContent = 'Network error. Please try again.'; }
