@@ -8,10 +8,21 @@ export interface Env {
   CONTACT_TO?: string; // destination address for contact messages
   CONTACT_FROM?: string;
   NOTIFY_TEST_JWKS?: string; // local tests only (ignored unless the request host is 127.0.0.1/localhost)
+  SITE_ENV?: string; // "production" (wrangler vars) | "staging" (previews.vars)
+  SITE_URL?: string; // staging only (previews.vars): origin for admin links in owner emails
   STAGING_PASSWORD?: string; // secret: password-protects the *.workers.dev staging site only (never fish-cabo.com)
+  // Booking system (D1 free plan). Secrets are set by the owner in the Cloudflare dashboard, never in code.
+  DB?: D1Database;
+  STRIPE_SECRET_KEY?: string; // sk_test_… until the owner approves live payments
+  STRIPE_WEBHOOK_SECRET?: string;
+  STRIPE_API_BASE?: string; // local tests only
+  BOOKING_LIVE?: string; // "approved" = owner explicitly approved live card payments
+  ADMIN_PASSWORD?: string;
 }
 import REDIRECTS from '../src/data/redirects.json';
 import { publishNotify } from './notify';
+import { apiBoats, apiAvailability, apiQuote, apiSummary, apiReserve, apiStatus, apiCancelCheckout, apiPay, apiStripeWebhook, cron, isProductionEnv, isStagingEnv, adminUrl, bookingOpen } from './booking/core';
+import { adminPage, adminApi } from './booking/admin';
 const TEST_TURNSTILE_SECRET = '1x0000000000000000000000000000000AA';
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
 const STAGING_OPEN_UNTIL = Date.parse('2026-11-04T16:55:00Z'); // = 2026-11-04 09:55 Mazatlán (post-deploy verification window)
@@ -29,9 +40,11 @@ async function stagingLocked(request: Request, env: Env): Promise<Response | nul
   if (crypto.subtle.timingSafeEqual(a, b)) return null;
   return new Response('Staging site — password required', { status: 401, headers: { 'www-authenticate': 'Basic realm="Exotic Fish Cabo staging", charset="UTF-8"', 'x-robots-tag': 'noindex, nofollow', 'cache-control': 'no-store' } });
 }
-// Staging (*.workers.dev) always uses Cloudflare's public TEST secret (always passes) so the form can be tested;
-// fish-cabo.com uses the real TURNSTILE_SECRET. The real secret must be re-checked before going live.
-const turnstileSecret = (_request: Request, env: Env) => env.TURNSTILE_SECRET || TEST_TURNSTILE_SECRET;
+// Turnstile keys are host-specific (error 110200 = site key not allowed on this hostname). fish-cabo.com: real site key
+// (page) + real TURNSTILE_SECRET (here). Every other host (localhost, *.workers.dev previews): Cloudflare's public TEST
+// pair, chosen by the page at runtime (public/js/efc-turnstile.js) and here, so the full check still runs off-production.
+// Production rules follow SITE_ENV=production on every hostname (audit B2): a production Worker on *.workers.dev keeps the real secret.
+const turnstileSecret = (request: Request, env: Env) => (isProductionEnv(env, new URL(request.url)) ? env.TURNSTILE_SECRET || '' : TEST_TURNSTILE_SECRET);
 const ALLOWED_EVENTS = /^[a-z0-9_-]{2,80}$/;
 
 async function contact(request: Request, env: Env) {
@@ -51,23 +64,22 @@ async function contact(request: Request, env: Env) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(data.email)) return json({ ok: false, error: 'Please enter a valid email address.' }, 400);
   // Cloudflare Turnstile verification
   const token = String(fd.get('cf-turnstile-response') ?? '');
-  // Staging (*.workers.dev) is already behind the staging password: the anti-bot check only runs on the real domain.
-  const isStaging = new URL(request.url).hostname.endsWith('.workers.dev');
-  // staging: verify with the real secret once it is set (to test it before launch); without it, skip
-  const ver = isStaging && !env.TURNSTILE_SECRET ? { success: true, 'error-codes': [] as string[] } : await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+  const host = new URL(request.url).hostname;
+  // local runtime (no network in tests): skipped; everywhere else the token is verified with the host's secret
+  const ver = (host === 'localhost' || host === '127.0.0.1') && !isProductionEnv(env, new URL(request.url)) ? { success: true, 'error-codes': [] as string[] } : await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
     method: 'POST', body: new URLSearchParams({ secret: turnstileSecret(request, env), response: token, remoteip: request.headers.get('cf-connecting-ip') || '' }),
   }).then((r) => r.json() as Promise<{ success: boolean; 'error-codes'?: string[] }>).catch(() => ({ success: false, 'error-codes': ['siteverify-unreachable'] }));
   if (!ver.success) {
     const codes = ver['error-codes'] || [];
     console.log('turnstile failed', JSON.stringify({ codes, tokenLength: token.length })); // no personal data logged
     // staging only: show Cloudflare's error codes to help diagnose the configuration
-    const dbg = new URL(request.url).hostname.endsWith('.workers.dev') ? { codes, tokenLength: token.length } : {};
+    const dbg = isStagingEnv(env, new URL(request.url)) ? { codes, tokenLength: token.length } : {};
     return json({ ok: false, error: 'Verification failed. Please try again.', ...dbg }, 403);
   }
   // Delivery: only when an approved provider is configured; otherwise TEST MODE (nothing sent, nothing stored).
   if (!env.RESEND_API_KEY || !env.CONTACT_TO) {
     // staging: test mode (nothing sent). fish-cabo.com: never pretend a request was sent when no email is configured
-    if (new URL(request.url).hostname.endsWith('.workers.dev')) return json({ ok: true, test: true });
+    if (isStagingEnv(env, new URL(request.url))) return json({ ok: true, test: true });
     return json({ ok: false, error: 'The form is temporarily unavailable. Please contact us on WhatsApp +52 624 122 3506 or at contact@fish-cabo.com.' }, 503);
   }
   const text = Object.entries(data).map(([k, v]) => `${k}: ${v}`).join('\n');
@@ -87,6 +99,9 @@ export default {
     h.set('X-Robots-Tag', 'noindex, nofollow');
     return new Response(res.body, { status: res.status, statusText: res.statusText, headers: h });
   },
+  async scheduled(_c: ScheduledController, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(cron(env).catch((e) => console.log('cron error', String(e))));
+  },
 } satisfies ExportedHandler<Env>;
 
 async function handle(request: Request, env: Env): Promise<Response> {
@@ -104,11 +119,67 @@ async function handle(request: Request, env: Env): Promise<Response> {
     // robots.txt on *.workers.dev is public (no password) so crawlers read "Disallow: /"
     if (new URL(request.url).hostname.endsWith('.workers.dev') && new URL(request.url).pathname === '/robots.txt')
       return new Response('User-agent: *\nDisallow: /\n', { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } });
+    if (new URL(request.url).pathname === '/api/stripe/webhook') {
+      if (!env.DB) return json({ ok: false }, 503);
+      return apiStripeWebhook(request, env).catch((e) => { console.log('webhook fatal', String(e)); return json({ ok: false }, 500); });
+    }
     const locked = await stagingLocked(request, env);
     if (locked) return locked;
     const url = new URL(request.url);
     if (url.pathname === '/api/contact') return contact(request, env);
     if (url.pathname === '/api/publish-notify') return publishNotify(request, env);
+    // Booking system. The Stripe webhook is reachable without the staging password (Stripe cannot send one; it is signed).
+    // Staging-only configuration check (never on fish-cabo.com): says WHICH settings are present and valid, never a value.
+    // Sends no email and creates no payment. The Resend key is checked with a read-only call that a sending-only key
+    // answers with "restricted" (= valid key) and a wrong key with "invalid".
+    if (url.pathname === '/api/booking/config-check') {
+      if (isProductionEnv(env, url)) return new Response('Not found', { status: 404 }); // never on a production Worker, whatever the hostname
+      const from = env.CONTACT_FROM || '';
+      const fromAddr = (from.match(/<([^<>\s@]+@[^<>\s@]+)>\s*$/) || [])[1] || '';
+      let resend = 'missing';
+      if (env.RESEND_API_KEY) {
+        const r = await fetch('https://api.resend.com/domains', { headers: { authorization: `Bearer ${env.RESEND_API_KEY}` } }).catch(() => null);
+        const j: any = r ? await r.json().catch(() => ({})) : {};
+        resend = !r ? 'unreachable' : r.ok ? 'valid (full access)' : /restricted/i.test(`${j.name} ${j.message}`) ? 'valid (sending access)' : `rejected (${j.name || r.status})`;
+        if (r?.ok) { const dom = (j.data || []).find((x: any) => x.name === fromAddr.split('@')[1]); resend += dom ? `; domain ${dom.name}: ${dom.status}` : ''; }
+      }
+      const k = env.STRIPE_SECRET_KEY || '';
+      return Response.json({
+        ADMIN_PASSWORD: env.ADMIN_PASSWORD ? 'set' : 'missing',
+        STRIPE_SECRET_KEY: !k ? 'missing' : k.startsWith('sk_test_') || k.startsWith('rk_test_') ? 'set (test key)' : 'set (NOT a test key: card payments refused)',
+        STRIPE_WEBHOOK_SECRET: !env.STRIPE_WEBHOOK_SECRET ? 'missing' : env.STRIPE_WEBHOOK_SECRET.startsWith('whsec_') ? 'set (whsec_)' : 'set (unexpected format)',
+        RESEND_API_KEY: resend,
+        CONTACT_TO: !env.CONTACT_TO ? 'missing' : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(env.CONTACT_TO) ? env.CONTACT_TO : 'invalid format',
+        CONTACT_FROM: !from ? 'missing' : fromAddr ? { name: from.replace(/<[^>]*>\s*$/, '').trim(), address: fromAddr, domainIsFishCabo: fromAddr.endsWith('@fish-cabo.com') } : 'invalid format (expected: Name <address>)',
+        DB: env.DB ? 'bound' : 'missing',
+        ADMIN_LINK_IN_OWNER_EMAILS: adminUrl(env),
+      }, { headers: { 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } });
+    }
+
+    // /booking-admin = owner dashboard (Worker). /admin/ stays Sveltia CMS (static files) and is never handled here.
+    if (url.pathname.startsWith('/api/booking/') || url.pathname.startsWith('/api/admin/') || url.pathname === '/booking-admin') {
+      if (!env.DB) return json({ ok: false, error: 'Online booking is not available yet.' }, 503);
+      // before the owner-authorised public launch (src/data/launch.json): booking API closed on production
+      if (url.pathname.startsWith('/api/booking/') && !bookingOpen(env)) return json({ ok: false, error: 'Online booking is not open yet. Please contact us on WhatsApp +52 624 122 3506.' }, 503);
+      try {
+        switch (url.pathname) {
+          case '/api/booking/boats': return await apiBoats(env);
+          case '/api/booking/availability': return await apiAvailability(request, env);
+          case '/api/booking/quote': return await apiQuote(request, env);
+          case '/api/booking/summary': return await apiSummary(request, env);
+          case '/api/booking/reserve': return await apiReserve(request, env);
+          case '/api/booking/status': return await apiStatus(request, env);
+          case '/api/booking/cancel-checkout': return await apiCancelCheckout(request, env);
+          case '/api/booking/pay': return await apiPay(request, env);
+          case '/booking-admin': return await adminPage(request, env);
+        }
+        if (url.pathname.startsWith('/api/admin/')) return await adminApi(request, env);
+      } catch (e) {
+        console.log('booking error', String(e));
+        return json({ ok: false, error: 'Something went wrong. Please try again or contact us on WhatsApp +52 624 122 3506.' }, 500);
+      }
+      return json({ ok: false, error: 'Not found' }, 404);
+    }
     if (url.pathname === '/api/event') {
       if (request.method !== 'POST') return new Response(null, { status: 405 });
       try {

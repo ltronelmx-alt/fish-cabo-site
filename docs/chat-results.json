@@ -111,7 +111,7 @@
   "area": "Topics",
   "test": "EN cancel",
   "ok": true,
-  "detail": "📄 Cancellations Under our Terms & Conditions, deposits are not refunded for cancellations"
+  "detail": "📄 Cancellations Under our Terms & Conditions, deposits are not refunded (cancellation by "
  },
  {
   "area": "Topics",
@@ -189,7 +189,7 @@
   "area": "Topics",
   "test": "ES cancel",
   "ok": true,
-  "detail": "📄 Cancelaciones Según nuestros términos y condiciones, el depósito no se reembolsa por ca"
+  "detail": "📄 Cancelaciones Según nuestros términos y condiciones, el depósito no se reembolsa (cance"
  },
  {
   "area": "Topics",
@@ -267,7 +267,7 @@
   "area": "Topics",
   "test": "FR cancel",
   "ok": true,
-  "detail": "📄 Annulation Selon nos conditions générales, l'acompte n'est pas remboursé en cas d'annul"
+  "detail": "📄 Annulation Selon nos conditions générales, l'acompte n'est pas remboursé (annulation de"
  },
  {
   "area": "Topics",
@@ -337,75 +337,75 @@
  },
  {
   "area": "PayPal",
-  "test": "EN \"Can I pay with PayPal?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "test": "EN \"Can I pay with PayPal?\" → exactly \"Yes.\" (owner rule), no link",
   "ok": true,
-  "detail": "💳 Deposit payment On each boat page: • Stripe (card, Apple Pay, Google Pay) — 6% fee • Wise — no fee For PayPal payment arrangements, please contact our team v"
+  "detail": "\"Yes.\""
  },
  {
   "area": "PayPal",
-  "test": "EN \"How do I pay the deposit?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "test": "EN \"How do I pay the deposit?\" → payment answer lists Stripe 6 %, Wise, PayPal 6 % + WhatsApp button wa.me/526241223506",
   "ok": true,
-  "detail": "💳 Deposit payment On each boat page: • Stripe (card, Apple Pay, Google Pay) — 6% fee • Wise — no fee For PayPal payment arrangements, please contact our team v"
+  "detail": "💳 Deposit payment On each boat page: • Stripe (card, Apple Pay, Google Pay) — 6% fee • Wise — no fee • PayPal — 6% fee 🚤 See the boats 💬 WhatsApp 11:56"
  },
  {
   "area": "PayPal",
-  "test": "EN \"Do you accept Stripe?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "test": "EN \"Do you accept Stripe?\" → payment answer lists Stripe 6 %, Wise, PayPal 6 % + WhatsApp button wa.me/526241223506",
   "ok": true,
-  "detail": "💳 Deposit payment On each boat page: • Stripe (card, Apple Pay, Google Pay) — 6% fee • Wise — no fee For PayPal payment arrangements, please contact our team v"
+  "detail": "💳 Deposit payment On each boat page: • Stripe (card, Apple Pay, Google Pay) — 6% fee • Wise — no fee • PayPal — 6% fee 🚤 See the boats 💬 WhatsApp 11:56"
  },
  {
   "area": "PayPal",
-  "test": "EN \"Can I pay with Wise?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "test": "EN \"Can I pay with Wise?\" → payment answer lists Stripe 6 %, Wise, PayPal 6 % + WhatsApp button wa.me/526241223506",
   "ok": true,
-  "detail": "💳 Deposit payment On each boat page: • Stripe (card, Apple Pay, Google Pay) — 6% fee • Wise — no fee For PayPal payment arrangements, please contact our team v"
+  "detail": "💳 Deposit payment On each boat page: • Stripe (card, Apple Pay, Google Pay) — 6% fee • Wise — no fee • PayPal — 6% fee 🚤 See the boats 💬 WhatsApp 11:56"
  },
  {
   "area": "PayPal",
-  "test": "ES \"¿Puedo pagar con PayPal?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "test": "ES \"¿Puedo pagar con PayPal?\" → exactly \"Sí.\" (owner rule), no link",
   "ok": true,
-  "detail": "💳 Pago del depósito En la página de cada bote: • Stripe (tarjeta, Apple Pay, Google Pay) — 6% de comisión • Wise — sin comisión Para organizar un pago mediante"
+  "detail": "\"Sí.\""
  },
  {
   "area": "PayPal",
-  "test": "ES \"¿Cómo pago el depósito?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "test": "ES \"¿Cómo pago el depósito?\" → payment answer lists Stripe 6 %, Wise, PayPal 6 % + WhatsApp button wa.me/526241223506",
   "ok": true,
-  "detail": "💳 Pago del depósito En la página de cada bote: • Stripe (tarjeta, Apple Pay, Google Pay) — 6% de comisión • Wise — sin comisión Para organizar un pago mediante"
+  "detail": "💳 Pago del depósito En la página de cada bote: • Stripe (tarjeta, Apple Pay, Google Pay) — 6% de comisión • Wise — sin comisión • PayPal — 6% de comisión 🚤 Ve"
  },
  {
   "area": "PayPal",
-  "test": "ES \"¿Aceptan Stripe?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "test": "ES \"¿Aceptan Stripe?\" → payment answer lists Stripe 6 %, Wise, PayPal 6 % + WhatsApp button wa.me/526241223506",
   "ok": true,
-  "detail": "💳 Pago del depósito En la página de cada bote: • Stripe (tarjeta, Apple Pay, Google Pay) — 6% de comisión • Wise — sin comisión Para organizar un pago mediante"
+  "detail": "💳 Pago del depósito En la página de cada bote: • Stripe (tarjeta, Apple Pay, Google Pay) — 6% de comisión • Wise — sin comisión • PayPal — 6% de comisión 🚤 Ve"
  },
  {
   "area": "PayPal",
-  "test": "ES \"¿Puedo pagar con Wise?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "test": "ES \"¿Puedo pagar con Wise?\" → payment answer lists Stripe 6 %, Wise, PayPal 6 % + WhatsApp button wa.me/526241223506",
   "ok": true,
-  "detail": "💳 Pago del depósito En la página de cada bote: • Stripe (tarjeta, Apple Pay, Google Pay) — 6% de comisión • Wise — sin comisión Para organizar un pago mediante"
+  "detail": "💳 Pago del depósito En la página de cada bote: • Stripe (tarjeta, Apple Pay, Google Pay) — 6% de comisión • Wise — sin comisión • PayPal — 6% de comisión 🚤 Ve"
  },
  {
   "area": "PayPal",
-  "test": "FR \"Je peux payer avec PayPal ?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "test": "FR \"Je peux payer avec PayPal ?\" → exactly \"Oui.\" (owner rule), no link",
   "ok": true,
-  "detail": "💳 Paiement de l'acompte Sur chaque page bateau : • Stripe (carte, Apple Pay, Google Pay) — 6 % de frais • Wise — sans frais Pour organiser un paiement par PayP"
+  "detail": "\"Oui.\""
  },
  {
   "area": "PayPal",
-  "test": "FR \"Comment payer l'acompte ?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "test": "FR \"Comment payer l'acompte ?\" → payment answer lists Stripe 6 %, Wise, PayPal 6 % + WhatsApp button wa.me/526241223506",
   "ok": true,
-  "detail": "💳 Paiement de l'acompte Sur chaque page bateau : • Stripe (carte, Apple Pay, Google Pay) — 6 % de frais • Wise — sans frais Pour organiser un paiement par PayP"
+  "detail": "💳 Paiement de l'acompte Sur chaque page bateau : • Stripe (carte, Apple Pay, Google Pay) — 6 % de frais • Wise — sans frais • PayPal — 6 % de frais 🚤 Voir les"
  },
  {
   "area": "PayPal",
-  "test": "FR \"Vous acceptez Stripe ?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "test": "FR \"Vous acceptez Stripe ?\" → payment answer lists Stripe 6 %, Wise, PayPal 6 % + WhatsApp button wa.me/526241223506",
   "ok": true,
-  "detail": "💳 Paiement de l'acompte Sur chaque page bateau : • Stripe (carte, Apple Pay, Google Pay) — 6 % de frais • Wise — sans frais Pour organiser un paiement par PayP"
+  "detail": "💳 Paiement de l'acompte Sur chaque page bateau : • Stripe (carte, Apple Pay, Google Pay) — 6 % de frais • Wise — sans frais • PayPal — 6 % de frais 🚤 Voir les"
  },
  {
   "area": "PayPal",
-  "test": "FR \"Je peux payer avec Wise ?\" → payment answer with PayPal via WhatsApp, Stripe 6 %, Wise, wa.me/526241223506",
+  "test": "FR \"Je peux payer avec Wise ?\" → payment answer lists Stripe 6 %, Wise, PayPal 6 % + WhatsApp button wa.me/526241223506",
   "ok": true,
-  "detail": "💳 Paiement de l'acompte Sur chaque page bateau : • Stripe (carte, Apple Pay, Google Pay) — 6 % de frais • Wise — sans frais Pour organiser un paiement par PayP"
+  "detail": "💳 Paiement de l'acompte Sur chaque page bateau : • Stripe (carte, Apple Pay, Google Pay) — 6 % de frais • Wise — sans frais • PayPal — 6 % de frais 🚤 Voir les"
  },
  {
   "area": "Detection",

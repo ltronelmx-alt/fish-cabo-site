@@ -25,6 +25,8 @@ for o, n in PAIRS:
     for el in b.select('script,style,noscript'): el.decompose()
     # New Google/Tripadvisor review carousel (owner-approved addition, see docs/GOOGLE-TRIPADVISOR-REVIEWS-FINAL-REPORT.md): not part of the original page
     for el in b.select('section.rv-section'): el.decompose()
+    # Online booking entry points (owner-approved addition: BOOK THIS BOAT on boat pages + fleet listing), marked data-booking
+    for el in b.select('[data-booking]'): el.decompose()
     # Latest-log block is rendered by JS on the old site ("Loading..." in static HTML): skip it on both sides
     for el in a.find_all(string=re.compile('Loading latest fishing log')): el.parent.decompose()
     ll = b.select_one('.ll-wrap'); ll and ll.decompose()

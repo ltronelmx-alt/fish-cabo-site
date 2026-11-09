@@ -2,10 +2,13 @@
 // Replaces the Squarespace form block. Same fields, labels, options and button text as the original form.
 // Submits to the Worker (/api/contact): validation + Cloudflare Turnstile. No data is stored.
 import form from '../data/contact-form.json';
+import catalogue from '../data/boats.json';
+// /contact?request=second-trip&boat=boat-03&date=2026-12-01&duration=6 (from /book-now "REQUEST AVAILABILITY") pre-fills the form
+const boatLabels = Object.fromEntries(catalogue.boats.map((b) => [b.id, b.contactFormLabel]));
 const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY || '0x4AAAAAAFyrH2-R96GEy7AN'; // real Turnstile site key (public; Invisible mode; hostnames fish-cabo.com + staging workers.dev)
 const id = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 ---
-<form class="cform card" id="contact-form" method="post" action="/api/contact" novalidate>
+<form class="cform card" id="contact-form" method="post" action="/api/contact" novalidate data-boats={JSON.stringify(boatLabels)}>
   {form.fields.map((f) => f.type === 'name' ? (
     <fieldset class="cf-row two">
       <legend>{f.title}{f.required && <span aria-hidden="true"> *</span>}</legend>
@@ -32,10 +35,31 @@ const id = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^
   <button class="btn btn-primary no-arrow" type="submit">{form.submit}</button>
   <p class="cf-msg" role="status" aria-live="polite"></p>
 </form>
-<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script is:inline src="/js/efc-turnstile.js" defer></script>
+<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer></script>
 <script>
   const f = document.getElementById('contact-form') as HTMLFormElement | null;
   const msg = f?.querySelector('.cf-msg') as HTMLElement | null;
+  // pre-fill from /book-now "REQUEST AVAILABILITY" (boat already booked that day, or price on request)
+  if (f && location.search) {
+    const q = new URLSearchParams(location.search);
+    const labels = JSON.parse(f.dataset.boats || '{}') as Record<string, string>;
+    const set = (name: string, v: string) => { const el = f.elements.namedItem(name) as HTMLInputElement | HTMLSelectElement | null; if (el && v) el.value = v; };
+    const norm = (s: string) => s.replace(/\s+/g, ' ').trim();
+    const pick = (name: string, want: string) => {
+      const sel = f.elements.namedItem(name) as HTMLSelectElement | null;
+      const o = sel && [...sel.options].find((x) => norm(x.value) === norm(want));
+      if (sel && o) sel.value = o.value;
+    };
+    const boat = labels[q.get('boat') || ''];
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(q.get('date') || '') ? q.get('date')! : '';
+    const dur = q.get('duration') === '6' ? '3/4 day (6 Hour)' : q.get('duration') === '8' ? 'Full day (8 hour)' : '';
+    if (boat) pick('boats', boat);
+    if (date) set('date', date);
+    if (dur) pick('duration', dur);
+    if (boat && q.get('request') === 'second-trip' && !(f.elements.namedItem('message') as HTMLTextAreaElement).value)
+      set('message', `Availability request: ${norm(boat)}${date ? ' on ' + date : ''}${dur ? ', ' + dur : ''}. The online booking shows this date as already booked (or price on request) — is a trip possible?`);
+  }
   f?.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!f.checkValidity()) { f.reportValidity(); if (msg) msg.textContent = 'Please complete all required fields.'; return; }

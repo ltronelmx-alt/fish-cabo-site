@@ -1,12 +1,16 @@
 // Runs after `astro build`. Writes _headers, robots.txt and sitemap.xml.
 // Staging (default): everything is noindex and robots.txt blocks all crawlers.
 // Production: only when PUBLIC_SITE_ENV=production is set explicitly.
-import { readdirSync, statSync, writeFileSync, readFileSync } from 'node:fs';
+import { readdirSync, statSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const DIST = 'dist';
 const SITE = 'https://fish-cabo.com';
 const isProd = process.env.PUBLIC_SITE_ENV === 'production';
+// PUBLIC LAUNCH SWITCH (src/data/launch.json): a production build made while online booking is closed carries NO
+// /book-now pages (they answer 404 like any unknown URL) and no /book-now sitemap entry.
+const bookingOpen = !isProd || JSON.parse(readFileSync('src/data/launch.json', 'utf8')).PUBLIC_BOOKING_LAUNCHED === true;
+if (!bookingOpen) { rmSync(join(DIST, 'book-now.html'), { force: true }); rmSync(join(DIST, 'book-now'), { recursive: true, force: true }); console.log('postbuild: online booking CLOSED (launch.json) — /book-now pages removed from the production build'); }
 
 const csp = [
   "default-src 'self'",
@@ -33,6 +37,10 @@ ${isProd ? '' : '  X-Robots-Tag: noindex, nofollow\n'}
 /admin/*
   ! Content-Security-Policy
   Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-eval' https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https://api.github.com https://github.com https://unpkg.com https://*.githubusercontent.com; frame-src 'self' blob:; font-src 'self' data: https://unpkg.com; frame-ancestors 'none'
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
+
+/book-now/*
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store
 
@@ -95,6 +103,8 @@ try {
     extra.push(`<url><loc>${SITE}${path}</loc>${date ? `<lastmod>${date}</lastmod>` : ''}</url>`);
   }
 } catch {}
+// Booking page (new URL, indexable). Its private sub-pages (/book-now/confirmation, /book-now/canceled) are noindex.
+try { readFileSync(join(DIST, 'book-now.html')); if (!known.has('/book-now')) extra.push(`<url><loc>${SITE}/book-now</loc></url>`); } catch {}
 // F7 — /cabo-fishing is a duplicate of the homepage and canonicalises to "/": list the canonical homepage URL instead
 const fixed = orig.replace(`<loc>${SITE}/cabo-fishing</loc>`, `<loc>${SITE}/</loc>`);
 // F9 — sitemap <image:loc>: the exact same files, self-hosted (all 102 references have a local copy in /media)

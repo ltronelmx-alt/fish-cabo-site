@@ -14,9 +14,36 @@
     "run_worker_first": ["/*", "!/media/*", "!/_astro/*", "!/fonts/*", "!/og/*", "!/js/*", "!/cms/*", "!/favicon.ico"]
   },
   "observability": { "enabled": true },
+  // Booking system: Cloudflare D1 (free plan: 5 GB, 5M reads + 100k writes per day). Wrangler creates the database
+  // automatically on the first deploy (no database_id needed). Tables are created by the Worker itself (worker/booking/schema.ts).
+  "d1_databases": [{ "binding": "DB", "database_name": "fish-cabo-bookings", "database_id": "80275ccc-e82f-4ccd-ba5f-fc947bbc481d" }],
+  // Hourly: release expired holds, Wise expiry notices, retry confirmation emails that failed (free plan: 5 cron triggers).
+  "triggers": { "crons": ["17 * * * *"] },
   // Enable after creating the dataset (free): uncomment to store click counts.
   // "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "fishcabo_events" }],
   // Production configuration. Staging isolation does not depend on this value: on *.workers.dev the Worker
   // always adds X-Robots-Tag noindex, serves robots.txt "Disallow: /" and applies the STAGING_PASSWORD lock.
-  "vars": { "SITE_ENV": "production" }
+  // keep variables the owner set in the Cloudflare dashboard (a deploy must never erase CONTACT_FROM or similar)
+  "keep_vars": true,
+  "vars": { "SITE_ENV": "production" },
+  // Worker Previews (branch builds). Since Wrangler 4.135, Workers Builds deploys non-production branches with
+  // `npx wrangler preview`, which REQUIRES this block (error "Your Wrangler configuration is missing a `previews` block").
+  // Previews inherit NOTHING from production: no vars, no D1, no secrets. Assets, compatibility_date and cron triggers
+  // stay at the top level (crons never run on Previews). Secrets for Previews are set separately (Previews base config).
+  "previews": {
+    // Plain-text staging variables live here (the source of truth for every Preview deploy; values typed in the dashboard
+    // would be replaced by this block on the next deploy). Secrets (ADMIN_PASSWORD, STRIPE_*, RESEND_API_KEY) stay in
+    // the dashboard and are NOT affected. Production vars (top-level "vars") are unchanged.
+    "vars": {
+      "SITE_ENV": "staging",
+      "CONTACT_TO": "contact@fish-cabo.com",
+      "CONTACT_FROM": "Exotic Fish Cabo STAGING <bookings@fish-cabo.com>",
+      // staging only: origin used for the /booking-admin link in owner emails (production always uses https://fish-cabo.com)
+      "SITE_URL": "https://booking-system-fish-cabo.small-boat-4235.workers.dev"
+    },
+    // Staging-only booking database (created by the owner 2026-11-09). Never the production database.
+    "d1_databases": [
+      { "binding": "DB", "database_name": "fish-cabo-bookings-staging", "database_id": "360ad3c7-d0e5-42ee-84ea-8e5038044bed" }
+    ]
+  }
 }

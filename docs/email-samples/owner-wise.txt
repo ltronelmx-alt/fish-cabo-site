@@ -1,0 +1,43 @@
+SUBJECT: [TEST] ✅ CONFIRMED EFC-7KQ2MZ — 8 HOURS — Boat #3, 2026-12-11
+
+[TEST] New CONFIRMED booking (deposit verified)
+
+TRIP DURATION: 8 HOURS
+CUSTOMER EMAIL: ana@example.com
+
+The customer received an automatic deposit receipt only. Send your official confirmation email personally.
+
+TRIP DURATION: 8 HOURS (full day)
+CUSTOMER EMAIL: ana@example.com
+Customer: Ana Ux
+Phone / WhatsApp: +1 555 000 2222
+Status: CONFIRMED — deposit verified
+Booking reference: EFC-7KQ2MZ
+Boat: Boat #3 (27 ft)
+Fishing date: Friday, December 11, 2026
+People aboard: 3
+Special requests / notes: Two kids aboard
+Total charter price: $800 USD
+Required deposit: $200.00 USD
+Deposit verified: $200.00 USD
+Card processing fee: none
+Total charged to the customer: $200.00 USD
+Remaining balance (cash on the fishing day): $600 USD
+Payment method: Wise
+Payment status: VERIFIED
+Verified at: Sunday, November 8, 2026 at 8:12 PM (Los Cabos time)
+Transaction reference: Wise TR-88213
+Booked via: Website
+
+Customer (contact form fields)
+First name: Ana
+Last name: Ux
+Email: ana@example.com
+Phone: +1 555 000 2222
+Date: 2026-12-11
+People aboard: 3
+Duration: Full day (8 hours)
+Boat: Boat #3 (27 ft)
+Message: Two kids aboard
+
+Manage: https://fish-cabo.com/booking-admin

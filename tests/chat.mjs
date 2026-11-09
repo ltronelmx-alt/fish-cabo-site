@@ -89,7 +89,9 @@ for (const l of langs) {
     fr: ['Je peux payer avec PayPal ?', "Comment payer l'acompte ?", 'Vous acceptez Stripe ?', 'Je peux payer avec Wise ?'],
     es: ['¿Puedo pagar con PayPal?', '¿Cómo pago el depósito?', '¿Aceptan Stripe?', '¿Puedo pagar con Wise?'],
   };
-  const NEED = { en: /• PayPal — 6% fee/, fr: /• PayPal — 6 % de frais/, es: /• PayPal — 6% de comisión/ };
+  // open build (staging / after the launch switch): online booking only, PayPal shown as coming soon (owner 2026-11-09:
+  // the old boat-page payment buttons disappear at the launch). The pre-launch wording is checked in tests/launch-switch.mjs.
+  const NEED = { en: /Stripe \(\+6% processing fee\) or Wise \(no fee\)\. PayPal: coming soon\./, fr: /Stripe \(\+6 % de frais\) ou Wise \(sans frais\)\. PayPal : bientôt disponible\./, es: /Stripe \(\+6 % de comisión\) o Wise \(sin comisión\)\. PayPal: próximamente\./ };
   for (const l of langs) {
     const p = await page('en-US'); await open(p); await p.click('#btn-' + l);
     const YES = { en: 'Yes.', fr: 'Oui.', es: 'Sí.' };
@@ -105,7 +107,7 @@ for (const l of langs) {
       const ok = /PayPal/.test(txt) && NEED[l].test(txt) && /Stripe/.test(txt) && /6 ?%/.test(txt) && /Wise/.test(txt)
         && !/unavailable|indisponible|no est[áa] disponible/i.test(txt) && !links.some((h) => /paypal\./i.test(h))
         && wa.host === 'wa.me' && wa.path === '/526241223506' && !MIX[l].test(txt);
-      rec('PayPal', `${l.toUpperCase()} "${q}" → payment answer lists Stripe 6 %, Wise, PayPal 6 % + WhatsApp button wa.me/526241223506`, ok, txt.replace(/\s+/g, ' ').slice(0, 160));
+      rec('PayPal', `${l.toUpperCase()} "${q}" → payment answer: Stripe +6 %, Wise, PayPal coming soon + WhatsApp button wa.me/526241223506`, ok, txt.replace(/\s+/g, ' ').slice(0, 160));
     }
     await p.context().close();
   }
@@ -163,7 +165,7 @@ for (const dev of ['iPhone 13', 'Pixel 7']) {
   await p.fill('#efc-input', 'price'); await p.tap('#efc-send'); await p.waitForFunction(() => document.querySelectorAll('#efc-messages .efc-bot').length > 1);
   rec('Mobile', `${dev}: opens, fits screen, send by tap`, box && box.x >= 0 && box.x + box.width <= vw + 1 && /350 USD/.test(await lastBot(p)), JSON.stringify(box));
   await p.tap('#efc-close'); await p.waitForTimeout(200);
-  const bookVisible = await p.locator('a.btn-stripe').first().isVisible();
+  const bookVisible = await p.locator('a[href="/book-now?boat=boat-01"]').first().isVisible(); // BOOK THIS BOAT (open build)
   rec('Mobile', `${dev}: closed chat leaves booking buttons usable`, !(await p.locator('#efc-chat-window').isVisible()) && bookVisible);
   await ctx.close();
 }

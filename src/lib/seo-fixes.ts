@@ -56,6 +56,8 @@ export function fixHead(tags: string[], opts: { canonical?: string; fallback?: {
           t = t.replace(/content="[^"]*"/, `content="${opts.fallback.url}"`); if (/og:image|twitter:image/.test(t)) usedFallback = true;
         }
       }
+      // F13 — WebSite JSON-LD (Squarespace) carries an empty "description": "" → removed (an empty property is invalid data; no text invented)
+      if (/application\/ld\+json/.test(t) && /"@type"\s*:\s*"WebSite"/.test(t)) t = t.replace(/"description"\s*:\s*"",?\s*/, '');
       // F12 — social previews: large image card, and the page's own photo instead of the small logo (owner request 2026-11-04)
       if (/name="twitter:card"/.test(t)) t = t.replace(/content="summary"/, 'content="summary_large_image"');
       if (/property="og:image"|name="twitter:image"/.test(t) && /logo-low-res-fishing-san-jose-del-cabo/.test(t) && opts.fallback) {

@@ -1,0 +1,19 @@
+SUBJECT: [TEST] WISE — EXPIRED EFC-7KQ2MZ — DATE RELEASED
+
+[TEST] WISE — EXPIRED — DATE RELEASED
+
+No payment was verified. The booking has expired and the date has been released (it is available again for booking).
+The customer has been told by email that the date was released. If the deposit arrives later, you can still confirm it from the booking dashboard while the date is free.
+
+Status: EXPIRED — no payment verified, date released
+Booking reference: EFC-7KQ2MZ
+Customer: Ana Ux
+CUSTOMER EMAIL: ana@example.com
+Phone / WhatsApp: +1 555 000 2222
+Boat: Boat #3 (27 ft)
+Fishing date: Friday, December 11, 2026
+TRIP DURATION: 8 HOURS
+Expected Wise deposit: $200 USD
+Expired at (payment deadline): Tuesday, November 10, 2026 at 12:09 PM (Los Cabos time)
+
+Booking dashboard: https://fish-cabo.com/booking-admin

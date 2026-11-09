@@ -1,0 +1,6 @@
+{
+  "_doc": "PUBLIC LAUNCH SWITCH (owner, 2026-11-09) — the ONLY place that opens online booking on fish-cabo.com. false: the production site behaves as before the booking system (BOOK NOW → /fishing-boats, chat → /contact, the original Stripe/Wise/PayPal buttons on the boat pages, no BOOK THIS BOAT, no /book-now page, booking API closed (503); /booking-admin and the signed Stripe webhook stay available). true (one commit, one deploy): every BOOK NOW / BOOK THIS BOAT / chat link → /book-now, old direct-payment buttons removed, /book-now and the booking API open — all at the same time. Staging and local builds (not PUBLIC_SITE_ENV=production / not SITE_ENV=production) are always open. Change only with the owner's explicit authorization.",
+  "PUBLIC_BOOKING_LAUNCHED": false,
+  "_doc_card": "CARD PAYMENTS (owner, 2026-11-09: Wise-only launch while Stripe identity verification blocks the live key). false: on production the card option is shown disabled ('Card payments temporarily unavailable'), no Stripe Checkout Session can be created, Wise works normally. To enable cards later: owner sets the live STRIPE_SECRET_KEY secret, then one commit sets this to true and adds BOOKING_LIVE=approved — no rebuild of the booking system. Staging/local builds ignore it (cards follow the Stripe key there).",
+  "CARD_PAYMENTS_ENABLED": false
+}

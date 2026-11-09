@@ -5,12 +5,14 @@ import Rich from './Rich.astro';
 import { liWrap } from '../lib/design-markup';
 import OImg from './OImg.astro';
 import OBtn from './OBtn.astro';
+import { BOOKING_OPEN } from '../lib/launch';
 import LatestLog from './LatestLog.astro';
 import ContactForm from './ContactForm.astro';
 import { byH2, type Page, type Block } from '../lib/original';
 import { pictures, media } from '../lib/media';
 import { videoH1 } from '../lib/seo-fixes';
 import { SITE } from '../data/site';
+import catalogue from '../data/boats.json';
 
 interface Props { page: Page & { videos?: string[] }; slug: string }
 const { page, slug } = Astro.props;
@@ -26,6 +28,9 @@ const first = S[0];
 const heroImgBlock = first && !first.bg ? first.blocks.find((b) => b.kind === 'img') : undefined;
 const isHero = !!first && hasH1(first) && (!!first.bg || !!heroImgBlock);
 let codeIdx = 0;
+// Boat pages: "BOOK THIS BOAT" (online booking) is added once, just before the original payment buttons
+const bookBoat = catalogue.boats.find((b) => b.url === `/${slug}`);
+let bookShown = false;
 // F4 — video item pages had no H1: the video title (first H2 of the item) becomes the H1
 const isVideoItem = slug.startsWith('cabo-fishing-videos/v/') && !S.some((sec) => sec.blocks.some((b) => /<h1[\s>]/.test(b.html || '')));
 // hero photo placed as a content block: the section takes the photo's own proportions, so the whole photo shows
@@ -33,6 +38,9 @@ const heroM = heroImgBlock?.path ? media(heroImgBlock.path) : null;
 const heroAr = heroM ? `${heroM.width} / ${heroM.height}` : '';
 const heroPortrait = !!heroM && heroM.height > heroM.width * 0.9;
 
+// legacy direct-payment buttons (Stripe / PayPal / Wise links) — hidden only after the owner-approved launch (SITE.legacyPaymentButtons)
+const isPayBtn = (x: Block) => /^(stri?pe|wise|paypal)$/i.test((x.text || '').trim()) || /stripe\.com|wise\.com|paypal\./i.test(x.href || '');
+const hidePay = !SITE.legacyPaymentButtons && !!catalogue.boats.find((b) => b.url === `/${slug}`);
 // Group consecutive blocks of the same kind (images → gallery row, buttons → button row). Order is preserved.
 function groups(blocks: Block[]) {
   const out: { kind: string; items: Block[] }[] = [];
@@ -78,6 +86,7 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
               {g.items.map((b) => <OImg block={b} class:list={['reveal', /Cabo Casita Keeper/i.test(b.alt || '') && 'o-small-logo']} sizes={g.items.length > 1 ? '(min-width: 900px) 33vw, 92vw' : '(min-width: 1240px) 1200px, 92vw'} />)}
             </div>
           );
+          if (g.kind === 'button' && hidePay && g.items.every(isPayBtn)) return null;
           if (g.kind === 'button') return (
             <div class:list={['btn-row o-btns', stripeRow(g) && next?.kind === 'img' && next.items.length === 1 && 'o-stripe-row']}>{g.items.map((b) => <OBtn block={b} primary={/book/i.test((b.href || '') + (b.text || ''))} track={/stripe|wise|paypal/i.test(b.href || b.text || '') ? `pay_${(b.text || '').toLowerCase()}_${slug.split('/').pop()}` : undefined} />)}
               {stripeRow(g) && next?.kind === 'img' && next.items.length === 1 && <OImg block={next.items[0]} class="o-paymethods" sizes="240px" />}</div>
@@ -88,7 +97,15 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
             const pay = isPayLabel(b);
             return chunks.length > 1
               ? <div class="o-text">{chunks.map((c) => <Rich html={pictures(c)} mode="cards" class="reveal o-chunk" />)}</div>
-              : <Rich html={pictures(b.html || '')} mode="cards" class:list={['reveal', pay && 'o-paylabel']} />;
+              : <>
+                  {BOOKING_OPEN && pay && bookBoat && !bookShown && (bookShown = true) && (
+                    <div class="o-book" data-booking>
+                      <p class="o-book-t"><strong>Book online</strong> — choose your date and pay the deposit securely.</p>
+                      <div class="btn-row"><a class="btn btn-primary" href={`/book-now?boat=${bookBoat.id}`} data-track={`book_this_boat_${bookBoat.id}`}>BOOK THIS BOAT</a></div>
+                    </div>
+                  )}
+                  {!(pay && hidePay) && <Rich html={pictures(b.html || '')} mode="cards" class:list={['reveal', pay && 'o-paylabel']} />}
+                </>;
           }
           if (b.kind === 'code') {
             const html = b.html || '';
@@ -272,6 +289,9 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
   .o-html:not(.article) > article:has(> h2.as-h1) > h2 a { text-decoration: none; }
   .o-html:not(.article) > article:has(> h2.as-h1) > p { font-size: 0.92em; }
   .o-html:not(.article) > article:has(> h2.as-h1) > a:last-child { margin-top: auto; align-self: flex-start; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; text-decoration-color: var(--orange); text-underline-offset: 5px; }
+  .o-book { display: grid; gap: 12px; justify-items: start; padding: clamp(18px, 2vw, 26px); border: 1px solid var(--line); border-left: 4px solid var(--orange); border-radius: var(--radius-sm); background: var(--white); margin-block: 8px 20px; }
+  .o-book-t { margin: 0; font-family: var(--font-ui); font-size: 16px; }
+  .o-book .btn-row { margin: 0; }
   .o-stripe-row { align-items: center; }
   .o-stripe-row .o-paymethods { width: auto; max-width: min(240px, 60vw); box-shadow: none !important; background: transparent !important; border-radius: 6px; }
   .o-stripe-row .o-paymethods img { height: 26px !important; width: auto !important; }

@@ -1,0 +1,612 @@
+// Booking engine: availability, reservations, Stripe Checkout (test mode until the owner approves live), Wise, webhook.
+//
+// Owner rules (2026-11-06):
+// - ONE automatically confirmed trip per boat per calendar day (6 h or 8 h), America/Mazatlan dates.
+// - Boat already booked that day → "REQUEST AVAILABILITY" opens a prefilled WhatsApp chat (customer presses Send);
+//   no deposit, no automatic second trip. Only the owner can record a second trip (admin override, see admin.ts).
+// - Prices (2026-11-08): server-side only (pricing.ts → D1). The public API returns ONE quote at a time (SHOW MY PRICE),
+//   never the grid. Boat #1 = 6 hours only (19 valid combinations).
+// - Stripe = deposit + 6 %; Wise = deposit, 24 h hold, manual verification; bookings ≥ 24 h before departure.
+// - Owner email ONLY once the deposit is verified and the booking CONFIRMED (deduplicated).
+// Concurrency: the unique index (boat_id, date, slot) WHERE holds_slot = 1 guarantees one holder per slot.
+import { ensureSchema, getSettings } from './schema';
+import { json, nowIso, newId, newRef, newToken, hmacHex, safeEqual, rateLimit, localToday, localTs, isDate, addDays } from './util';
+import { cardChargeCents } from './pricing';
+import * as M from './emails';
+import type { Res } from './emails';
+
+export interface BEnv {
+  DB?: D1Database;
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_WEBHOOK_SECRET?: string;
+  STRIPE_API_BASE?: string; // local tests only (honoured on localhost/127.0.0.1 only)
+  BOOKING_LIVE?: string; // must be "approved" (set by the owner) before a live Stripe key is accepted
+  ADMIN_PASSWORD?: string;
+  TURNSTILE_SECRET?: string;
+  RESEND_API_KEY?: string;
+  CONTACT_TO?: string;
+  CONTACT_FROM?: string;
+  SITE_ENV?: string; // "production" (top-level vars) | "staging" (previews.vars) — see envmode.ts
+  SITE_URL?: string; // staging only: trusted origin used for the /booking-admin link in owner emails
+  RESEND_API_BASE?: string; // local tests only (honoured off production, on 127.0.0.1 only)
+}
+
+export const HOLDING = ['HELD', 'AWAITING_PAYMENT', 'AWAITING_PAYMENT_VERIFICATION'] as const;
+const TEST_TURNSTILE_SECRET = '1x0000000000000000000000000000000AA'; // Cloudflare's public test secret (pairs with test site key 1x00000000000000000000AA)
+import { isProductionHost, isProductionEnv, isStagingEnv, isLocalHost as isLocal, adminUrl, bookingOpen, cardEnabled } from './envmode';
+export { isProductionHost, isProductionEnv, isStagingEnv, adminUrl, bookingOpen, cardEnabled };
+/** Terms & Privacy versions the customer accepts by completing a booking ("Last updated" dates of the published pages). */
+export const TERMS_VERSION = 'terms:2026-03;privacy:2026-02';
+/** Public boat reference: "Boat #3 (27 ft)" — boat numbers and sizes only, never vessel or captain names. */
+export const boatLabel = (r: { boat_number: number; boat_size_ft: number }) => `Boat #${r.boat_number} (${r.boat_size_ft} ft)`;
+
+export type Boat = { id: string; number: number; name: string; slug: string; url: string; size_ft: number; capacity: number; deposit_usd: number; active: number; p6: number | null; p8: number | null };
+export const priceOf = (b: Boat, hours: number) => (hours === 6 ? b.p6 : hours === 8 ? b.p8 : null);
+export const durationsOf = (b: Boat) => ([6, 8] as const).filter((h) => priceOf(b, h) != null);
+
+export async function db(env: BEnv) {
+  if (!env.DB) throw new Error('DB binding missing');
+  await ensureSchema(env.DB);
+  return env.DB;
+}
+
+export async function boats(d: D1Database): Promise<Boat[]> {
+  const { results } = await d.prepare(
+    `SELECT b.*, (SELECT price_usd FROM prices WHERE boat_id = b.id AND hours = 6) p6, (SELECT price_usd FROM prices WHERE boat_id = b.id AND hours = 8) p8
+     FROM boats b ORDER BY number`,
+  ).all<Boat>();
+  return results;
+}
+
+/** Release every hold that has expired (also run by the hourly cron). */
+const EXPIRING = `holds_slot = 1 AND status IN ('HELD','AWAITING_PAYMENT','AWAITING_PAYMENT_VERIFICATION') AND hold_expires_at IS NOT NULL AND hold_expires_at < ?1`;
+/** Release holds whose deadline has passed (never before it). One atomic batch: the audit entry is written for exactly
+ * the rows that this UPDATE expires, so a booking is expired — and logged — once, whoever runs the sweep first. */
+export const sweep = (d: D1Database, now = nowIso()) => [
+  d.prepare(`INSERT INTO audit_log (at, actor, action, reservation_id, details)
+             SELECT ?1, 'system', 'hold_expired', id, json_object('ref', ref, 'payment', payment_method, 'deadline', hold_expires_at,
+               'reason', CASE WHEN payment_method = 'wise' THEN 'No Wise deposit verified before the 24-hour deadline; date released.'
+                              ELSE 'Card payment not completed before the hold deadline; date released.' END)
+             FROM reservations WHERE ${EXPIRING}`).bind(now),
+  d.prepare(`UPDATE reservations SET holds_slot = 0, status = 'EXPIRED', updated_at = ?1 WHERE ${EXPIRING}`).bind(now),
+];
+export const runSweep = (d: D1Database, now = nowIso()) => d.batch(sweep(d, now));
+
+export const audit = (d: D1Database, actor: string, action: string, reservationId: string | null, details: unknown = null) =>
+  d.prepare(`INSERT INTO audit_log (at, actor, action, reservation_id, details) VALUES (?, ?, ?, ?, ?)`).bind(nowIso(), actor, action, reservationId, details == null ? null : JSON.stringify(details));
+
+export const RES_COLS = `r.*, b.name boat_name, b.number boat_number, b.size_ft boat_size_ft,
+  (SELECT external_id FROM payments p WHERE p.reservation_id = r.id AND p.status IN ('paid','verified') ORDER BY p.id DESC LIMIT 1) payment_ref,
+  (SELECT amount_cents FROM payments p WHERE p.reservation_id = r.id AND p.status IN ('paid','verified') ORDER BY p.id DESC LIMIT 1) payment_amount_cents,
+  (SELECT created_at FROM payments p WHERE p.reservation_id = r.id AND p.status IN ('paid','verified') ORDER BY p.id DESC LIMIT 1) payment_at`;
+export async function loadRes(d: D1Database, where: string, ...args: unknown[]): Promise<Res | null> {
+  return d.prepare(`SELECT ${RES_COLS} FROM reservations r JOIN boats b ON b.id = r.boat_id WHERE ${where}`).bind(...args).first<Res>();
+}
+
+// ---------- availability ----------
+export type DayState = 'available' | 'booked' | 'pending' | 'blocked' | 'too_soon' | 'past' | 'closed';
+export async function dayStates(d: D1Database, boatId: string, from: string, to: string): Promise<Record<string, DayState>> {
+  const s = await getSettings(d);
+  const today = localToday();
+  const lastDay = addDays(today, s.booking_window_days);
+  const [blocked, taken] = await Promise.all([
+    d.prepare(`SELECT date FROM blocked_dates WHERE boat_id IN (?, '*') AND date BETWEEN ? AND ?`).bind(boatId, from, to).all<{ date: string }>(),
+    d.prepare(`SELECT date, status FROM reservations WHERE boat_id = ? AND slot = 0 AND holds_slot = 1 AND date BETWEEN ? AND ?
+               AND (status = 'CONFIRMED' OR hold_expires_at IS NULL OR hold_expires_at >= ?)`).bind(boatId, from, to, nowIso()).all<{ date: string; status: string }>(),
+  ]);
+  const bl = new Set(blocked.results.map((r) => r.date));
+  const tk = new Map(taken.results.map((r) => [r.date, r.status]));
+  const out: Record<string, DayState> = {};
+  for (let day = from; day <= to; day = addDays(day, 1)) {
+    if (day < today) out[day] = 'past';
+    else if (day > lastDay) out[day] = 'closed';
+    else if (bl.has(day)) out[day] = 'blocked';
+    else if (tk.has(day)) out[day] = tk.get(day) === 'CONFIRMED' ? 'booked' : 'pending';
+    else if (localTs(day, s.departure_hour_local + (s.departure_minute_local || 0) / 60) - Date.now() < s.min_lead_hours * 3600e3) out[day] = 'too_soon';
+    else out[day] = 'available';
+  }
+  return out;
+}
+
+/** Public catalogue: boats, capacities and the durations offered. NO prices and NO deposits (see apiQuote). */
+export async function apiBoats(env: BEnv) {
+  const d = await db(env);
+  const s = await getSettings(d);
+  return json({
+    ok: true,
+    cardPayments: cardPaymentsOn(env), // false → the page shows 'Card payments temporarily unavailable' (Wise only)
+    stripeFeePct: s.stripe_fee_pct, minLeadHours: s.min_lead_hours, wiseHoldHours: s.wise_hold_hours, today: localToday(), lastMonth: addDays(localToday(), s.booking_window_days).slice(0, 7), timezone: 'America/Mazatlan',
+    boats: (await boats(d)).map((b) => ({ id: b.id, number: b.number, sizeFt: b.size_ft, capacity: b.capacity, durations: durationsOf(b), bookable: !!b.active && durationsOf(b).length > 0 })),
+  });
+}
+
+/** SHOW MY PRICE: one quote for one boat + duration + date. Discreet anti-scraping: same-origin browser request
+ * (custom header), per-IP limits, no price grid anywhere. A person can still read prices one by one — that is accepted. */
+export async function apiQuote(request: Request, env: BEnv) {
+  if (request.method !== 'POST') return json({ ok: false, error: 'Method not allowed' }, 405);
+  const o = request.headers.get('origin');
+  if (!o || new URL(o).host !== new URL(request.url).host || request.headers.get('x-efc-quote') !== '1') return json({ ok: false, error: 'Forbidden' }, 403);
+  const body = (await request.json().catch(() => ({}))) as { boat?: string; hours?: number | string; date?: string };
+  const boatId = String(body.boat || ''), hours = Number(body.hours), date = String(body.date || '');
+  if (!/^boat-\d{2}$/.test(boatId) || (hours !== 6 && hours !== 8) || !isDate(date)) return json({ ok: false, error: 'Please choose a boat, a trip duration and a date.' }, 400);
+  const d = await db(env);
+  const ip = request.headers.get('cf-connecting-ip') || 'local';
+  // generous for real customers (comparing every boat and both durations takes 19 quotes), tight for bulk collection
+  if (!(await rateLimit(d, `quote:h:${ip}`, 40, 3600)) || !(await rateLimit(d, `quote:d:${ip}`, 120, 86400))) {
+    await audit(d, 'system', 'quote_rate_limited', null, { ip: ip.replace(/[\d]+$/, 'x') }).run();
+    return json({ ok: false, error: 'You have checked many prices in a short time. Please try again later, or message us on WhatsApp +52 624 122 3506 and we will help you right away.' }, 429);
+  }
+  const boat = (await boats(d)).find((b) => b.id === boatId);
+  if (!boat || !boat.active) return json({ ok: false, error: 'This boat is not available online. Please contact us.' }, 404);
+  const total = priceOf(boat, hours);
+  if (total == null) return json({ ok: false, code: 'DURATION', error: `Boat #${boat.number} offers ${durationsOf(boat).map((h) => h + '-hour').join(' or ')} trips only.` }, 409);
+  const state = (await dayStates(d, boat.id, date, date))[date];
+  if (state !== 'available') return json({ ok: false, code: 'UNAVAILABLE', error: UNAVAILABLE_MSG }, 409);
+  const s = await getSettings(d);
+  return json({ ok: true, boat: boat.id, number: boat.number, hours, date, total, cardFeePct: s.stripe_fee_pct });
+}
+
+/** Deposit + amounts for the final payment summary (asked only after the customer accepted the quote). */
+export async function apiSummary(request: Request, env: BEnv) {
+  if (request.method !== 'POST') return json({ ok: false, error: 'Method not allowed' }, 405);
+  const o = request.headers.get('origin');
+  if (!o || new URL(o).host !== new URL(request.url).host || request.headers.get('x-efc-quote') !== '1') return json({ ok: false, error: 'Forbidden' }, 403);
+  const body = (await request.json().catch(() => ({}))) as { boat?: string; hours?: number | string };
+  const d = await db(env);
+  const ip = request.headers.get('cf-connecting-ip') || 'local';
+  if (!(await rateLimit(d, `quote:h:${ip}`, 40, 3600))) return json({ ok: false, error: 'Please try again later.' }, 429);
+  const boat = (await boats(d)).find((b) => b.id === String(body.boat || ''));
+  const total = boat ? priceOf(boat, Number(body.hours)) : null;
+  if (!boat || total == null) return json({ ok: false, error: 'Please choose a boat and a trip duration.' }, 400);
+  const s = await getSettings(d);
+  const card = cardChargeCents(boat.deposit_usd, s.stripe_fee_pct);
+  return json({ ok: true, total, deposit: boat.deposit_usd, balance: total - boat.deposit_usd, cardFeePct: s.stripe_fee_pct, cardFeeCents: card - boat.deposit_usd * 100, cardChargeCents: card, wiseChargeCents: boat.deposit_usd * 100 });
+}
+
+/** Public calendar (owner decision 2026-11-08): only "available" / "unavailable" — never why (booked, pending,
+ * blocked, too soon), never a past month, never counts or identities. The owner sees everything in /booking-admin. */
+export async function apiAvailability(request: Request, env: BEnv) {
+  const u = new URL(request.url);
+  const boatId = u.searchParams.get('boat') || '';
+  const today = localToday();
+  const month = u.searchParams.get('month') || today.slice(0, 7);
+  if (!/^boat-\d{2}$/.test(boatId) || !/^\d{4}-\d{2}$/.test(month)) return json({ ok: false, error: 'Bad request' }, 400);
+  const d = await db(env);
+  const s = await getSettings(d);
+  const lastMonth = addDays(today, s.booking_window_days).slice(0, 7);
+  if (month < today.slice(0, 7) || month > lastMonth) return json({ ok: false, error: 'This month cannot be booked online.' }, 400);
+  const ip = request.headers.get('cf-connecting-ip') || 'local';
+  if (!(await rateLimit(d, `avail:${ip}`, 90, 3600))) return json({ ok: false, error: 'Too many requests. Please try again later or contact us on WhatsApp.' }, 429);
+  if (!(await d.prepare(`SELECT 1 FROM boats WHERE id = ? AND active = 1`).bind(boatId).first())) return json({ ok: false, error: 'Unknown boat' }, 404);
+  const from = `${month}-01` < today ? today : `${month}-01`; // nothing before today is ever computed or returned
+  const end = addDays(new Date(Date.UTC(+month.slice(0, 4), +month.slice(5, 7), 1)).toISOString().slice(0, 10), -1);
+  const states = await dayStates(d, boatId, from, end);
+  const days: Record<string, 'available' | 'unavailable'> = {};
+  for (const [day, st] of Object.entries(states)) days[day] = st === 'available' ? 'available' : 'unavailable';
+  return json({ ok: true, boat: boatId, month, today, days });
+}
+
+/** Public wording for any date that cannot be booked online (never says why). */
+export const UNAVAILABLE_MSG = 'This date is not available online for this boat. A trip may still be possible upon request — please contact us to check availability.';
+export const BOOKED_MSG = 'This boat already has a booking on your selected date. A second trip may be possible upon request. Please contact us to check availability.';
+
+// ---------- reservation ----------
+/** Turnstile (final booking step only, never before the price). fish-cabo.com: the real secret is REQUIRED.
+ * Other hosts (local, *.workers.dev previews) use Cloudflare's public test pair, so the check still runs end-to-end. */
+async function human(request: Request, env: BEnv, token: string) {
+  const u = new URL(request.url);
+  const prod = isProductionEnv(env, u); // SITE_ENV=production enforces the real check on every hostname (audit B2)
+  if (prod && !env.TURNSTILE_SECRET) return false;
+  if (!prod && isLocal(u)) return true; // no network in local tests
+  const secret = prod ? env.TURNSTILE_SECRET! : TEST_TURNSTILE_SECRET;
+  const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    method: 'POST', body: new URLSearchParams({ secret, response: token, remoteip: request.headers.get('cf-connecting-ip') || '' }),
+  }).then((x) => x.json() as Promise<{ success: boolean }>).catch(() => ({ success: false }));
+  return !!r.success;
+}
+
+function sameOrigin(request: Request) {
+  const o = request.headers.get('origin');
+  return !o || new URL(o).host === new URL(request.url).host;
+}
+
+export const chargeCents = cardChargeCents;
+
+/** Stripe key gate: a live key is refused unless the owner set BOOKING_LIVE=approved. */
+/** Card payments can actually be taken: allowed by configuration AND a usable Stripe key (test off-production, live+approved in production). */
+export const cardPaymentsOn = (env: BEnv) => cardEnabled(env) && ['test', 'live'].includes(stripeMode(env));
+export function stripeMode(env: BEnv): 'test' | 'live' | 'off' | 'blocked' {
+  const k = env.STRIPE_SECRET_KEY || '';
+  if (!k) return 'off';
+  // production never sends a real customer to a Stripe test checkout (owner, 2026-11-09): a test key there = card payments off
+  if (k.startsWith('sk_test_') || k.startsWith('rk_test_')) return env.SITE_ENV === 'production' ? 'blocked' : 'test';
+  if ((k.startsWith('sk_live_') || k.startsWith('rk_live_')) && env.BOOKING_LIVE === 'approved') return 'live';
+  return 'blocked';
+}
+
+export async function apiReserve(request: Request, env: BEnv) {
+  if (request.method !== 'POST') return json({ ok: false, error: 'Method not allowed' }, 405);
+  if (!sameOrigin(request)) return json({ ok: false, error: 'Forbidden' }, 403);
+  const u = new URL(request.url);
+  let fd: FormData;
+  try { fd = await request.formData(); } catch { return json({ ok: false, error: 'Invalid form' }, 400); }
+  if (String(fd.get('website') ?? '').length) return json({ ok: false, error: 'Invalid form' }, 400); // honeypot
+  const d = await db(env);
+  const ip = request.headers.get('cf-connecting-ip') || 'local';
+  if (!(await rateLimit(d, `reserve:${ip}`, 8, 3600))) return json({ ok: false, error: 'Too many attempts. Please try again later or contact us on WhatsApp.' }, 429);
+
+  const get = (k: string, max = 200) => String(fd.get(k) ?? '').trim().slice(0, max);
+  const f = {
+    firstName: get('fname', 80), lastName: get('lname', 80), email: get('email', 120).toLowerCase() /* new bookings only */, phone: get('phone', 40), date: get('date', 10),
+    people: Number(get('people', 3)), hours: Number(get('duration', 2)), boatId: get('boat', 10), message: get('message', 5000),
+    payment: get('payment', 10), lang: get('lang', 5) || 'en',
+  };
+  const err = (error: string, field?: string, status = 400) => json({ ok: false, error, field }, status);
+  if (!f.firstName || !f.lastName) return err('Please enter your first and last name.', 'fname');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email)) return err('Please enter a valid email address.', 'email');
+  if (!/^[+()\-.\s\d]{6,40}$/.test(f.phone) || (f.phone.match(/\d/g) || []).length < 6) return err('Please enter a valid phone number.', 'phone');
+  if (!isDate(f.date)) return err('Please choose a date.', 'date');
+  if (f.hours !== 6 && f.hours !== 8) return err('Please choose a trip duration.', 'duration');
+  if (f.payment !== 'stripe' && f.payment !== 'wise') return err('Please choose a payment method.', 'payment');
+  // No checkbox (owner, 2026-11-08): the statement next to the pay button says completing the booking = acceptance.
+  // The accepted versions and the time are recorded with the reservation (terms_version, consent_at).
+  if (!(await human(request, env, String(fd.get('cf-turnstile-response') ?? '')))) return err('Verification failed. Please try again.', undefined, 403);
+
+  const boat = (await boats(d)).find((b) => b.id === f.boatId);
+  if (!boat || !boat.active) return err('Please choose a boat.', 'boat');
+  const total = priceOf(boat, f.hours);
+  if (total == null) return err(`Boat #${boat.number} offers ${durationsOf(boat).map((h) => h + '-hour').join(' or ')} trips only.`, 'duration', 400);
+  if (!Number.isInteger(f.people) || f.people < 1 || f.people > Math.min(boat.capacity, 10)) return err(`This boat takes up to ${boat.capacity} people.`, 'people');
+  if (f.payment === 'stripe') {
+    const m = stripeMode(env);
+    if (m === 'off' || m === 'blocked' || !cardEnabled(env)) return err('Card payments temporarily unavailable. Please choose Wise or contact us on WhatsApp.', 'payment', 503);
+  }
+
+  const s = await getSettings(d);
+  const state = (await dayStates(d, boat.id, f.date, f.date))[f.date];
+  if (state !== 'available') return json({ ok: false, code: 'UNAVAILABLE', field: 'date', error: UNAVAILABLE_MSG }, 409);
+
+  const id = newId(), ref = newRef(), token = newToken(), now = nowIso();
+  const fee = f.payment === 'stripe' ? chargeCents(boat.deposit_usd, s.stripe_fee_pct) - boat.deposit_usd * 100 : 0;
+  const holdMs = f.payment === 'stripe' ? s.stripe_hold_minutes * 60e3 : s.wise_hold_hours * 3600e3;
+  const isTest = isStagingEnv(env, u) || stripeMode(env) === 'test' ? 1 : 0;
+  try {
+    await d.batch([
+      ...sweep(d, now),
+      d.prepare(`INSERT INTO reservations (id, ref, token, boat_id, date, hours, slot, holds_slot, hold_expires_at, status, payment_method,
+        total_usd, deposit_usd, balance_usd, fee_cents, charge_cents, first_name, last_name, email, phone, people, message, consent_at, terms_version, lang,
+        is_test, source, created_at, updated_at) VALUES (?,?,?,?,?,?,0,1,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'online',?,?)`)
+        .bind(id, ref, token, boat.id, f.date, f.hours, new Date(Date.now() + holdMs).toISOString(), f.payment === 'stripe' ? 'HELD' : 'AWAITING_PAYMENT_VERIFICATION', f.payment,
+          total, boat.deposit_usd, total - boat.deposit_usd, fee, boat.deposit_usd * 100 + fee, f.firstName, f.lastName, f.email, f.phone, f.people, f.message, now, TERMS_VERSION, f.lang, isTest, now, now),
+      audit(d, 'customer', 'reserve', id, { payment: f.payment, boat: boat.id, date: f.date, hours: f.hours, terms_accepted: TERMS_VERSION }),
+    ]);
+  } catch (e) {
+    if (/UNIQUE/i.test(String(e))) return json({ ok: false, code: 'UNAVAILABLE', field: 'date', error: UNAVAILABLE_MSG }, 409);
+    throw e;
+  }
+  const r = (await loadRes(d, 'r.id = ?', id))!;
+  const statusUrl = `${u.origin}/book-now/confirmation?ref=${ref}&t=${token}`;
+  if (f.payment === 'wise') {
+    await sendOnce(env, d, r, 'customer_wise_pending', r.email, M.customerWisePending(r), env.CONTACT_TO);
+    await notifyWisePending(env, d, r);
+    return json({ ok: true, ref, redirect: statusUrl });
+  }
+  const sess = await createCheckout(env, d, r, u.origin);
+  if (!sess.ok) {
+    await d.batch([
+      d.prepare(`UPDATE reservations SET status = 'EXPIRED', holds_slot = 0, updated_at = ? WHERE id = ?`).bind(nowIso(), id),
+      audit(d, 'system', 'stripe_session_failed', id, { status: sess.status }),
+    ]);
+    return err('Card payment is temporarily unavailable. Please try again, choose Wise, or contact us on WhatsApp.', 'payment', 502);
+  }
+  return json({ ok: true, ref, t: token, redirect: sess.url }); // t = this customer's own status token (lets the page retry cleanly after a "back" from Stripe)
+}
+
+// ---------- Stripe ----------
+function stripeBase(env: BEnv, origin: string) {
+  const o = new URL(origin);
+  return env.STRIPE_API_BASE && isLocal(o) && !isProductionEnv(env, o) ? env.STRIPE_API_BASE : 'https://api.stripe.com';
+}
+async function stripe(env: BEnv, origin: string, path: string, params: Record<string, string>, idem?: string) {
+  const r = await fetch(`${stripeBase(env, origin)}${path}`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, 'content-type': 'application/x-www-form-urlencoded', ...(idem ? { 'idempotency-key': idem } : {}) },
+    body: new URLSearchParams(params),
+  }).catch(() => null);
+  const body = r ? await r.json().catch(() => ({})) : {};
+  return { ok: !!r?.ok, status: r?.status ?? 0, body: body as Record<string, any> };
+}
+
+/** Creates a Stripe Checkout session for the deposit (+6 %) and links it to the reservation (status AWAITING_PAYMENT). */
+export async function createCheckout(env: BEnv, d: D1Database, r: Res, origin: string): Promise<{ ok: boolean; url?: string; status?: number }> {
+  const s = await getSettings(d);
+  const expires = Math.floor(Date.now() / 1000) + Math.max(30, s.stripe_hold_minutes - 4) * 60; // Stripe minimum: 30 min
+  const back = `ref=${r.ref}&t=${r.token}`;
+  const res = await stripe(env, origin, '/v1/checkout/sessions', {
+    mode: 'payment',
+    'payment_method_types[0]': 'card',
+    'line_items[0][quantity]': '1',
+    'line_items[0][price_data][currency]': 'usd',
+    'line_items[0][price_data][unit_amount]': String(r.charge_cents),
+    'line_items[0][price_data][product_data][name]': `Deposit — ${boatLabel(r)}, ${r.date}, ${r.hours}-hour trip — ${r.ref}`,
+    'line_items[0][price_data][product_data][description]': `Deposit $${r.deposit_usd} + ${Math.round((r.fee_cents / (r.deposit_usd * 100)) * 100)}% card processing fee`,
+    customer_email: r.email,
+    client_reference_id: r.ref,
+    'metadata[ref]': r.ref,
+    'metadata[reservation_id]': r.id,
+    'metadata[trip_duration_hours]': String(r.hours),
+    'metadata[boat]': `Boat #${r.boat_number}`,
+    'metadata[fishing_date]': r.date,
+    'payment_intent_data[metadata][ref]': r.ref,
+    'payment_intent_data[metadata][trip_duration_hours]': String(r.hours),
+    'payment_intent_data[metadata][boat]': `Boat #${r.boat_number}`,
+    'payment_intent_data[metadata][fishing_date]': r.date,
+    'payment_intent_data[description]': `Exotic Fish Cabo deposit ${r.ref}`,
+    success_url: `${origin}/book-now/confirmation?${back}`,
+    cancel_url: `${origin}/book-now/canceled?${back}`,
+    expires_at: String(expires),
+  }, `${r.id}-${Date.now() >> 16}`);
+  if (!res.ok || !res.body.id || !res.body.url) return { ok: false, status: res.status };
+  const hold = new Date(Math.max(Date.parse(r.hold_expires_at || nowIso()), (expires + 5 * 60) * 1000)).toISOString();
+  await d.batch([
+    d.prepare(`UPDATE reservations SET stripe_session_id = ?, status = 'AWAITING_PAYMENT', hold_expires_at = ?, updated_at = ? WHERE id = ? AND status IN ('HELD','AWAITING_PAYMENT')`)
+      .bind(res.body.id, hold, nowIso(), r.id),
+    audit(d, 'system', 'stripe_session_created', r.id, { session: res.body.id }),
+  ]);
+  return { ok: true, url: res.body.url };
+}
+
+async function verifyStripeSig(secret: string, payload: string, header: string) {
+  const parts = Object.fromEntries(header.split(',').map((p) => p.split('=') as [string, string]).filter((p) => p.length === 2)) as Record<string, string>;
+  const sigs = header.split(',').filter((p) => p.startsWith('v1=')).map((p) => p.slice(3));
+  const t = Number(parts.t);
+  if (!t || !sigs.length || Math.abs(Date.now() / 1000 - t) > 300) return false;
+  const expected = await hmacHex(secret, `${t}.${payload}`);
+  return sigs.some((s) => safeEqual(s, expected));
+}
+
+export async function apiStripeWebhook(request: Request, env: BEnv, ctx?: ExecutionContext) {
+  if (request.method !== 'POST') return json({ ok: false }, 405);
+  if (!env.STRIPE_WEBHOOK_SECRET) return json({ ok: false, error: 'not configured' }, 503);
+  const payload = await request.text();
+  if (!(await verifyStripeSig(env.STRIPE_WEBHOOK_SECRET, payload, request.headers.get('stripe-signature') || ''))) return json({ ok: false, error: 'bad signature' }, 400);
+  let ev: { id: string; type: string; livemode?: boolean; data: { object: Record<string, any> } };
+  try { ev = JSON.parse(payload); } catch { return json({ ok: false }, 400); }
+  const d = await db(env);
+  const ins = await d.prepare(`INSERT INTO payment_events (id, provider, type, result, received_at) VALUES (?, 'stripe', ?, 'processing', ?) ON CONFLICT(id) DO NOTHING RETURNING id`)
+    .bind(ev.id, ev.type, nowIso()).first();
+  if (!ins) return json({ ok: true, duplicate: true }); // Stripe retry of an event already handled
+  try {
+    const result = await handleStripeEvent(env, d, ev, new URL(request.url).origin);
+    await d.prepare(`UPDATE payment_events SET result = ?, reservation_id = ? WHERE id = ?`).bind(result.result, result.reservationId ?? null, ev.id).run();
+    return json({ ok: true, result: result.result });
+  } catch (e) {
+    await d.prepare(`DELETE FROM payment_events WHERE id = ?`).bind(ev.id).run(); // let Stripe retry
+    console.log('webhook error', String(e));
+    return json({ ok: false }, 500);
+  }
+}
+
+async function handleStripeEvent(env: BEnv, d: D1Database, ev: { type: string; livemode?: boolean; data: { object: Record<string, any> } }, origin: string): Promise<{ result: string; reservationId?: string }> {
+  const o = ev.data.object;
+  if (ev.livemode && stripeMode(env) !== 'live') return { result: 'ignored_livemode' };
+  if (ev.type === 'charge.refunded') {
+    const r = await loadRes(d, 'r.stripe_payment_intent = ?', o.payment_intent);
+    if (!r) return { result: 'unknown_payment' };
+    const full = o.amount_refunded >= o.amount;
+    await d.batch([
+      d.prepare(`UPDATE reservations SET status = ?, holds_slot = CASE WHEN ? THEN 0 ELSE holds_slot END, updated_at = ? WHERE id = ?`).bind(full ? 'REFUNDED' : r.status, full ? 1 : 0, nowIso(), r.id),
+      d.prepare(`INSERT INTO payments (reservation_id, provider, amount_cents, currency, status, external_id, created_at) VALUES (?, 'stripe', ?, ?, 'refunded', ?, ?)`).bind(r.id, -o.amount_refunded, o.currency, o.id, nowIso()),
+      audit(d, 'stripe', full ? 'refunded' : 'partially_refunded', r.id, { amount_refunded: o.amount_refunded }),
+    ]);
+    return { result: full ? 'refunded' : 'partial_refund', reservationId: r.id };
+  }
+  if (!['checkout.session.completed', 'checkout.session.async_payment_succeeded', 'checkout.session.expired', 'checkout.session.async_payment_failed'].includes(ev.type)) return { result: 'ignored' };
+  const r = await loadRes(d, 'r.stripe_session_id = ?', o.id) || (o.metadata?.reservation_id ? await loadRes(d, 'r.id = ? AND r.ref = ?', o.metadata.reservation_id, o.metadata.ref) : null);
+  if (!r) return { result: 'unknown_session' };
+
+  if (ev.type === 'checkout.session.expired' || ev.type === 'checkout.session.async_payment_failed') {
+    // only the current session counts (a newer payment link may exist); never touches a confirmed booking
+    const upd = await d.prepare(`UPDATE reservations SET status = 'EXPIRED', holds_slot = 0, updated_at = ? WHERE id = ? AND stripe_session_id = ? AND status IN ('HELD','AWAITING_PAYMENT') AND source = 'online' RETURNING id`)
+      .bind(nowIso(), r.id, o.id).first();
+    await audit(d, 'stripe', ev.type === 'checkout.session.expired' ? 'session_expired' : 'payment_failed', r.id, { session: o.id, released: !!upd }).run();
+    return { result: upd ? 'released' : 'noop', reservationId: r.id };
+  }
+
+  if (o.payment_status !== 'paid') return { result: 'not_paid_yet', reservationId: r.id };
+  if (['CONFIRMED', 'REFUND_PENDING', 'REFUNDED', 'PAYMENT_EXCEPTION'].includes(r.status) && r.stripe_payment_intent === o.payment_intent) return { result: 'already_processed', reservationId: r.id };
+  const now = nowIso();
+  await d.prepare(`INSERT INTO payments (reservation_id, provider, amount_cents, currency, status, external_id, created_at) VALUES (?, 'stripe', ?, ?, 'paid', ?, ?)`)
+    .bind(r.id, o.amount_total, o.currency, o.payment_intent || o.id, now).run();
+
+  const problem = (msg: string) => markException(env, d, r, msg, { session: o.id, payment_intent: o.payment_intent, amount_total: o.amount_total });
+  if (o.amount_total !== r.charge_cents || String(o.currency).toLowerCase() !== 'usd') return problem(`Amount mismatch: received ${o.amount_total} ${o.currency}, expected ${r.charge_cents} usd.`);
+  if (r.stripe_session_id !== o.id) await d.prepare(`UPDATE reservations SET stripe_session_id = ? WHERE id = ?`).bind(o.id, r.id).run();
+
+  // normal case: the reservation still holds its slot
+  let ok = await d.prepare(`UPDATE reservations SET status = 'CONFIRMED', stripe_payment_intent = ?, hold_expires_at = NULL, updated_at = ?
+                            WHERE id = ? AND holds_slot = 1 AND status IN ('HELD','AWAITING_PAYMENT') RETURNING id`).bind(o.payment_intent, now, r.id).first();
+  if (!ok && (r.status === 'EXPIRED' || r.status === 'CANCELED')) {
+    // late payment: the hold was released — take the slot back only if it is still free and the date is not blocked
+    const blocked = await d.prepare(`SELECT 1 FROM blocked_dates WHERE boat_id IN (?, '*') AND date = ?`).bind(r.boat_id, r.date).first();
+    if (!blocked) {
+      try {
+        ok = await d.prepare(`UPDATE reservations SET status = 'CONFIRMED', holds_slot = 1, stripe_payment_intent = ?, hold_expires_at = NULL, updated_at = ?
+                              WHERE id = ? AND holds_slot = 0 RETURNING id`).bind(o.payment_intent, now, r.id).first();
+      } catch (e) { if (!/UNIQUE/i.test(String(e))) throw e; ok = null; }
+    }
+    if (!ok) return problem('Deposit received after the reservation had expired, and the date is no longer available. Please refund the customer or offer another date.');
+    await audit(d, 'stripe', 'late_payment_confirmed', r.id).run();
+  }
+  if (!ok) return problem(`Payment received for a booking in status ${r.status}.`);
+  await audit(d, 'stripe', 'confirmed', r.id, { payment_intent: o.payment_intent, amount: o.amount_total }).run();
+  await notifyConfirmed(env, d, r.id);
+  return { result: 'confirmed', reservationId: r.id };
+}
+
+async function markException(env: BEnv, d: D1Database, r: Res, problem: string, details: unknown) {
+  await d.batch([
+    d.prepare(`UPDATE reservations SET status = 'PAYMENT_EXCEPTION', holds_slot = 0, updated_at = ? WHERE id = ?`).bind(nowIso(), r.id),
+    audit(d, 'system', 'payment_exception', r.id, { problem, details }),
+  ]);
+  const fresh = (await loadRes(d, 'r.id = ?', r.id))!;
+  if (env.CONTACT_TO) await sendOnce(env, d, fresh, 'owner_exception', env.CONTACT_TO, M.ownerException(fresh, problem, adminUrl(env)), fresh.email || undefined);
+  return { result: 'payment_exception', reservationId: r.id };
+}
+
+// ---------- emails ----------
+export async function sendLogged(env: BEnv, d: D1Database, r: Res | null, kind: string, to: string, m: { subject: string; text: string; html: string }, replyTo?: string) {
+  const res = await M.sendEmail(env, to, m.subject, m.text, m.html, replyTo);
+  await d.prepare(`INSERT INTO email_log (reservation_id, kind, recipient, subject, status, at, body) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+    .bind(r?.id ?? null, kind, to, m.subject, res.dryRun ? 'dry_run' : res.ok ? 'sent' : `failed_${res.status ?? 0}`, nowIso(), m.text).run();
+  return res.ok;
+}
+
+/* Once-only notifications with bounded retries (pre-launch audit B3, 2026-11-09). No new table or column: email_log
+ * is the record. Statuses: 'sending' (claimed, in flight) → 'sent' | 'dry_run' (accepted / nothing configured) |
+ * 'failed_<http status>' (transient: retried by the hourly job) | 'rejected_<http status>' (permanent 4xx: never retried).
+ * One (reservation, kind) is sent at most once: the claim is a single conditional INSERT, so two runs at the same time
+ * cannot both send. A 'sending' row older than 10 minutes (worker stopped mid-send) counts as a failed attempt. */
+export const EMAIL_MAX_ATTEMPTS = 5;
+export const EMAIL_RETRY_WINDOW_MS = 3 * 864e5;
+const PERMANENT = (status?: number) => !!status && status >= 400 && status < 500 && status !== 408 && status !== 429;
+export async function sendOnce(env: BEnv, d: D1Database, r: Res, kind: string, to: string, m: { subject: string; text: string; html: string }, replyTo?: string): Promise<'sent' | 'failed' | 'skipped'> {
+  const stale = new Date(Date.now() - 10 * 60e3).toISOString();
+  const claim = await d.prepare(`INSERT INTO email_log (reservation_id, kind, recipient, subject, status, at, body)
+      SELECT ?1, ?2, ?3, ?4, 'sending', ?5, ?6
+      WHERE NOT EXISTS (SELECT 1 FROM email_log WHERE reservation_id = ?1 AND kind = ?2
+                          AND (status IN ('sent', 'dry_run') OR status LIKE 'rejected%' OR (status = 'sending' AND at > ?7)))
+        AND (SELECT COUNT(*) FROM email_log WHERE reservation_id = ?1 AND kind = ?2 AND (status LIKE 'failed%' OR status = 'sending')) < ?8
+      RETURNING id`).bind(r.id, kind, to, m.subject, nowIso(), m.text, stale, EMAIL_MAX_ATTEMPTS).first<{ id: number }>();
+  if (!claim) return 'skipped';
+  const res = await M.sendEmail(env, to, m.subject, m.text, m.html, replyTo);
+  const status = res.dryRun ? 'dry_run' : res.ok ? 'sent' : `${PERMANENT(res.status) ? 'rejected' : 'failed'}_${res.status ?? 0}`;
+  await d.prepare(`UPDATE email_log SET status = ?, at = ? WHERE id = ?`).bind(status, nowIso(), claim.id).run();
+  return res.ok ? 'sent' : 'failed';
+}
+
+/** "WISE — PENDING PAYMENT" alert to the owner, at most once per booking (sent at creation, retried by the hourly job). */
+export async function notifyWisePending(env: BEnv, d: D1Database, r: Res) {
+  if (!env.CONTACT_TO || r.payment_method !== 'wise') return;
+  await sendOnce(env, d, r, 'owner_wise_pending', env.CONTACT_TO, M.ownerWisePending(r, adminUrl(env)), r.email || undefined);
+}
+
+/** Owner notification + customer deposit receipt, each sent at most once (atomic claim; released again if the send fails → retried by the cron). */
+export async function notifyConfirmed(env: BEnv, d: D1Database, id: string) {
+  const r = await loadRes(d, `r.id = ? AND r.status = 'CONFIRMED'`, id);
+  if (!r) return;
+  if (env.CONTACT_TO && (await d.prepare(`UPDATE reservations SET owner_notified_at = ? WHERE id = ? AND owner_notified_at IS NULL RETURNING id`).bind(nowIso(), id).first())) {
+    if (!(await sendLogged(env, d, r, 'owner_confirmed', env.CONTACT_TO, M.ownerConfirmed(r, adminUrl(env)), r.email || undefined)))
+      await d.prepare(`UPDATE reservations SET owner_notified_at = NULL WHERE id = ?`).bind(id).run();
+  }
+  if (r.email && await d.prepare(`UPDATE reservations SET customer_notified_at = ? WHERE id = ? AND customer_notified_at IS NULL RETURNING id`).bind(nowIso(), id).first()) {
+    // automatic customer email = deposit RECEIPT only; the official confirmation is sent personally by the owner
+    if (!(await sendLogged(env, d, r, 'customer_deposit_receipt', r.email, M.customerDepositReceipt(r), env.CONTACT_TO)))
+      await d.prepare(`UPDATE reservations SET customer_notified_at = NULL WHERE id = ?`).bind(id).run();
+  }
+}
+
+// ---------- customer status / checkout return ----------
+async function byRefToken(d: D1Database, ref: string, token: string) {
+  if (!/^EFC-[A-Z0-9]{6}$/.test(ref) || !/^[a-f0-9]{48}$/.test(token)) return null;
+  const r = await loadRes(d, 'r.ref = ?', ref);
+  return r && safeEqual(r.token, token) ? r : null;
+}
+
+export async function apiStatus(request: Request, env: BEnv) {
+  const u = new URL(request.url);
+  const d = await db(env);
+  await runSweep(d);
+  const r = await byRefToken(d, u.searchParams.get('ref') || '', u.searchParams.get('t') || '');
+  if (!r) return json({ ok: false, error: 'Booking not found' }, 404);
+  return json({
+    ok: true, ref: r.ref, status: r.status, boat: boatLabel(r), date: r.date, hours: r.hours, people: r.people, firstName: r.first_name,
+    total: r.total_usd, deposit: r.deposit_usd, balance: r.balance_usd, chargeCents: r.charge_cents, feeCents: r.fee_cents, payment: r.payment_method,
+    instructionsEmailed: r.payment_method === 'wise' ? !!(await d.prepare(`SELECT 1 FROM email_log WHERE reservation_id = ? AND kind IN ('customer_wise_pending','customer_wise_pending_resend') AND status = 'sent'`).bind(r.id).first()) : null,
+    holdExpiresAt: r.hold_expires_at, wiseUrl: r.payment_method === 'wise' ? M.WISE_PAY_URL : null, test: !!r.is_test,
+    canPay: r.payment_method === 'stripe' && r.status === 'AWAITING_PAYMENT' && !!r.hold_expires_at && Date.parse(r.hold_expires_at) > Date.now(),
+  });
+}
+
+/** Customer left Stripe Checkout: release the date right away (online bookings only) and expire the session. */
+export async function apiCancelCheckout(request: Request, env: BEnv) {
+  if (request.method !== 'POST' || !sameOrigin(request)) return json({ ok: false }, 405);
+  const { ref = '', t = '' } = (await request.json().catch(() => ({}))) as { ref?: string; t?: string };
+  const d = await db(env);
+  const r = await byRefToken(d, ref, t);
+  if (!r) return json({ ok: false }, 404);
+  if (r.source !== 'online' || !['HELD', 'AWAITING_PAYMENT'].includes(r.status)) return json({ ok: true, status: r.status });
+  const u = new URL(request.url);
+  if (r.stripe_session_id) {
+    const x = await stripe(env, u.origin, `/v1/checkout/sessions/${r.stripe_session_id}/expire`, {});
+    // already paid/complete → leave it to the webhook
+    if (!x.ok && x.body?.error?.code !== 'checkout_session_expired' && !/expired/i.test(String(x.body?.error?.message ?? ''))) return json({ ok: true, status: r.status, pending: true });
+  }
+  await d.batch([
+    d.prepare(`UPDATE reservations SET status = 'CANCELED', holds_slot = 0, updated_at = ? WHERE id = ? AND status IN ('HELD','AWAITING_PAYMENT')`).bind(nowIso(), r.id),
+    audit(d, 'customer', 'checkout_canceled', r.id),
+  ]);
+  return json({ ok: true, status: 'CANCELED' });
+}
+
+/** Payment link for a booking that is still held (second trip recorded by the owner, or a retry). */
+export async function apiPay(request: Request, env: BEnv) {
+  const u = new URL(request.url);
+  const d = await db(env);
+  await runSweep(d);
+  const r = await byRefToken(d, u.searchParams.get('ref') || '', u.searchParams.get('t') || '');
+  const back = (msg: string) => Response.redirect(`${u.origin}/book-now/confirmation?ref=${encodeURIComponent(u.searchParams.get('ref') || '')}&t=${encodeURIComponent(u.searchParams.get('t') || '')}&m=${msg}`, 303);
+  if (!r) return back('notfound');
+  if (r.payment_method !== 'stripe' || r.status !== 'AWAITING_PAYMENT' || !r.holds_slot) return back('nopay');
+  const m = stripeMode(env);
+  if (m === 'off' || m === 'blocked' || !cardEnabled(env)) return back('unavailable');
+  if (!(await rateLimit(d, `pay:${r.id}`, 10, 3600))) return back('later');
+  if (r.stripe_session_id) await stripe(env, u.origin, `/v1/checkout/sessions/${r.stripe_session_id}/expire`, {}); // only one open session at a time
+  const s = await createCheckout(env, d, r, u.origin);
+  return s.ok ? Response.redirect(s.url!, 303) : back('unavailable');
+}
+
+// ---------- cron ----------
+export async function cron(env: BEnv) {
+  const summary = { expired: 0, customerExpiryEmails: 0, ownerExpiryEmails: 0, confirmationRetries: 0, emailRetries: 0 };
+  if (!env.DB) return summary;
+  const d = await db(env);
+  const sw = await runSweep(d);
+  summary.expired = (sw[1] as any)?.meta?.changes ?? 0;
+  const since = new Date(Date.now() - EMAIL_RETRY_WINDOW_MS).toISOString();
+  const failedOf = (kinds: string) => `EXISTS (SELECT 1 FROM email_log e WHERE e.reservation_id = r.id AND e.kind IN (${kinds}) AND (e.status LIKE 'failed%' OR e.status = 'sending'))`;
+  // Wise reservations released after the deadline (by this job or by any earlier request): customer + owner notices,
+  // each once (sendOnce). Candidates = not processed yet, or processed with a failed notice still to retry.
+  const { results: expired } = await d.prepare(`SELECT ${RES_COLS} FROM reservations r JOIN boats b ON b.id = r.boat_id
+     WHERE r.status = 'EXPIRED' AND r.payment_method = 'wise' AND r.updated_at > ?
+       AND (r.expiry_notified_at IS NULL OR ${failedOf("'customer_wise_expired','owner_wise_expired'")}) LIMIT 20`).bind(since).all<Res>();
+  for (const r of expired) {
+    if (r.email && (await sendOnce(env, d, r, 'customer_wise_expired', r.email, M.customerWiseExpired(r), env.CONTACT_TO)) === 'sent') summary.customerExpiryEmails++;
+    if (env.CONTACT_TO && (await sendOnce(env, d, r, 'owner_wise_expired', env.CONTACT_TO, M.ownerWiseExpired(r, adminUrl(env)), r.email || undefined)) === 'sent') summary.ownerExpiryEmails++;
+    await d.prepare(`UPDATE reservations SET expiry_notified_at = ? WHERE id = ? AND expiry_notified_at IS NULL`).bind(nowIso(), r.id).run();
+  }
+  // Wise still awaiting verification (before its deadline): retry the customer instructions / owner alert that FAILED
+  const { results: pending } = await d.prepare(`SELECT ${RES_COLS} FROM reservations r JOIN boats b ON b.id = r.boat_id
+     WHERE r.status = 'AWAITING_PAYMENT_VERIFICATION' AND r.payment_method = 'wise' AND r.created_at > ? AND r.hold_expires_at > ?
+       AND ${failedOf("'customer_wise_pending','owner_wise_pending'")} LIMIT 20`).bind(since, nowIso()).all<Res>();
+  for (const r of pending) {
+    if (r.email && (await sendOnce(env, d, r, 'customer_wise_pending', r.email, M.customerWisePending(r), env.CONTACT_TO)) === 'sent') summary.emailRetries++;
+    if (r.source === 'online' && env.CONTACT_TO && (await sendOnce(env, d, r, 'owner_wise_pending', env.CONTACT_TO, M.ownerWisePending(r, adminUrl(env)), r.email || undefined)) === 'sent') summary.emailRetries++;
+  }
+  // "ACTION REQUIRED" (payment received, booking NOT confirmed) that failed: retried with the recorded problem
+  const { results: exc } = await d.prepare(`SELECT ${RES_COLS} FROM reservations r JOIN boats b ON b.id = r.boat_id
+     WHERE r.status = 'PAYMENT_EXCEPTION' AND r.updated_at > ? AND ${failedOf("'owner_exception'")} LIMIT 20`).bind(since).all<Res>();
+  for (const r of exc) {
+    const a = await d.prepare(`SELECT details FROM audit_log WHERE reservation_id = ? AND action = 'payment_exception' ORDER BY id DESC LIMIT 1`).bind(r.id).first<{ details: string }>();
+    let problem = 'Payment received but the booking could not be confirmed. Check the booking dashboard.';
+    try { problem = JSON.parse(a?.details || '{}').problem || problem; } catch {}
+    if (env.CONTACT_TO && (await sendOnce(env, d, r, 'owner_exception', env.CONTACT_TO, M.ownerException(r, problem, adminUrl(env)), r.email || undefined)) === 'sent') summary.emailRetries++;
+  }
+  // confirmation emails whose delivery failed earlier
+  const { results: unsent } = await d.prepare(`SELECT id FROM reservations WHERE status = 'CONFIRMED' AND (owner_notified_at IS NULL OR (customer_notified_at IS NULL AND email <> '')) AND updated_at > ? LIMIT 20`)
+    .bind(new Date(Date.now() - 3 * 864e5).toISOString()).all<{ id: string }>();
+  for (const { id } of unsent) { await notifyConfirmed(env, d, id); summary.confirmationRetries++; }
+  // housekeeping (free-plan friendly)
+  await d.prepare(`DELETE FROM rate_limits WHERE window_start < ?`).bind(Math.floor(Date.now() / 1000) - 86400).run();
+  return summary;
+}
