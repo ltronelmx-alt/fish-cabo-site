@@ -7,6 +7,76 @@ Légende : ✅ fait et testé · ♻️ existait déjà, conservé · 🟡 fait,
 
 ---
 
+## 00. Corrections consolidées (8 nov. 2026, 2ᵉ passage)
+
+**Branche :** `booking-system`. **Production :** `main` @ `cf492b8`, inchangée (rien fusionné, rien déployé, paiements live désactivés).
+
+### Nouveau ou corrigé
+- **Aide à chaque étape de `/book-now`** : boutons CONTACT US (`/contact`) et WHATSAPP sur les 6 étapes. Ils s'ouvrent dans un nouvel onglet. Aucun email ni `mailto:` dans le parcours (`src/components/BookingHelp.astro`).
+- **Reprise de la réservation** (sessionStorage, effacé à la fermeture de l'onglet, aucune donnée de paiement) : bateau, durée, date, prix, coordonnées et étape sont restaurés après un détour par `/contact`, un rechargement ou un retour depuis Stripe. Un lien `?boat=N` reste prioritaire.
+- **Date prise pendant le paiement** : message neutre, puis jusqu'à 4 dates disponibles proches. En cliquer une revérifie la date et le prix, puis ramène directement au paiement avec les mêmes coordonnées. La disponibilité est aussi revérifiée à l'entrée de l'étape de paiement, et affichée (« Available ✓ ») dans le devis et le récapitulatif.
+- **Reprise après un paiement abandonné** : un retour depuis Stripe ou un nouvel essai ferme d'abord l'ancienne session Stripe et libère la date. Si l'ancien paiement a déjà abouti, le client est envoyé vers sa confirmation (pas de second débit). `reserve` renvoie le jeton du client pour permettre cette reprise.
+- **PayPal** : option visible mais désactivée, « PayPal — Coming Soon », sans lien. Le serveur refuse `paypal`.
+- **Liste de clients** (`/booking-admin` → Clients) : **nom + email seulement**, une ligne par email (sans tenir compte de la casse), le dernier nom non vide l'emporte. Construite à partir des réservations, sans export. Accessible uniquement avec la session admin.
+- **Email au propriétaire complet** :
+  - en tête : email du client, nom, téléphone ;
+  - réservation : référence, bateau et taille, date, durée, personnes, demandes ;
+  - montants : total, acompte requis, acompte vérifié, frais carte **séparés**, total débité, solde ;
+  - paiement : moyen, statut VERIFIED, horodatage, référence de transaction ;
+  - un champ manquant s'affiche « (no email given) / (none) », jamais une valeur inventée.
+- **Email d'exception** : sujet « ⚠️ ACTION REQUIRED — payment received, booking NOT confirmed ». Il précise que le client n'a reçu aucun reçu et qu'aucun remboursement n'a été fait.
+- **Reçu client** : ne montre plus ni email ni marina (pied de page neutre). Il renvoie vers WhatsApp et `/contact`.
+- **Interrupteur de lancement** : avec `PUBLIC_BOOKING_LAUNCHED=true` au build, les anciens boutons Stripe/PayPal/Wise disparaissent des 10 pages bateaux. BOOK THIS BOAT et « Next Boat » restent. Testé : 0 lien de paiement direct avec l'interrupteur, et les liens présents sans lui (le build par défaut = la production actuelle).
+- **Échantillons d'emails rendus** : `docs/email-samples/` (Stripe, Wise, champs manquants, reçu client, exception), générés par `scripts/render-emails.ts`. Ces rendus ont été vérifiés visuellement.
+
+### Matrice d'acceptation
+Légende : PASS local = Worker + D1 locales, Stripe simulé, emails non envoyés (dry-run). Rien n'a encore été testé sur le staging réel.
+
+| Domaine | Élément | Résultat |
+|---|---|---|
+| Réservation | 19 combinaisons de prix, au centime | PASS local |
+| | Bateau #1 sans option 8 h (page, devis, réservation, téléphone, 2ᵉ sortie) | PASS local |
+| | SHOW MY PRICE avant les coordonnées | PASS local |
+| | Acomptes ; frais Stripe sur l'acompte seulement ; Wise sans frais | PASS local |
+| | Liens BOOK NOW (menu, mobile, 20 boutons), préselection `?boat=3` | PASS local |
+| | Aucun prix individuel sur les pages bateaux et la liste de `/book-now` | PASS |
+| | « From $350 / $600 » et `$600USD` de l'accueil inchangés | PASS (comparaison avec `main`) |
+| UX | CONTACT US + WHATSAPP aux 6 étapes ; aucun email ni mailto | PASS local (desktop + Pixel 7) |
+| | Progression conservée après `/contact` ; retour en arrière sans perte | PASS local |
+| | Disponibilité affichée avant paiement ; dates de remplacement | PASS local |
+| | Mobile : aucun débordement, cibles ≥ 44 px | PASS local |
+| | Retour depuis Stripe → reprise, une seule réservation, une seule session ouverte | PASS local (Stripe simulé) |
+| | Pas de double débit, pas de double réservation (8 tentatives simultanées) | PASS local |
+| Admin | Authentification `/booking-admin` ; `/admin` = Sveltia | PASS local |
+| | Liste clients nom + email, sans doublon | PASS local |
+| | 2ᵉ sortie, vérification Wise, réservation téléphone | PASS local |
+| Calendrier | Passé bloqué dans l'interface et l'API ; aucun historique ni compte | PASS local |
+| | 3 réservations manuelles bloquées | PASS local · BLOCKED sur staging (pas de D1) |
+| | Limites de requêtes | PASS local |
+| Paiements / emails | Paiement Stripe test réel, webhook signé réel | **BLOCKED** (clés + webhook à configurer) |
+| | Webhook dupliqué, signature, exception paiement sans confirmation | PASS local (événements signés simulés) |
+| | Reçu client, email propriétaire complet, aucune confirmation officielle automatique | PASS local (contenu) · **NOT TESTED** en envoi réel Resend |
+| | PayPal visible et désactivé | PASS local |
+| Régression | Titre, meta, H1, canonical de l'accueil ; JSON-LD (sauf F13) ; avis ; Fishing Reports ; contact ; chatbot ; CMS ; redirections ; sitemap ; design mobile | PASS (compare-builds + qa 150/150, reviews 51/51, chat 96/96, layout 252/252, design 332/332) |
+| | Aucun nom de bateau ni de capitaine dans les textes ajoutés | PASS |
+
+Commandes : `node tests/booking.mjs` **380/380**, `node tests/booking-ui.mjs` **36/36**, `node tests/booking-ux.mjs` **21/21**, `node tests/catalogue.mjs` **12/12**, `python3 scripts/compare-builds.py <main>/dist dist` : 12 pages modifiées, toutes voulues.
+
+### Actions du propriétaire restantes, dans l'ordre
+1. Créer la base D1 `fish-cabo-bookings-staging` et me donner son Database ID.
+2. Poser les secrets des Previews (je guiderai écran par écran).
+3. Créer le webhook Stripe en mode test.
+4. Test réel ensemble (carte 4242…, Wise, emails), puis protéger le staging (`STAGING_PASSWORD`).
+
+### À faire au lancement (après ton accord, pas avant)
+- Fusionner `booking-system` → `main`.
+- Créer la base D1 de production et la lier.
+- Poser les secrets de production.
+- Build avec `PUBLIC_BOOKING_LAUNCHED=true` : les anciens boutons de paiement disparaissent.
+- Passage en paiement live : accord séparé (`BOOKING_LIVE=approved` + clé live).
+
+**Statut : NOT READY — BLOCKERS REMAIN** (staging D1, secrets, Stripe test réel, Resend réel).
+
 ## 0. Corrections finales du propriétaire (8 nov. 2026, soir) — commit `575a844`
 
 | Décision | État |

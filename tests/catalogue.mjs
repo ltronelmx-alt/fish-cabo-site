@@ -30,5 +30,7 @@ const bad = pub.filter((f) => { const s = readFileSync(f, 'utf8'); return DIST.f
 t(`no price grid in any public file (${pub.length} files under dist/)`, bad.length === 0, bad.join(', '));
 const bk = readFileSync('dist/book-now.html', 'utf8');
 t('/book-now HTML: no dollar amount at all', !/\$\s?\d/.test(bk));
+const legacyPages = walk('dist/fishing-boats').filter((f) => f.endsWith('.html')).map((f) => readFileSync(f, 'utf8'));
+t('pre-launch build: old Stripe/Wise payment links still on the 10 boat pages (production fallback) + BOOK THIS BOAT', legacyPages.length === 10 && legacyPages.every((h) => /href="https:\/\/buy\.stripe\.com/.test(h) && /href="https:\/\/wise\.com\/pay/.test(h) && h.includes('BOOK THIS BOAT')));
 console.log(`\n${results.filter(Boolean).length}/${results.length} passed`);
 process.exit(results.every(Boolean) ? 0 : 1);

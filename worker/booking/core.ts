@@ -65,7 +65,9 @@ export const audit = (d: D1Database, actor: string, action: string, reservationI
   d.prepare(`INSERT INTO audit_log (at, actor, action, reservation_id, details) VALUES (?, ?, ?, ?, ?)`).bind(nowIso(), actor, action, reservationId, details == null ? null : JSON.stringify(details));
 
 export const RES_COLS = `r.*, b.name boat_name, b.number boat_number, b.size_ft boat_size_ft,
-  (SELECT external_id FROM payments p WHERE p.reservation_id = r.id AND p.status IN ('paid','verified') ORDER BY p.id DESC LIMIT 1) payment_ref`;
+  (SELECT external_id FROM payments p WHERE p.reservation_id = r.id AND p.status IN ('paid','verified') ORDER BY p.id DESC LIMIT 1) payment_ref,
+  (SELECT amount_cents FROM payments p WHERE p.reservation_id = r.id AND p.status IN ('paid','verified') ORDER BY p.id DESC LIMIT 1) payment_amount_cents,
+  (SELECT created_at FROM payments p WHERE p.reservation_id = r.id AND p.status IN ('paid','verified') ORDER BY p.id DESC LIMIT 1) payment_at`;
 export async function loadRes(d: D1Database, where: string, ...args: unknown[]): Promise<Res | null> {
   return d.prepare(`SELECT ${RES_COLS} FROM reservations r JOIN boats b ON b.id = r.boat_id WHERE ${where}`).bind(...args).first<Res>();
 }
@@ -280,7 +282,7 @@ export async function apiReserve(request: Request, env: BEnv) {
     ]);
     return err('Card payment is temporarily unavailable. Please try again, choose Wise, or contact us on WhatsApp.', 'payment', 502);
   }
-  return json({ ok: true, ref, redirect: sess.url });
+  return json({ ok: true, ref, t: token, redirect: sess.url }); // t = this customer's own status token (lets the page retry cleanly after a "back" from Stripe)
 }
 
 // ---------- Stripe ----------

@@ -26,7 +26,7 @@ tr.click{cursor:pointer}tr.click:hover{background:#fff7ef}.row{display:flex;gap:
 </style></head><body>
 <header><b>EXOTIC FISH CABO · BOOKINGS</b><nav id="nav" class="hide">
 <button data-t="list" class="on">Bookings</button><button data-t="cal">Calendar</button><button data-t="phone">New phone booking</button><button data-t="second">Record second trip</button>
-<button data-t="boats">Boats &amp; prices</button><button data-t="settings">Settings</button><button data-t="audit">Audit log</button>
+<button data-t="clients">Clients</button><button data-t="boats">Boats &amp; prices</button><button data-t="settings">Settings</button><button data-t="audit">Audit log</button>
 <button id="csv">Export CSV</button><button id="logout">Sign out</button></nav></header>
 <main>
 <section id="login" class="card" style="max-width:420px;margin:40px auto"><h2>Sign in</h2><form id="lf"><div class="row"><label>Password<input type="password" id="pw" autocomplete="current-password" required></label><button class="b o">Sign in</button></div></form><p class="msg err" id="lmsg"></p></section>
@@ -57,6 +57,7 @@ tr.click{cursor:pointer}tr.click:hover{background:#fff7ef}.row{display:flex;gap:
 <label style="display:grid;gap:4px;font-weight:600;font-size:13px">Message / notes<textarea name="message" rows="3"></textarea></label>
 <div class="row"><label>Type <code>SECOND TRIP</code> to confirm<input name="confirm" required autocomplete="off"></label><button class="b o">Record second trip &amp; send payment request</button></div>
 <p class="msg" id="smsg"></p></form></div></section>
+<section id="t-clients" class="hide"><div class="card" style="overflow:auto"><p><small>Private list: customer name and email address only, one line per email (from the bookings).</small></p><table><thead><tr><th>Customer name</th><th>Customer email</th></tr></thead><tbody id="crows"></tbody></table></div></section>
 <section id="t-boats" class="hide"><div class="card" style="overflow:auto"><p><small>Approved prices (USD). Empty price = that duration is not offered (Boat #1: 6 hours only). Every change is recorded (history + audit log). Prices are never shown as a list on the website: customers see one price at a time (SHOW MY PRICE).</small></p>
 <table><thead><tr><th>#</th><th>Boat</th><th>6 h price</th><th>8 h price</th><th>Deposit</th><th>Capacity</th><th>Online</th></tr></thead><tbody id="brows"></tbody></table><p class="msg" id="bmsg"></p></div></section>
 <section id="t-settings" class="hide"><div class="card"><form id="setf" class="row"></form><p class="msg" id="setmsg"></p><p><small>Times use the business timezone America/Mazatlan.</small></p></div></section>
@@ -76,7 +77,7 @@ async function boot(){const o=await api('overview');if(!o.ok){show(false);return
  const bo=o.boats.map(b=>'<option value="'+b.id+'">#'+b.number+' '+H(b.name)+'</option>').join('');$('#fb').innerHTML='<option value="">All</option>'+bo;$('#sb').innerHTML=bo;$('#pb').innerHTML=bo;
  tab('list')}
 function tab(t){document.querySelectorAll('#nav button[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===t));document.querySelectorAll('main>section[id^=t-]').forEach(s=>s.classList.toggle('hide',s.id!=='t-'+t));
- ({list,cal,boats:boatsTab,settings:settingsTab,audit:auditTab,second:()=>{},phone:phoneTab})[t]()}
+ ({list,cal,boats:boatsTab,settings:settingsTab,audit:auditTab,second:()=>{},phone:phoneTab,clients:clientsTab})[t]()}
 async function list(){const p=new URLSearchParams({q:$('#q').value,status:$('#fs').value,boat:$('#fb').value,from:$('#ff').value,to:$('#ft').value});const j=await api('bookings?'+p);
  $('#rows').innerHTML=(j.bookings||[]).map(b=>'<tr class="click" data-id="'+b.id+'"><td><b>'+H(b.ref)+'</b>'+(b.source==='override'?' <span class="pill">2nd trip</span>':'')+'</td><td>'+H(b.date)+'</td><td>#'+b.boat_number+' '+H(b.boat_name)+'</td><td><b>'+b.hours+' HOURS</b></td><td>'+H(b.first_name+' '+b.last_name)+'<br><small>'+H(b.email)+' · '+H(b.phone)+'</small></td><td>'+b.people+'</td><td>'+H(b.payment_method)+'<br><small>'+money(b.charge_cents)+'</small></td><td>'+pill(b.status,b.is_test)+'</td></tr>').join('')||'<tr><td colspan="8">No bookings.</td></tr>';}
 $('#rows').onclick=e=>{const tr=e.target.closest('tr[data-id]');if(tr)detail(tr.dataset.id)};
@@ -116,6 +117,7 @@ $('#brows').onchange=async e=>{const i=e.target;const id=i.closest('tr').dataset
  $('#bmsg').className='msg '+(r.ok?'okm':'err');$('#bmsg').textContent=r.ok?'Saved.':r.error;if(!r.ok)boatsTab()};
 async function settingsTab(){const o=await api('overview');$('#setf').innerHTML=Object.entries(SET_LABELS).map(([k,l])=>'<label>'+l+'<input type="number" name="'+k+'" value="'+o.settings[k]+'"></label>').join('')+'<button class="b">Save</button>'}
 $('#setf').onsubmit=async e=>{e.preventDefault();const r=await api('settings',Object.fromEntries(new FormData(e.target)));$('#setmsg').className='msg '+(r.ok?'okm':'err');$('#setmsg').textContent=r.ok?'Saved.':r.error};
+async function clientsTab(){const j=await api('clients');$('#crows').innerHTML=(j.clients||[]).map(c=>'<tr><td>'+H(c.name)+'</td><td style="user-select:all">'+H(c.email)+'</td></tr>').join('')||'<tr><td colspan="2">No clients yet.</td></tr>'}
 async function auditTab(){const j=await api('audit');$('#arows').innerHTML=j.audit.map(a=>'<tr><td>'+H(a.at)+'</td><td>'+H(a.actor)+'</td><td>'+H(a.action)+'</td><td>'+H(a.ref||'')+'</td><td><small>'+H(a.details)+'</small></td></tr>').join('')}
 $('#sf').onsubmit=async e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));f.hours=+f.hours;f.people=+f.people;
  if(!confirm('Record a SECOND trip for this boat on '+f.date+'? The customer will receive a deposit payment request.'))return;const r=await api('second-trip',f);

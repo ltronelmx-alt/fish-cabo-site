@@ -7,7 +7,7 @@
 import { esc, usd, usdCents, longDate, localDateTime } from './util';
 
 export type Res = {
-  id: string; ref: string; token: string; boat_id: string; boat_name: string; boat_number: number; boat_size_ft: number; payment_ref?: string | null; terms_version?: string | null; date: string; hours: number; status: string;
+  id: string; ref: string; token: string; boat_id: string; boat_name: string; boat_number: number; boat_size_ft: number; payment_ref?: string | null; payment_amount_cents?: number | null; payment_at?: string | null; terms_version?: string | null; date: string; hours: number; status: string;
   payment_method: 'stripe' | 'wise' | 'other'; total_usd: number; deposit_usd: number; balance_usd: number; fee_cents: number; charge_cents: number;
   first_name: string; last_name: string; email: string; phone: string; people: number; message: string; slot: number;
   hold_expires_at: string | null; is_test: number; created_at: string; updated_at: string;
@@ -32,10 +32,10 @@ export async function sendEmail(env: Env, to: string, subject: string, text: str
   return { ok: !!r?.ok, status: r?.status };
 }
 
-const wrap = (title: string, body: string) => `<!doctype html><html><body style="margin:0;background:#f4f1ea;font-family:Arial,Helvetica,sans-serif;color:#111">
+const wrap = (title: string, body: string, foot = 'Exotic Fish Cabo · Puerto Los Cabos Marina, San José del Cabo, B.C.S., Mexico · fish-cabo.com') => `<!doctype html><html><body style="margin:0;background:#f4f1ea;font-family:Arial,Helvetica,sans-serif;color:#111">
 <div style="max-width:600px;margin:0 auto;padding:24px"><div style="background:#111;color:#fff;padding:18px 22px;border-radius:12px 12px 0 0;font-weight:700;letter-spacing:.04em">EXOTIC FISH CABO</div>
 <div style="background:#fff;padding:24px 22px;border-radius:0 0 12px 12px"><h1 style="font-size:20px;margin:0 0 16px">${esc(title)}</h1>${body}</div>
-<p style="font-size:12px;color:#666;text-align:center;margin-top:16px">Exotic Fish Cabo · Puerto Los Cabos Marina, San José del Cabo, B.C.S., Mexico · fish-cabo.com</p></div></body></html>`;
+<p style="font-size:12px;color:#666;text-align:center;margin-top:16px">${esc(foot)}</p></div></body></html>`;
 const table = (rows: [string, string][]) => `<table style="width:100%;border-collapse:collapse;font-size:14px">${rows.map(([k, v]) => `<tr><td style="padding:7px 8px;border-bottom:1px solid #eee;color:#555;width:42%">${esc(k)}</td><td style="padding:7px 8px;border-bottom:1px solid #eee;font-weight:600">${esc(v)}</td></tr>`).join('')}</table>`;
 const lines = (rows: [string, string][]) => rows.map(([k, v]) => `${k}: ${v}`).join('\n');
 const test = (r: Res) => (r.is_test ? '[TEST] ' : '');
@@ -66,20 +66,29 @@ const DUR = (h: number) => `${h} HOURS`; // owner rule: trip duration always spe
  * email address come first: the owner sends the official confirmation personally (owner decision 2026-11-08). */
 export function ownerConfirmed(r: Res) {
   const email = r.email || '(no email given)';
+  const card = r.payment_method === 'stripe';
+  const received = r.payment_amount_cents ?? null; // what the payment record actually shows (Stripe amount_total or the amount the owner verified)
   const rows: [string, string][] = [
     ['TRIP DURATION', `${DUR(r.hours)} (${r.hours === 6 ? '3/4 day' : 'full day'})`],
     ['CUSTOMER EMAIL', email],
     ['Customer', `${r.first_name} ${r.last_name}`.trim()],
-    ['Phone / WhatsApp', r.phone],
+    ['Phone / WhatsApp', r.phone || '(not given)'],
     ['Status', 'CONFIRMED — deposit verified'],
     ['Booking reference', r.ref],
     ['Boat', B(r)],
     ['Fishing date', longDate(r.date)],
+    ['People aboard', String(r.people)],
+    ['Special requests / notes', r.message || '(none)'],
     ['Total charter price', usd(r.total_usd)],
-    ['Deposit paid', usdCents(r.deposit_usd * 100) + (r.fee_cents ? ` (+ ${usdCents(r.fee_cents)} card fee = ${usdCents(r.charge_cents)} charged)` : '')],
-    ['Remaining balance', usd(r.balance_usd)],
+    ['Required deposit', usdCents(r.deposit_usd * 100)],
+    ['Deposit verified', card ? usdCents(r.deposit_usd * 100) : received != null ? usdCents(received) : '(amount not recorded)'],
+    ['Card processing fee', card ? usdCents(r.fee_cents) : 'none'],
+    ['Total charged to the customer', card ? (received != null ? usdCents(received) : usdCents(r.charge_cents)) : received != null ? usdCents(received) : '(amount not recorded)'],
+    ['Remaining balance (cash on the fishing day)', usd(r.balance_usd)],
     ['Payment method', PAY(r)],
-    ['Payment reference', r.payment_ref || r.stripe_payment_intent || '—'],
+    ['Payment status', 'VERIFIED'],
+    ['Verified at', r.payment_at ? localDateTime(r.payment_at) : '(not recorded)'],
+    ['Transaction reference', r.payment_ref || r.stripe_payment_intent || '(not recorded)'],
     ['Booked via', r.source === 'online' ? 'Website' : r.source === 'phone' ? 'Owner (telephone booking)' : 'Owner (authorised second trip)'],
   ];
   const subject = `${test(r)}✅ CONFIRMED ${r.ref} — ${DUR(r.hours)} — Boat #${r.boat_number}, ${r.date}`;
@@ -107,8 +116,8 @@ export function customerDepositReceipt(r: Res) {
   const p1 = 'Thank you for your deposit. Your booking has been received and your fishing date has been reserved.';
   const p2 = 'Loïc from Exotic Fish Cabo will personally send you a separate official confirmation email containing your meeting time, meeting point, marina directions, and all necessary information for your fishing trip.';
   const p3 = 'Please wait for this personal confirmation email before making your way to the marina.';
-  const text = `Dear ${r.first_name},\n\n${p1}\n\n${lines(rows)}\n\n${p2}\n\n${p3}\n\nExotic Fish Cabo\nWhatsApp ${WHATSAPP} · contact@fish-cabo.com`;
-  const html = wrap('Deposit received', `<p>Dear ${esc(r.first_name)},</p><p>${esc(p1)}</p>${table(rows)}<p style="margin-top:18px">${esc(p2)}</p><p><strong>${esc(p3)}</strong></p><p>Exotic Fish Cabo<br>WhatsApp ${WHATSAPP} · contact@fish-cabo.com</p>`);
+  const text = `Dear ${r.first_name},\n\n${p1}\n\n${lines(rows)}\n\n${p2}\n\n${p3}\n\nQuestions? WhatsApp ${WHATSAPP} or https://fish-cabo.com/contact\n\nExotic Fish Cabo`;
+  const html = wrap('Deposit received', `<p>Dear ${esc(r.first_name)},</p><p>${esc(p1)}</p>${table(rows)}<p style="margin-top:18px">${esc(p2)}</p><p><strong>${esc(p3)}</strong></p><p>Questions? WhatsApp ${WHATSAPP} or <a href="https://fish-cabo.com/contact">fish-cabo.com/contact</a></p><p>Exotic Fish Cabo</p>`, 'Exotic Fish Cabo · San José del Cabo, B.C.S., Mexico · fish-cabo.com'); // no marina in the receipt (meeting point comes from Loïc)
   return { subject: `${test(r)}Exotic Fish Cabo — Deposit Received`, text, html };
 }
 
@@ -180,5 +189,7 @@ export function customerWiseExpired(r: Res) {
 
 /** Exceptions only (payment received for a date that is no longer available, etc.) — needs owner action. */
 export function ownerException(r: Res, problem: string) {
-  return { subject: `${test(r)}⚠️ Booking needs your attention — ${r.ref}`, text: `${problem}\n\n${lines([...tripRows(r), ...customerRows(r)])}\n\n${ADMIN_URL}`, html: wrap('Booking needs your attention', `<p><strong>${esc(problem)}</strong></p>${table([...tripRows(r), ...customerRows(r)])}`) };
+  const head = 'ACTION REQUIRED — money was received but this booking is NOT confirmed. The customer has NOT received a deposit receipt. No automatic refund was made: refund the customer or offer another date yourself.';
+  const rows: [string, string][] = [['CUSTOMER EMAIL', r.email || '(no email given)'], ['Status', `${r.status} — NOT CONFIRMED`], ['Payment reference', r.payment_ref || r.stripe_payment_intent || '(see Stripe)'], ...tripRows(r), ...customerRows(r)];
+  return { subject: `${test(r)}⚠️ ACTION REQUIRED — payment received, booking NOT confirmed — ${r.ref}`, text: `${head}\n\n${problem}\n\n${lines(rows)}\n\n${ADMIN_URL}`, html: wrap('ACTION REQUIRED — booking NOT confirmed', `<p style="padding:12px 14px;background:#fee2e2;border-left:5px solid #b42318;font-weight:700">${esc(head)}</p><p><strong>${esc(problem)}</strong></p>${table(rows)}<p><a href="${ADMIN_URL}">${ADMIN_URL}</a></p>`) };
 }

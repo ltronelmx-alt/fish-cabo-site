@@ -1,0 +1,8 @@
+---
+// "Questions?" controls shown in every /book-now step (owner, 2026-11-08): CONTACT US (/contact form) + WHATSAPP.
+// No email address and no mailto: in the booking journey. New tab, so the booking in progress is never lost
+// (it is also saved in sessionStorage — see book-now.astro).
+import { SITE } from '../data/site';
+const wa = `https://wa.me/${SITE.whatsapp.replace(/\D/g, '')}`;
+---
+<div class="bk-help"><span>Questions?</span><a href="/contact" target="_blank" rel="noopener" data-track="booking_help_contact">CONTACT US</a><a href={wa} target="_blank" rel="noopener" data-track="booking_help_whatsapp">WHATSAPP</a></div>

@@ -6,6 +6,8 @@ const { chromium, devices } = createRequire(import.meta.url)('playwright'); // g
 const BASE = process.argv[2] || 'http://127.0.0.1:8787';
 const SHOTS = process.env.SHOTS || '/tmp/bk-shots';
 const results = []; const t = (name, ok, info = '') => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${!ok && info ? ' — ' + info : ''}`); };
+import { execFileSync } from 'node:child_process';
+try { execFileSync('npx', ['wrangler', 'd1', 'execute', 'fish-cabo-bookings', '--local', '--persist-to', process.env.PERSIST || '/tmp/wpb', '--command', 'DELETE FROM rate_limits'], { stdio: 'ignore' }); } catch {} // one local IP for every browser request
 const browser = await chromium.launch();
 
 async function run(label, ctxOpts, boatId, number, hours, total, deposit) {
@@ -60,7 +62,7 @@ async function run(label, ctxOpts, boatId, number, hours, total, deposit) {
   await p.locator('.bk-go').click(); await p.waitForURL(/\/book-now\/confirmation/, { timeout: 15000 });
   await p.waitForSelector('main h1'); const conf = await p.locator('main').innerText();
   t(`${label}: Wise booking → confirmation page (awaiting verification, not "confirmed")`, /Wise/i.test(conf) && !/booking is confirmed/i.test(conf), conf.slice(0, 200));
-  t(`${label}: the price grid endpoint was never needed (only one quote per selection)`, reqs.filter((u) => u.includes('/api/booking/quote')).length <= 2);
+  t(`${label}: only single-combination quotes (SHOW MY PRICE + re-check before payment), never a price grid`, reqs.filter((u) => u.includes('/api/booking/quote')).length <= 4 && !reqs.some((u) => /price|grid/i.test(u.replace('/api/booking/quote', ''))));
   // same boat + date again → booked → WhatsApp request
   const p2 = await ctx.newPage(); await p2.goto(`${BASE}/book-now?boat=${boatId}`, { waitUntil: 'networkidle' });
   if (number !== 1) await p2.locator(`input[name=duration][value="${hours}"]`).check();

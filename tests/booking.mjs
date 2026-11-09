@@ -229,7 +229,9 @@ try {
     t(`${tag}: verified webhook → CONFIRMED, exactly 1 owner email + 1 customer deposit receipt`, w === 200 && st2.status === 'CONFIRMED' && em.filter((e) => e.kind === 'owner_confirmed' && e.recipient === 'owner@example.test').length === 1 && em.filter((e) => e.kind === 'customer_deposit_receipt' && e.recipient === 'customer@example.test').length === 1 && em.length === 2, JSON.stringify(em));
     const ob = body(st2.ref, 'owner_confirmed')[0];
     t(`${tag}: owner email shows "${hours} HOURS" first + all contact-form fields + amounts`, ob.subject.includes(`${hours} HOURS`) && ob.body.includes(`TRIP DURATION: ${hours} HOURS`) && ob.body.indexOf(`TRIP DURATION: ${hours} HOURS`) < ob.body.indexOf('Booking reference') &&
-      ['First name: Test', 'Last name: Customer', 'Email: customer@example.test', 'Phone: +1 555 010 0000', `Date: ${date}`, 'People aboard: 2', `Duration: ${hours === 6 ? '3/4 day (6 hours)' : 'Full day (8 hours)'}`, 'Message: Test booking', `Booking reference: ${st2.ref}`, `Boat: Boat #${i + 1} (${SIZE[id]} ft)`, `Total charter price: $${total.toLocaleString('en-US')} USD`, `Deposit paid: $${deposit.toLocaleString('en-US')}.00 USD`, `Remaining balance: $${balance.toLocaleString('en-US')} USD`, 'Payment method: Card via Stripe', `Payment reference: ${sess.payment_intent}`, 'Status: CONFIRMED'].every((x) => ob.body.includes(x)), ob.body);
+      ['First name: Test', 'Last name: Customer', 'Email: customer@example.test', 'Phone: +1 555 010 0000', `Date: ${date}`, 'People aboard: 2', `Duration: ${hours === 6 ? '3/4 day (6 hours)' : 'Full day (8 hours)'}`, 'Message: Test booking', `Booking reference: ${st2.ref}`, `Boat: Boat #${i + 1} (${SIZE[id]} ft)`, `Total charter price: $${total.toLocaleString('en-US')} USD`, `Required deposit: $${deposit.toLocaleString('en-US')}.00 USD`, `Deposit verified: $${deposit.toLocaleString('en-US')}.00 USD`,
+        `Card processing fee: $${(deposit * 0.06).toFixed(2)} USD`, `Total charged to the customer: $${(deposit * 1.06).toLocaleString('en-US', { minimumFractionDigits: 2 })} USD`, `Remaining balance (cash on the fishing day): $${balance.toLocaleString('en-US')} USD`,
+        'Payment method: Card via Stripe', 'Payment status: VERIFIED', 'Verified at: ', `Transaction reference: ${sess.payment_intent}`, 'Status: CONFIRMED', 'People aboard: 2', 'Special requests / notes: Test booking'].every((x) => ob.body.includes(x)), ob.body);
     t(`${tag}: no vessel name in customer-facing texts (Stripe line item, customer email)`, sess.params['line_items[0][price_data][product_data][name]'].includes(`Boat #${i + 1} (${SIZE[id]} ft)`) && !/Panga|Console|Cuddy|Flybridge|Catamaran|Machine/.test(sess.params['line_items[0][price_data][product_data][name]'] + sess.params['metadata[boat]']));
     const cb = body(st2.ref, 'customer_deposit_receipt')[0];
     const fee = (deposit * 0.06).toFixed(2), chargeTxt = (deposit * 1.06).toLocaleString('en-US', { minimumFractionDigits: 2 });
@@ -273,6 +275,8 @@ try {
   let sx = sessionOf(j.redirect);
   [w1, wj] = await webhook('checkout.session.completed', sx, { amount_total: 100 });
   let stx = await status(sx.params.success_url);
+  const exm = sql(`SELECT e.subject, e.body FROM email_log e JOIN reservations r ON r.id=e.reservation_id WHERE r.ref='${stx.ref}' AND e.kind='owner_exception'`)[0];
+  t('exception email = clearly "ACTION REQUIRED … NOT confirmed", no receipt to the customer, no refund made', /ACTION REQUIRED — payment received, booking NOT confirmed/.test(exm.subject) && /NOT confirmed/.test(exm.body) && /No automatic refund/.test(exm.body) && emails(stx.ref, 'customer_deposit_receipt').length === 0 && sql(`SELECT COUNT(*) n FROM payments p JOIN reservations r ON r.id=p.reservation_id WHERE r.ref='${stx.ref}' AND p.status='paid'`)[0].n === 1);
   t('amount mismatch → PAYMENT_EXCEPTION, owner alerted, never "confirmed"', wj.result === 'payment_exception' && stx.status === 'PAYMENT_EXCEPTION' && emails(stx.ref, 'owner_exception').length === 1 && emails(stx.ref, 'owner_confirmed').length === 0);
   t('exception releases the date', (await avail('boat-02', day(30))) === 'available');
 
@@ -306,6 +310,16 @@ try {
   [s, j] = await reserve(customer('boat-05', day(33), 8));
   t('…and can be booked by the next customer', s === 200 && (await status(sH.params.success_url)).status === 'EXPIRED');
 
+  section = 'Payment recovery';
+  [s, j] = await reserve(customer('boat-08', day(35)));
+  t('card reservation returns the customer token (page can retry cleanly)', s === 200 && /^[a-f0-9]{48}$/.test(j.t || ''));
+  let rr = await (await fetch(BASE + '/api/booking/cancel-checkout', { method: 'POST', headers: { 'content-type': 'application/json', ...H }, body: JSON.stringify({ ref: j.ref, t: j.t }) })).json();
+  const [s3, j3] = await reserve(customer('boat-08', day(35)));
+  t('back from Stripe / declined → retry on the same date works, the old session is closed (no 2nd open payment)', rr.status === 'CANCELED' && s3 === 200 && sql(`SELECT COUNT(*) n FROM reservations WHERE boat_id='boat-08' AND date='${day(35)}' AND holds_slot=1`)[0].n === 1);
+  const sP = sessionOf(j3.redirect); await webhook('checkout.session.completed', sP);
+  rr = await (await fetch(BASE + '/api/booking/cancel-checkout', { method: 'POST', headers: { 'content-type': 'application/json', ...H }, body: JSON.stringify({ ref: j3.ref, t: j3.t }) })).json();
+  t('a paid checkout can never be canceled by a later retry (no double charge)', rr.status === 'CONFIRMED' && (await reserve(customer('boat-08', day(35))))[0] === 409);
+
   section = 'Concurrency';
   const burst = await Promise.all(Array.from({ length: 8 }, (_, k) => reserve(customer('boat-06', day(40), k % 2 ? 8 : 6, k % 3 ? 'stripe' : 'wise'))));
   t('8 simultaneous attempts, same boat/day → exactly 1 succeeds', burst.filter(([x]) => x === 200).length === 1 && burst.filter(([x, y]) => x === 409 && y.code === 'UNAVAILABLE').length === 7, JSON.stringify(burst.map(([x]) => x)));
@@ -324,6 +338,8 @@ try {
   t('amount below the deposit → refused', s === 409);
   [s, j] = await admin('action', { id: wid, action: 'confirm_wise', amount: 400, confirm: 'VERIFIED', wiseRef: 'TR-1' });
   wst = await status(j.ok ? `/x?ref=${wq.ref}&t=${wq.t}` : '/x');
+  const wob = sql(`SELECT e.body FROM email_log e JOIN reservations r ON r.id=e.reservation_id WHERE r.ref='${wq.ref}' AND e.kind='owner_confirmed'`)[0]?.body || '';
+  t('Wise owner email: verified amount, no card fee, Wise reference, VERIFIED', ['Deposit verified: $400.00 USD', 'Card processing fee: none', 'Total charged to the customer: $400.00 USD', 'Payment method: Wise', 'Payment status: VERIFIED', 'Transaction reference: TR-1'].every((x) => wob.includes(x)), wob);
   t('owner verifies the Wise payment → CONFIRMED, 1 owner email + 1 customer deposit receipt', s === 200 && wst.status === 'CONFIRMED' && emails(wq.ref, 'owner_confirmed').length === 1 && emails(wq.ref, 'customer_deposit_receipt').length === 1);
   [s] = await admin('action', { id: wid, action: 'confirm_wise', amount: 400, confirm: 'VERIFIED' });
   t('confirming twice → refused, still one owner email', s === 409 && emails(wq.ref, 'owner_confirmed').length === 1);
@@ -394,6 +410,8 @@ try {
   [s, j] = await admin('phone-booking', { ...pb, hours: 6, payment: 'received', amount: 300, confirm: 'VERIFIED' });
   t('same boat/day again → refused (second trip needs the explicit override)', s === 409 && /SECOND TRIP|second trip/i.test(j.error));
   [s, j] = await admin('phone-booking', { ...pb, date: day(161), email: '', payment: 'received', amount: 300, confirm: 'VERIFIED' });
+  const nob = sql(`SELECT e.body FROM email_log e JOIN reservations r ON r.id=e.reservation_id WHERE r.ref='${j.ref}' AND e.kind='owner_confirmed'`)[0]?.body || '';
+  t('missing optional fields shown honestly in the owner email (no invented data)', nob.includes('CUSTOMER EMAIL: (no email given)') && nob.includes('Special requests / notes: (telephone booking)') && nob.includes('Deposit verified: $300.00 USD'), nob.slice(0, 300));
   t('no email given → confirmed, owner record only (no customer email)', s === 200 && emails(j.ref, 'customer_deposit_receipt').length === 0 && emails(j.ref, 'owner_confirmed').length === 1);
   [s, j] = await admin('phone-booking', { ...pb, date: day(162), payment: 'stripe' });
   const pst2 = j;
@@ -444,6 +462,13 @@ try {
   t('status with a wrong token → 404 (no data leak)', s === 404);
   [s, j] = await get(`/api/admin/booking?id=${c2id}`, { admin: true });
   t('booking detail never exposes the customer token', s === 200 && !('token' in j.booking));
+
+  section = 'Clients list';
+  [s, j] = await get('/api/admin/clients', { admin: true });
+  t('clients list: exactly two fields (name, email)', s === 200 && j.clients.length > 0 && j.clients.every((c) => JSON.stringify(Object.keys(c)) === '["name","email"]'));
+  t('one line per email address (no duplicates, case-insensitive)', new Set(j.clients.map((c) => c.email)).size === j.clients.length && j.clients.filter((c) => c.email === 'customer@example.test').length === 1 && j.clients.find((c) => c.email === 'customer@example.test').name === 'Test Customer');
+  t('phone bookings without an email are not listed; no phone numbers anywhere', !j.clients.some((c) => !c.email) && !/\+1 555|\+52 624/.test(JSON.stringify(j)));
+  t('clients list requires the admin session', (await fetch(BASE + '/api/admin/clients')).status === 401);
 
   section = 'Emails (global)';
   const all = sql(`SELECT r.status, e.kind FROM email_log e JOIN reservations r ON r.id = e.reservation_id WHERE e.kind = 'owner_confirmed'`);

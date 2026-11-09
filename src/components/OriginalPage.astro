@@ -37,6 +37,9 @@ const heroM = heroImgBlock?.path ? media(heroImgBlock.path) : null;
 const heroAr = heroM ? `${heroM.width} / ${heroM.height}` : '';
 const heroPortrait = !!heroM && heroM.height > heroM.width * 0.9;
 
+// legacy direct-payment buttons (Stripe / PayPal / Wise links) — hidden only after the owner-approved launch (SITE.legacyPaymentButtons)
+const isPayBtn = (x: Block) => /^(stri?pe|wise|paypal)$/i.test((x.text || '').trim()) || /stripe\.com|wise\.com|paypal\./i.test(x.href || '');
+const hidePay = !SITE.legacyPaymentButtons && !!catalogue.boats.find((b) => b.url === `/${slug}`);
 // Group consecutive blocks of the same kind (images → gallery row, buttons → button row). Order is preserved.
 function groups(blocks: Block[]) {
   const out: { kind: string; items: Block[] }[] = [];
@@ -82,6 +85,7 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
               {g.items.map((b) => <OImg block={b} class:list={['reveal', /Cabo Casita Keeper/i.test(b.alt || '') && 'o-small-logo']} sizes={g.items.length > 1 ? '(min-width: 900px) 33vw, 92vw' : '(min-width: 1240px) 1200px, 92vw'} />)}
             </div>
           );
+          if (g.kind === 'button' && hidePay && g.items.every(isPayBtn)) return null;
           if (g.kind === 'button') return (
             <div class:list={['btn-row o-btns', stripeRow(g) && next?.kind === 'img' && next.items.length === 1 && 'o-stripe-row']}>{g.items.map((b) => <OBtn block={b} primary={/book/i.test((b.href || '') + (b.text || ''))} track={/stripe|wise|paypal/i.test(b.href || b.text || '') ? `pay_${(b.text || '').toLowerCase()}_${slug.split('/').pop()}` : undefined} />)}
               {stripeRow(g) && next?.kind === 'img' && next.items.length === 1 && <OImg block={next.items[0]} class="o-paymethods" sizes="240px" />}</div>
@@ -99,7 +103,7 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
                       <div class="btn-row"><a class="btn btn-primary" href={`/book-now?boat=${bookBoat.id}`} data-track={`book_this_boat_${bookBoat.id}`}>BOOK THIS BOAT</a></div>
                     </div>
                   )}
-                  <Rich html={pictures(b.html || '')} mode="cards" class:list={['reveal', pay && 'o-paylabel']} />
+                  {!(pay && hidePay) && <Rich html={pictures(b.html || '')} mode="cards" class:list={['reveal', pay && 'o-paylabel']} />}
                 </>;
           }
           if (b.kind === 'code') {

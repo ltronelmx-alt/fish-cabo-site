@@ -102,6 +102,15 @@ export async function adminApi(request: Request, env: BEnv): Promise<Response> {
     for (const b of list) states[b.id] = await dayStates(d, b.id, from, to);
     return json({ ok: true, month, from, to, boats: list.map((b) => ({ id: b.id, number: b.number, name: b.name })), reservations: res.results, blocks: blocks.results, states });
   }
+  if (path === 'clients' && request.method === 'GET') {
+    // Private contact list (owner, 2026-11-08): ONLY name + email, one line per email address (case-insensitive).
+    // Built from the bookings themselves (no separate table to keep in sync); the most recent NON-EMPTY name wins.
+    const { results } = await d.prepare(`SELECT lower(trim(email)) e, trim(first_name || ' ' || last_name) n, created_at FROM reservations WHERE trim(email) <> '' ORDER BY created_at DESC`).all<{ e: string; n: string }>();
+    const by = new Map<string, string>();
+    for (const r of results) if (!by.has(r.e) || (!by.get(r.e) && r.n)) by.set(r.e, r.n);
+    const clients = [...by].map(([email, name]) => ({ name, email })).sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email));
+    return json({ ok: true, clients });
+  }
   if (path === 'audit' && request.method === 'GET') {
     const { results } = await d.prepare(`SELECT a.at, a.actor, a.action, a.details, r.ref FROM audit_log a LEFT JOIN reservations r ON r.id = a.reservation_id ORDER BY a.id DESC LIMIT 300`).all();
     return json({ ok: true, audit: results });

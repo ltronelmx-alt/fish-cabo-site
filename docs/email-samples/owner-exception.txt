@@ -1,0 +1,28 @@
+SUBJECT: [TEST] ⚠️ ACTION REQUIRED — payment received, booking NOT confirmed — EFC-7KQ2MZ
+
+ACTION REQUIRED — money was received but this booking is NOT confirmed. The customer has NOT received a deposit receipt. No automatic refund was made: refund the customer or offer another date yourself.
+
+Deposit received after the reservation had expired, and the date is no longer available. Please refund the customer or offer another date.
+
+CUSTOMER EMAIL: ana@example.com
+Status: PAYMENT_EXCEPTION — NOT CONFIRMED
+Payment reference: pi_test_3Q1
+Booking reference: EFC-7KQ2MZ
+Boat: Boat #3 (27 ft)
+Fishing date: Friday, December 11, 2026
+Trip duration: 8 HOURS
+Total charter price: $800 USD
+Deposit: $200 USD + $12.00 USD card processing fee
+Remaining balance: $600 USD
+Payment method: Card via Stripe
+First name: Ana
+Last name: Ux
+Email: ana@example.com
+Phone: +1 555 000 2222
+Date: 2026-12-11
+People aboard: 3
+Duration: Full day (8 hours)
+Boat: Boat #3 (27 ft)
+Message: Two kids aboard
+
+https://fish-cabo.com/booking-admin

@@ -27,6 +27,8 @@ import Base from '../../layouts/Base.astro';
       <dt>Charter price</dt><dd>${money(j.total)}</dd><dt>Deposit</dt><dd>${money(j.deposit)}${j.feeCents ? ' + ' + cents(j.feeCents) + ' card fee' : ''}</dd><dt>Remaining balance</dt><dd>${money(j.balance)}</dd></dl>`;
     const note = q.get('m') && NOTES[q.get('m')!] ? `<p class="bs-warn">${NOTES[q.get('m')!]}</p>` : '';
     const test = j.test ? '<p class="bs-test">Test booking — no real payment.</p>' : '';
+    // booking finished (or handed to the owner): forget the progress saved by /book-now in this tab
+    if (['CONFIRMED', 'AWAITING_PAYMENT_VERIFICATION', 'PAYMENT_EXCEPTION', 'REFUND_PENDING', 'REFUNDED'].includes(j.status)) { try { sessionStorage.removeItem('efc-booking-v1'); } catch {} }
     let html = '';
     switch (j.status) {
       case 'CONFIRMED': html = `<h1>Deposit received ✅</h1><p>Thank you ${esc(j.firstName)}! Your booking has been received and your fishing date has been reserved. A deposit receipt is on its way by email.</p>${rows}<p>Loïc from Exotic Fish Cabo will personally send you a separate official confirmation email with your meeting time, meeting point, marina directions and everything you need for your trip. Please wait for this personal confirmation email before making your way to the marina. Questions? WhatsApp +52 624 122 3506.</p>`; break;
@@ -42,7 +44,7 @@ import Base from '../../layouts/Base.astro';
         <p>Your date is held until <b>${when(j.holdExpiresAt)}</b>. We also sent these instructions to your email.</p>${rows}`; break;
       case 'PAYMENT_EXCEPTION': html = `<h1>We received your payment</h1><p>There is a problem with this booking that we need to check personally (for example the date is no longer available). We will contact you very soon — or WhatsApp us on +52 624 122 3506.</p>${rows}`; break;
       case 'CANCELED': html = `<h1>Booking canceled</h1><p>No deposit was taken. <a href="/book-now">Choose another date or boat</a>.</p>`; break;
-      case 'EXPIRED': html = `<h1>Reservation expired</h1><p>The date was held but no deposit was received in time, so it has been released. <a href="/book-now">Book again</a> or contact us if you already paid.</p>`; break;
+      case 'EXPIRED': html = `<h1>Reservation expired</h1><p>The date was held but no deposit was received in time, so it has been released. <a href="/book-now">Book again</a> (your details are kept in this browser tab) or contact us if you already paid.</p>`; break;
       case 'REFUND_PENDING': case 'REFUNDED': html = `<h1>Booking canceled</h1><p>Your refund is ${j.status === 'REFUNDED' ? 'done' : 'being processed'}.</p>${rows}`; break;
       default: html = `<h1>Booking ${esc(j.ref)}</h1>${rows}`;
     }
