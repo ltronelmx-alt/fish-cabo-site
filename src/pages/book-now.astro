@@ -119,6 +119,11 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
             <label><input type="radio" name="payment" value="wise" /> <span><b>Wise (no processing fee)</b> — your date is held 24 hours while we verify your transfer</span></label>
             <label class="bk-off" aria-disabled="true"><input type="radio" name="payment" value="paypal" disabled /> <span><b>PayPal — Coming Soon</b></span></label>
           </fieldset>
+          <div class="bk-wise" id="wise-note" hidden role="note" aria-labelledby="wise-note-h">
+            <p id="wise-note-h"><b>Wise Bank Transfer — Important</b></p>
+            <p>Wise deposits may take up to 24 hours to be received and verified. Your booking will only be confirmed once your deposit has been verified.</p>
+            <p>Booking a last-minute fishing trip? Please contact us directly via <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener" data-track="wise_note_whatsapp">WhatsApp</a> or our <a href="/contact" target="_blank" rel="noopener" data-track="wise_note_contact">Contact Form</a> before proceeding.</p>
+          </div>
           <div class="bk-sum" id="sum"></div>
           <div class="bk-cond">
             <p><b>Booking and cancellation conditions</b></p>
@@ -247,7 +252,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
         if (days[s.date] === 'available') { pickDay(s.date, false); if (s.quote) { await showPrice(); if (s.details && quote) { details(false); setVal('people', String(s.people ?? '')); if (s.pay) await toPay(false); } } }
         else if (days[s.date]) pickDay(s.date, false);
       }
-      if (s.payment === 'stripe' || s.payment === 'wise') { const p = f.querySelector<HTMLInputElement>(`input[name=payment][value="${s.payment}"]`); if (p) { p.checked = true; summary(); } }
+      if (s.payment === 'stripe' || s.payment === 'wise') { const p = f.querySelector<HTMLInputElement>(`input[name=payment][value="${s.payment}"]`); if (p) { p.checked = true; summary(); wiseNote(); } }
       if (note) $('#pmsg').textContent = note;
       const last = ['s-pay', 's-details', 's-price', 's-date', 's-dur'].find((id) => !document.getElementById(id)!.hidden);
       if (last) document.getElementById(last)!.scrollIntoView({ block: 'start' });
@@ -378,6 +383,8 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     sum = j as S; summary(); show('s-pay', true); save();
     if (scroll) document.getElementById('s-pay')!.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
+  /** Wise: deposits can take up to 24 h to arrive and be verified — shown as soon as Wise is chosen (owner, 2026-11-09). */
+  function wiseNote() { show('wise-note', val('payment') === 'wise'); }
   function summary() {
     if (!quote || !sum) return;
     const b = boat()!, pay = val('payment');
@@ -393,7 +400,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     const t = e.target as HTMLInputElement;
     if (t.name === 'boat') pickBoat();
     if (t.name === 'duration') onDuration();
-    if (t.name === 'payment') { summary(); save(); }
+    if (t.name === 'payment') { summary(); save(); wiseNote(); }
     if (FIELDS.includes(t.name)) { ($('#req') as HTMLAnchorElement).href = waUrl(); save(); }
   });
   f.addEventListener('input', (e) => { if (FIELDS.includes((e.target as HTMLInputElement).name)) save(); });
@@ -526,6 +533,10 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
   .bk-alts p { flex-basis: 100%; margin: 0; }
   .bk-alt { min-height: 44px; padding: 0 14px; border: 1.5px solid #9ad5a8; border-radius: 8px; background: #f0fbf3; font: inherit; font-weight: 700; cursor: pointer; }
   .bk-ok { color: #1a7f37; font-weight: 700; }
+  .bk-wise { margin: 0 0 14px; padding: 14px 16px; background: #fff7ef; border-left: 4px solid var(--orange); border-radius: var(--radius-sm); font-family: var(--font-ui); font-size: 14px; display: grid; gap: 6px; }
+  .bk-wise[hidden] { display: none; }
+  .bk-wise p { margin: 0; }
+  .bk-wise a { color: var(--ink); font-weight: 700; text-decoration: underline; }
   .bk-payopts label.bk-off { opacity: .55; cursor: not-allowed; }
   .bk .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
   .bk-go { margin-top: 12px; }

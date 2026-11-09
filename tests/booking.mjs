@@ -6,6 +6,9 @@ import http from 'node:http';
 import { createHmac, randomBytes } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+// The synchronous `wrangler d1 execute` checks can leave the HTTP client idle long enough for the local server to close
+// its keep-alive socket; a request that fails on such a stale socket never reached the Worker, so it is sent once more.
+{ const f0 = globalThis.fetch; globalThis.fetch = async (...a) => { try { return await f0(...a); } catch (e) { if (e?.cause?.code === 'UND_ERR_SOCKET') return f0(...a); throw e; } }; }
 
 const BASE = 'http://127.0.0.1:8787';
 const PERSIST = process.env.PERSIST || '/tmp/wpb';
@@ -421,7 +424,7 @@ try {
   await admin('block', { boat: 'boat-05', date: day(164), block: true });
   [s, j] = await admin('phone-booking', { ...pb, date: day(164), payment: 'received', amount: 300, confirm: 'VERIFIED' });
   t('blocked day refused', s === 409);
-  t('phone booking requires the admin session', (await fetch(BASE + '/api/admin/phone-booking', { method: 'POST', headers: { 'content-type': 'application/json', 'x-efc-admin': '1', ...H }, body: JSON.stringify(pb) })).status === 401);
+  t('phone booking requires the admin session', (await fetch(BASE + '/api/admin/phone-booking', { method: 'POST', headers: { 'content-type': 'application/json', 'x-efc-admin': '1', ...H }, body: JSON.stringify(pb) }).then(async (r) => (await r.text(), r.status))) === 401);
 
   // ---------------- admin operations ----------------
   section = 'Admin';
@@ -468,7 +471,7 @@ try {
   t('clients list: exactly two fields (name, email)', s === 200 && j.clients.length > 0 && j.clients.every((c) => JSON.stringify(Object.keys(c)) === '["name","email"]'));
   t('one line per email address (no duplicates, case-insensitive)', new Set(j.clients.map((c) => c.email)).size === j.clients.length && j.clients.filter((c) => c.email === 'customer@example.test').length === 1 && j.clients.find((c) => c.email === 'customer@example.test').name === 'Test Customer');
   t('phone bookings without an email are not listed; no phone numbers anywhere', !j.clients.some((c) => !c.email) && !/\+1 555|\+52 624/.test(JSON.stringify(j)));
-  t('clients list requires the admin session', (await fetch(BASE + '/api/admin/clients')).status === 401);
+  t('clients list requires the admin session', (await fetch(BASE + '/api/admin/clients').then(async (r) => (await r.text(), r.status))) === 401);
 
   section = 'Emails (global)';
   const all = sql(`SELECT r.status, e.kind FROM email_log e JOIN reservations r ON r.id = e.reservation_id WHERE e.kind = 'owner_confirmed'`);

@@ -9,6 +9,9 @@ import { randomBytes } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { mkdirSync } from 'node:fs';
+// The synchronous `wrangler d1 execute` checks can leave the HTTP client idle long enough for the local server to close
+// its keep-alive socket; a request that fails on such a stale socket never reached the Worker, so it is sent once more.
+{ const f0 = globalThis.fetch; globalThis.fetch = async (...a) => { try { return await f0(...a); } catch (e) { if (e?.cause?.code === 'UND_ERR_SOCKET') return f0(...a); throw e; } }; }
 const { chromium, devices } = createRequire(import.meta.url)('playwright');
 
 const BASE = process.argv[2] || 'http://127.0.0.1:8787';
@@ -69,7 +72,15 @@ async function journey(label, ctxOpts) {
   t(`${label}: CONTACT US + WHATSAPP visible at every step (6/6)`, steps.every(([, ok]) => ok), JSON.stringify(steps));
   const pp = p.locator('input[name=payment][value=paypal]');
   t(`${label}: PayPal shown as "PayPal — Coming Soon", disabled, no link`, (await pp.isDisabled()) && (await p.locator('.bk-payopts').innerText()).includes('PayPal — Coming Soon') && (await p.locator('.bk-payopts a').count()) === 0);
+  t(`${label}: Wise notice hidden while no method / card is chosen`, await p.locator('#wise-note').isHidden());
+  await p.locator('input[name=payment][value=wise]').check();
+  const wn = p.locator('#wise-note'); const wtxt = (await wn.innerText()).replace(/\s+/g, ' ').trim();
+  const wLinks = await wn.locator('a').evaluateAll((els) => els.map((e) => [e.textContent, e.getAttribute('href'), e.getAttribute('target')]));
+  t(`${label}: Wise selected → "Wise Bank Transfer — Important" notice, exact owner text`, (await wn.isVisible()) && wtxt === 'Wise Bank Transfer — Important Wise deposits may take up to 24 hours to be received and verified. Your booking will only be confirmed once your deposit has been verified. Booking a last-minute fishing trip? Please contact us directly via WhatsApp or our Contact Form before proceeding.', wtxt);
+  t(`${label}: notice links = WhatsApp (official number) + /contact, new tab, no email`, JSON.stringify(wLinks) === JSON.stringify([['WhatsApp', 'https://wa.me/526241223506', '_blank'], ['Contact Form', '/contact', '_blank']]) && !/@|mailto/.test(await wn.innerHTML()), JSON.stringify(wLinks));
+  if (ctxOpts.isMobile) { await wn.scrollIntoViewIfNeeded(); await p.screenshot({ path: `${SHOTS}/${label}-wise-note.png` }); t(`${label}: Wise notice fits the screen (no overflow)`, await noOverflow(p)); }
   await p.locator('input[name=payment][value=stripe]').check();
+  t(`${label}: switching back to card hides the Wise notice`, await p.locator('#wise-note').isHidden());
   const sum = await p.locator('#sum').innerText();
   t(`${label}: summary — Boat #3, date, availability, $800 total, $200 deposit, $12.00 fee, $212.00 now, $600 balance`, ['#3 (27 ft)', 'Available ✓', '8 hours', '$800 USD', '$200 USD', '$12.00 USD', '$212.00 USD', '$600 USD'].every((x) => sum.includes(x)), sum);
   if (ctxOpts.isMobile) {
@@ -93,6 +104,8 @@ async function journey(label, ctxOpts) {
 {
   const { ctx, p, date } = await journey('desktop', { viewport: { width: 1366, height: 900 } });
   await p.locator('input[name=payment][value=wise]').check();
+  await p.goto(`${BASE}/contact`, { waitUntil: 'domcontentloaded' }); await p.goBack({ waitUntil: 'networkidle' }); await p.waitForTimeout(800);
+  t('Wise chosen, detour to /contact and back → Wise still selected, notice shown again, details kept', (await p.locator('input[name=payment][value=wise]').isChecked()) && (await p.locator('#wise-note').isVisible()) && (await p.inputValue('input[name=fname]')) === 'Ana');
   await admin('block', { boat: 'boat-03', date, block: true, reason: 'test: taken during checkout' });
   await p.locator('.bk-go').click(); await p.waitForSelector('#qalts:not([hidden])');
   const msg = await p.locator('#qmsg').innerText();
