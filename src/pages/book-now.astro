@@ -8,9 +8,10 @@ import catalogue from '../data/boats.json';
 import { SITE } from '../data/site';
 import { media } from '../lib/media';
 import BookingHelp from '../components/BookingHelp.astro';
+import { BOOKING_CARD } from '../lib/launch';
 
 const title = 'Book a Fishing Charter in San Jose del Cabo | Exotic Fish Cabo';
-const description = 'Book your private fishing charter from Puerto Los Cabos Marina online: choose your boat, date and 6 or 8 hour trip, and pay the deposit by card or Wise.';
+const description = `Book your private fishing charter from Puerto Los Cabos Marina online: choose your boat, date and 6 or 8 hour trip, and pay the deposit by ${BOOKING_CARD ? 'card or Wise' : 'Wise'}.`;
 const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY || '0x4AAAAAAFyrH2-R96GEy7AN'; // real key; replaced by the test key off fish-cabo.com (public/js/efc-turnstile.js)
 // public data only: number, size, capacity, photo (prices/deposits are server-side, worker/booking/pricing.ts)
 const boats = catalogue.boats.map((b) => ({ id: b.id, number: b.number, name: b.name, capacity: b.capacity, img: media(b.image.path)?.at(480) ?? '', alt: b.image.alt }));
@@ -33,7 +34,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
       <ul class="bk-facts">
         <li><b>One private trip per boat per day</b> — the boat is yours.</li>
         <li><b>See your price before giving any personal details.</b> A deposit secures your date; the balance is paid in cash on the fishing day.</li>
-        <li><b>Deposit by card</b> (Stripe, +6% processing fee) <b>or Wise</b> (no fee).</li>
+        {BOOKING_CARD ? <li><b>Deposit by card</b> (Stripe, +6% processing fee) <b>or Wise</b> (no fee).</li> : <li><b>Deposit by Wise</b> (no fee). Card payments are temporarily unavailable.</li>}
         <li><b>Book at least 24 hours</b> before your trip. Last minute? <a href={`https://wa.me/${wa}`}>WhatsApp us</a>.</li>
       </ul>
     </div>
@@ -115,7 +116,9 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
         <div class="bk-step" id="s-pay" hidden>
           <h2><span>6</span> Review and pay your deposit</h2>
           <fieldset class="bk-payopts"><legend>Payment method *</legend>
-            <label><input type="radio" name="payment" value="stripe" required /> <span><b>Card via Stripe (+6% processing fee)</b></span></label>
+            {BOOKING_CARD
+              ? <label data-card><input type="radio" name="payment" value="stripe" required /> <span><b>Card via Stripe (+6% processing fee)</b></span></label>
+              : <label class="bk-off" aria-disabled="true" data-card><input type="radio" name="payment" value="stripe" disabled /> <span><b>Card via Stripe</b> — Card payments temporarily unavailable</span></label>}
             <label><input type="radio" name="payment" value="wise" /> <span><b>Wise (no processing fee)</b> — your date is held 24 hours while we verify your transfer</span></label>
             <label class="bk-off" aria-disabled="true"><input type="radio" name="payment" value="paypal" disabled /> <span><b>PayPal — Coming Soon</b></span></label>
           </fieldset>
@@ -226,11 +229,24 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     save();
   }
 
+  /** Wise-only (owner 2026-11-09): card option shown but disabled; Wise is selected for the customer. */
+  function cardOff() {
+    cardOn = false;
+    const c = f.querySelector<HTMLInputElement>('input[name=payment][value="stripe"]');
+    const l = f.querySelector<HTMLElement>('label[data-card]');
+    if (c) { c.checked = false; c.disabled = true; c.required = false; }
+    if (l && !l.classList.contains('bk-off')) { l.classList.add('bk-off'); l.setAttribute('aria-disabled', 'true'); l.querySelector('span')!.innerHTML = '<b>Card via Stripe</b> — Card payments temporarily unavailable'; }
+    const w = f.querySelector<HTMLInputElement>('input[name=payment][value="wise"]'); if (w) w.required = true;
+  }
+  let cardOn = document.documentElement.dataset.card !== 'off';
+  if (!cardOn) cardOff();
+
   async function init() {
     try {
       const r = await fetch('/api/booking/boats'); const j = await r.json();
       if (!j.ok) throw 0;
       boats = j.boats; today = j.today; month = today.slice(0, 7); lastMonth = j.lastMonth || '';
+      if (j.cardPayments === false) cardOff();
     } catch {
       const m = document.createElement('p'); m.className = 'bk-msg';
       m.innerHTML = 'Online booking is not available right now. Please <a href="/contact">contact us</a> or WhatsApp +52 624 122 3506.';
@@ -272,7 +288,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
         if (days[s.date] === 'available') { pickDay(s.date, false); if (s.quote) { await showPrice(); if (s.details && quote) { details(false); setVal('people', String(s.people ?? '')); if (s.pay) await toPay(false); } } }
         else if (days[s.date]) pickDay(s.date, false);
       }
-      if (s.payment === 'stripe' || s.payment === 'wise') { const p = f.querySelector<HTMLInputElement>(`input[name=payment][value="${s.payment}"]`); if (p) { p.checked = true; summary(); wiseNote(); } }
+      if ((s.payment === 'stripe' && cardOn) || s.payment === 'wise') { const p = f.querySelector<HTMLInputElement>(`input[name=payment][value="${s.payment}"]`); if (p) { p.checked = true; summary(); wiseNote(); } }
       if (note) $('#pmsg').textContent = note;
       const last = ['s-pay', 's-details', 's-price', 's-date', 's-dur'].find((id) => !document.getElementById(id)!.hidden);
       if (last) { restoring = false; goTo(last, true); }
@@ -379,7 +395,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     quote = j as Q; $('#qmsg').textContent = '';
     $('#quote').innerHTML = `<p class="bk-qline">Boat #${b.number} · ${h}-hour trip · ${longDate(d)} · <span class="bk-ok">Available ✓</span></p>
       <p class="bk-total">Total charter price: <b>${money(quote.total)}</b></p>
-      <p class="bk-qnote">Private charter price for the boat. A deposit secures your date and the remaining balance is paid in cash on the fishing day. Card payments carry a ${quote.cardFeePct}% processing fee on the deposit; Wise has no fee. You will see every amount before you pay.</p>
+      <p class="bk-qnote">Private charter price for the boat. A deposit secures your date and the remaining balance is paid in cash on the fishing day. ${cardOn ? `Card payments carry a ${quote.cardFeePct}% processing fee on the deposit; Wise has no fee.` : 'The deposit is paid by Wise (no fee).'} You will see every amount before you pay.</p>
       <div class="bk-qbtns"><button type="button" class="btn btn-primary no-arrow" id="continue">CONTINUE TO BOOKING</button><button type="button" class="btn no-arrow" id="change">CHANGE MY SELECTION</button></div>`;
     show('quote', true); save();
     goTo('quote'); // 4. SHOW MY PRICE → the price
@@ -401,7 +417,9 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     }
     const [, j] = await POST('/api/booking/summary', { boat: quote.boat, hours: quote.hours }).catch(() => [0, {}] as const);
     if (!j.ok) { $('#dmsg').textContent = j.error || 'Please try again.'; return; }
-    sum = j as S; summary(); show('s-pay', true); save();
+    sum = j as S;
+    if (!cardOn) { const w = f.querySelector<HTMLInputElement>('input[name=payment][value="wise"]'); if (w && !w.checked) w.checked = true; wiseNote(); } // Wise only
+    summary(); show('s-pay', true); save();
     if (scroll) goTo('s-pay');
   }
   /** Wise: deposits can take up to 24 h to arrive and be verified — shown as soon as Wise is chosen (owner, 2026-11-09). */

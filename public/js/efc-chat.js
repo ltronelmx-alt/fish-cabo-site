@@ -228,6 +228,17 @@ const PRE_LAUNCH = {
   es: { bookingSteps: "1️⃣ Elige tu fecha\n2️⃣ 3/4 de día (6 horas) o día completo (8 horas)\n3️⃣ Número de pescadores (1-10)\n4️⃣ Elige tu bote y paga el depósito en línea, o escríbenos", paymentDesc: "En la página de cada bote:\n• Stripe (tarjeta, Apple Pay, Google Pay) — 6% de comisión\n• Wise — sin comisión\n• PayPal — 6% de comisión" },
 };
 if (!BOOKING_OPEN) for (const lg of Object.keys(PRE_LAUNCH)) Object.assign(I18N[lg], PRE_LAUNCH[lg]);
+// Wise-only period (owner 2026-11-09, <html data-card="off">): no card promise; the deposit is paid by Wise.
+const CARD_OFF = BOOKING_OPEN && document.documentElement.dataset.card === 'off';
+const WISE_ONLY = {
+  fr: { bookingSteps: "1️⃣ Choisissez votre bateau (#1 à #10)\n2️⃣ 3/4 de journée (6 h) ou journée complète (8 h) — bateau #1 : 6 h uniquement\n3️⃣ Choisissez votre date\n4️⃣ Touchez SHOW MY PRICE pour voir votre prix, puis payez l'acompte en ligne par Wise (sans frais), ou écrivez-nous",
+        paymentDesc: "Réservation en ligne (Réserver maintenant) : acompte par Wise (sans frais). Paiement par carte temporairement indisponible. PayPal : bientôt disponible." },
+  en: { bookingSteps: "1️⃣ Choose your boat (#1 to #10)\n2️⃣ 3/4 day (6 hours) or full day (8 hours) — boat #1: 6 hours only\n3️⃣ Pick your date\n4️⃣ Tap SHOW MY PRICE to see your price, then pay the deposit online by Wise (no fee), or message us",
+        paymentDesc: "Online booking (Book Now): deposit by Wise (no fee). Card payments temporarily unavailable. PayPal: coming soon." },
+  es: { bookingSteps: "1️⃣ Elige tu bote (#1 a #10)\n2️⃣ 3/4 de día (6 horas) o día completo (8 horas) — bote #1: solo 6 horas\n3️⃣ Elige tu fecha\n4️⃣ Toca SHOW MY PRICE para ver tu precio y paga el depósito en línea por Wise (sin comisión), o escríbenos",
+        paymentDesc: "Reserva en línea (Reservar ahora): depósito por Wise (sin comisión). Pago con tarjeta temporalmente no disponible. PayPal: próximamente." },
+};
+if (CARD_OFF) for (const lg of Object.keys(WISE_ONLY)) Object.assign(I18N[lg], WISE_ONLY[lg]);
 
 // ============================================
 // SAFE RENDERING

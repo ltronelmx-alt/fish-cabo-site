@@ -33,8 +33,8 @@ export interface BEnv {
 
 export const HOLDING = ['HELD', 'AWAITING_PAYMENT', 'AWAITING_PAYMENT_VERIFICATION'] as const;
 const TEST_TURNSTILE_SECRET = '1x0000000000000000000000000000000AA'; // Cloudflare's public test secret (pairs with test site key 1x00000000000000000000AA)
-import { isProductionHost, isProductionEnv, isStagingEnv, isLocalHost as isLocal, adminUrl, bookingOpen } from './envmode';
-export { isProductionHost, isProductionEnv, isStagingEnv, adminUrl, bookingOpen };
+import { isProductionHost, isProductionEnv, isStagingEnv, isLocalHost as isLocal, adminUrl, bookingOpen, cardEnabled } from './envmode';
+export { isProductionHost, isProductionEnv, isStagingEnv, adminUrl, bookingOpen, cardEnabled };
 /** Terms & Privacy versions the customer accepts by completing a booking ("Last updated" dates of the published pages). */
 export const TERMS_VERSION = 'terms:2026-03;privacy:2026-02';
 /** Public boat reference: "Boat #3 (27 ft)" — boat numbers and sizes only, never vessel or captain names. */
@@ -114,6 +114,7 @@ export async function apiBoats(env: BEnv) {
   const s = await getSettings(d);
   return json({
     ok: true,
+    cardPayments: cardPaymentsOn(env), // false → the page shows 'Card payments temporarily unavailable' (Wise only)
     stripeFeePct: s.stripe_fee_pct, minLeadHours: s.min_lead_hours, wiseHoldHours: s.wise_hold_hours, today: localToday(), lastMonth: addDays(localToday(), s.booking_window_days).slice(0, 7), timezone: 'America/Mazatlan',
     boats: (await boats(d)).map((b) => ({ id: b.id, number: b.number, sizeFt: b.size_ft, capacity: b.capacity, durations: durationsOf(b), bookable: !!b.active && durationsOf(b).length > 0 })),
   });
@@ -212,6 +213,8 @@ function sameOrigin(request: Request) {
 export const chargeCents = cardChargeCents;
 
 /** Stripe key gate: a live key is refused unless the owner set BOOKING_LIVE=approved. */
+/** Card payments can actually be taken: allowed by configuration AND a usable Stripe key (test off-production, live+approved in production). */
+export const cardPaymentsOn = (env: BEnv) => cardEnabled(env) && ['test', 'live'].includes(stripeMode(env));
 export function stripeMode(env: BEnv): 'test' | 'live' | 'off' | 'blocked' {
   const k = env.STRIPE_SECRET_KEY || '';
   if (!k) return 'off';
@@ -256,7 +259,7 @@ export async function apiReserve(request: Request, env: BEnv) {
   if (!Number.isInteger(f.people) || f.people < 1 || f.people > Math.min(boat.capacity, 10)) return err(`This boat takes up to ${boat.capacity} people.`, 'people');
   if (f.payment === 'stripe') {
     const m = stripeMode(env);
-    if (m === 'off' || m === 'blocked') return err('Card payment is not available yet. Please choose Wise or contact us.', 'payment', 503);
+    if (m === 'off' || m === 'blocked' || !cardEnabled(env)) return err('Card payments temporarily unavailable. Please choose Wise or contact us on WhatsApp.', 'payment', 503);
   }
 
   const s = await getSettings(d);
@@ -556,7 +559,7 @@ export async function apiPay(request: Request, env: BEnv) {
   if (!r) return back('notfound');
   if (r.payment_method !== 'stripe' || r.status !== 'AWAITING_PAYMENT' || !r.holds_slot) return back('nopay');
   const m = stripeMode(env);
-  if (m === 'off' || m === 'blocked') return back('unavailable');
+  if (m === 'off' || m === 'blocked' || !cardEnabled(env)) return back('unavailable');
   if (!(await rateLimit(d, `pay:${r.id}`, 10, 3600))) return back('later');
   if (r.stripe_session_id) await stripe(env, u.origin, `/v1/checkout/sessions/${r.stripe_session_id}/expire`, {}); // only one open session at a time
   const s = await createCheckout(env, d, r, u.origin);

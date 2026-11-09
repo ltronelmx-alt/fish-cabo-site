@@ -7,3 +7,6 @@ export const BOOKING_OPEN = import.meta.env.PUBLIC_SITE_ENV !== 'production' || 
 
 /** Before the launch, a link to the booking page keeps the pre-launch destination (as on the production site). */
 export const bookHref = (href?: string) => (!BOOKING_OPEN && href && /^\/book-now(\?|$)/.test(href) ? '/fishing-boats' : href);
+
+/** Card payments offered on this build (Wise-only launch, owner 2026-11-09). Staging/local: always (they follow the key). */
+export const BOOKING_CARD = import.meta.env.PUBLIC_SITE_ENV !== 'production' || launch.CARD_PAYMENTS_ENABLED === true;

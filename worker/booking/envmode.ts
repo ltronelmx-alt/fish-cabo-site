@@ -36,3 +36,7 @@ export function adminUrl(env: EnvLike): string {
  * Production: the public booking API (/api/booking/*) answers only after the owner-authorised switch. /booking-admin
  * and the signed Stripe webhook are not affected (the owner can verify the production database before the launch). */
 export const bookingOpen = (env: EnvLike, launched: boolean = launch.PUBLIC_BOOKING_LAUNCHED === true) => env.SITE_ENV !== 'production' || launched;
+
+/** Card payments allowed by configuration (Wise-only launch). Staging/local: yes (the Stripe key decides). Production:
+ * only once launch.json CARD_PAYMENTS_ENABLED is true — and the Stripe key/BOOKING_LIVE rules still apply on top. */
+export const cardEnabled = (env: EnvLike, enabled: boolean = launch.CARD_PAYMENTS_ENABLED === true) => env.SITE_ENV !== 'production' || enabled;

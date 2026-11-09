@@ -3,7 +3,7 @@
 // Every change is written to audit_log. An override never confirms a booking by itself: payment must still be verified.
 import { getSettings } from './schema';
 import { json, nowIso, newId, newRef, newToken, hmacHex, sha256Hex, safeEqual, rateLimit, isDate, localToday, addDays } from './util';
-import { db, boats, audit, loadRes, runSweep, cron, isProductionEnv, isStagingEnv, adminUrl, bookingOpen, stripeMode as stripeModeOf, notifyConfirmed, sendLogged, sendOnce, chargeCents, dayStates, priceOf, durationsOf, BOOKED_MSG, TERMS_VERSION, type BEnv, type Boat } from './core';
+import { db, boats, audit, loadRes, runSweep, cron, isProductionEnv, isStagingEnv, adminUrl, bookingOpen, cardPaymentsOn, cardEnabled, stripeMode as stripeModeOf, notifyConfirmed, sendLogged, sendOnce, chargeCents, dayStates, priceOf, durationsOf, BOOKED_MSG, TERMS_VERSION, type BEnv, type Boat } from './core';
 import * as M from './emails';
 import type { Res } from './emails';
 import { ADMIN_HTML } from './admin-page';
@@ -287,6 +287,7 @@ async function secondTrip(request: Request, env: BEnv, d: D1Database, b: Record<
   if (!f.first || !f.last || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email) || (f.phone.match(/\d/g) || []).length < 6) return fail('Customer name, valid email and phone are required');
   if (!Number.isInteger(people) || people < 1 || people > boat.capacity) return fail(`People: 1–${boat.capacity}`);
   if (b.payment !== 'stripe' && b.payment !== 'wise') return fail('Payment method?');
+  if (b.payment === 'stripe' && !cardPaymentsOn(env)) return fail('Card payments are temporarily unavailable: choose Wise.');
   const first = await d.prepare(`SELECT status FROM reservations WHERE boat_id = ? AND date = ? AND slot = 0 AND holds_slot = 1`).bind(boat.id, date).first<{ status: string }>();
   if (!first) return fail('This boat has no booking on that date: the customer can book online normally (no override needed).');
   const s = await getSettings(d);
@@ -308,7 +309,10 @@ async function secondTrip(request: Request, env: BEnv, d: D1Database, b: Record<
   } catch (e) { if (/UNIQUE/i.test(String(e))) return json({ ok: false, error: 'Conflict, please retry' }, 409); throw e; }
   const r = (await loadRes(d, 'r.id = ?', id)) as Res;
   const payUrl = `${u.origin}/api/booking/pay?ref=${ref}&t=${token}`;
-  const sent = b.notify === false ? false : await sendLogged(env, d, r, 'customer_payment_request', r.email, M.customerPaymentRequest(r, payUrl), env.CONTACT_TO);
+  // Wise second trip: the Wise instructions (a card payment link would be wrong for a Wise booking)
+  const sent = b.notify === false ? false : b.payment === 'wise'
+    ? (await sendOnce(env, d, r, 'customer_wise_pending', r.email, M.customerWisePending(r), env.CONTACT_TO)) === 'sent'
+    : await sendLogged(env, d, r, 'customer_payment_request', r.email, M.customerPaymentRequest(r, payUrl), env.CONTACT_TO);
   return json({ ok: true, id, ref, slot, status: r.status, payUrl, emailSent: sent, statusUrl: `${u.origin}/book-now/confirmation?ref=${ref}&t=${token}` });
 }
 
@@ -333,6 +337,7 @@ async function phoneBooking(request: Request, env: BEnv, d: D1Database, b: Recor
   if ((b.payment === 'stripe' || b.payment === 'wise') && !f.email) return fail('An email is needed to send the payment instructions (or choose "deposit already received").');
   if (!Number.isInteger(people) || people < 1 || people > boat.capacity) return fail(`People: 1–${boat.capacity}`);
   if (!['stripe', 'wise', 'received'].includes(b.payment)) return fail('How is the deposit paid?');
+  if (b.payment === 'stripe' && !cardPaymentsOn(env)) return fail('Card payments are temporarily unavailable: choose Wise or "deposit already received".');
   let amountCents = 0;
   if (b.payment === 'received') {
     if (b.confirm !== 'VERIFIED') return fail('Type VERIFIED to confirm you have received the deposit.');
@@ -410,7 +415,7 @@ async function readiness(env: BEnv, d: D1Database, u: URL) {
   const from = e.CONTACT_FROM || '';
   const fromAddr = (from.match(/<([^<>\s@]+@[^<>\s@]+)>\s*$/) || [])[1] || '';
   return {
-    host: u.hostname, SITE_ENV: e.SITE_ENV || '(not set)', productionRules: isProductionEnv(e, u), publicBookingOpen: bookingOpen(e),
+    host: u.hostname, SITE_ENV: e.SITE_ENV || '(not set)', productionRules: isProductionEnv(e, u), publicBookingOpen: bookingOpen(e), cardPaymentsAllowedByConfig: cardEnabled(e), cardPaymentsActive: cardPaymentsOn(e),
     database: { tablesAndIndexesOk: need.every((n) => tables.includes(n)), missing: need.filter((n) => !tables.includes(n)), manualBlocks: blocks.map((b) => `Boat #${Number(b.boat_id.slice(5))} ${b.date}`), ...counts },
     prices: prices.map((p) => `#${p.n} ${p.h}h $${p.price} (deposit $${p.deposit})`), settings: { stripe_fee_pct: s.stripe_fee_pct, wise_hold_hours: s.wise_hold_hours, min_lead_hours: s.min_lead_hours },
     ADMIN_PASSWORD: e.ADMIN_PASSWORD ? 'set' : 'missing', TURNSTILE_SECRET: e.TURNSTILE_SECRET ? 'set' : 'missing',

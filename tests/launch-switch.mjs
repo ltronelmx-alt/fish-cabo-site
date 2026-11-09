@@ -6,7 +6,7 @@
 import { spawn, execSync } from 'node:child_process';
 import { readFileSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
-const { chromium } = createRequire(import.meta.url)('playwright');
+const { chromium, devices } = createRequire(import.meta.url)('playwright');
 
 const PORT = 8793, BASE = `http://127.0.0.1:${PORT}`, PASS = 'launch-test-pass', LAUNCH = 'src/data/launch.json';
 const original = readFileSync(LAUNCH, 'utf8');
@@ -16,8 +16,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const page = (f) => readFileSync(`dist/${f}`, 'utf8');
 const count = (s, re) => (s.match(re) || []).length;
 
-function build(open) {
-  writeFileSync(LAUNCH, original.replace(/"PUBLIC_BOOKING_LAUNCHED":\s*(true|false)/, `"PUBLIC_BOOKING_LAUNCHED": ${open}`));
+function build(open, card = false) {
+  writeFileSync(LAUNCH, original.replace(/"PUBLIC_BOOKING_LAUNCHED":\s*(true|false)/, `"PUBLIC_BOOKING_LAUNCHED": ${open}`).replace(/"CARD_PAYMENTS_ENABLED":\s*(true|false)/, `"CARD_PAYMENTS_ENABLED": ${card}`));
   execSync('npm run build:prod', { stdio: 'ignore' });
 }
 async function start(extra = []) {
@@ -31,6 +31,28 @@ async function adminGet(path) {
   const r = await fetch(BASE + '/api/admin/login', { method: 'POST', headers: { 'content-type': 'application/json', 'x-efc-admin': '1', origin: BASE }, body: JSON.stringify({ password: PASS }) });
   const cookie = (r.headers.get('set-cookie') || '').split(';')[0];
   return fetch(BASE + '/api/admin/' + path, { headers: { cookie } }).then((x) => x.json());
+}
+async function chatAnswer(q) {
+  const b = await chromium.launch(); const p = await (await b.newContext({ locale: 'en-US' })).newPage();
+  await p.goto(BASE + '/fishing-charters', { waitUntil: 'load' });
+  await p.click('#efc-chat-bubble'); await p.waitForSelector('#efc-messages .efc-bot');
+  const n = await p.locator('#efc-messages .efc-bot').count();
+  await p.fill('#efc-input', q); await p.press('#efc-input', 'Enter');
+  await p.waitForFunction((k) => document.querySelectorAll('#efc-messages .efc-bot').length > k, n);
+  const txt = await p.locator('#efc-messages .efc-bot').last().innerText(); await b.close(); return txt;
+}
+async function wisePaymentStep() {
+  const b = await chromium.launch(); const ctx = await b.newContext({ ...devices['Pixel 7'] }); const p = await ctx.newPage();
+  await p.goto(BASE + '/book-now?boat=boat-03', { waitUntil: 'networkidle' });
+  await p.locator('label[data-h="8"]').click(); await p.waitForSelector('.day.s-available');
+  await p.locator('.day.s-available').nth(5).click(); await p.locator('#show-price').click(); await p.waitForSelector('#quote:not([hidden])');
+  const quoteTxt = await p.locator('#quote').innerText();
+  await p.locator('#continue').click();
+  for (const [k, v] of Object.entries({ fname: 'Ana', lname: 'Test', email: 'ana@example.test', phone: '+1 555 010 0000' })) await p.fill(`[name=${k}]`, v);
+  await p.selectOption('[name=people]', '2');
+  await p.locator('#to-pay').click(); await p.waitForSelector('#s-pay:not([hidden])');
+  const r = await p.evaluate(() => ({ cardDisabled: document.querySelector('input[name=payment][value=stripe]').disabled, cardText: document.querySelector('label[data-card]').innerText, wiseChecked: document.querySelector('input[name=payment][value=wise]').checked, paypalDisabled: document.querySelector('input[name=payment][value=paypal]').disabled, sum: document.getElementById('sum').innerText, wiseNote: !document.getElementById('wise-note').hidden, help: document.querySelectorAll('#s-pay a[href="/contact"], #s-pay a[href^="https://wa.me/"]').length }));
+  await b.close(); return { ...r, quoteTxt };
 }
 async function chatBookLink() {
   const b = await chromium.launch(); const p = await (await b.newContext({ locale: 'en-US' })).newPage();
@@ -97,6 +119,26 @@ try {
   t('production Worker: Turnstile enforced (no secret → refused), no test relaxation', rs3.status === 403);
   const ch2 = await chatBookLink();
   t('chat (switch on): book button → /book-now', ch2.hrefs.includes('/book-now'), JSON.stringify(ch2));
+  // Wise-only period (CARD_PAYMENTS_ENABLED false, no Stripe key)
+  const bnOn = page('book-now.html');
+  t('Wise-only: /book-now shows the card option disabled with "Card payments temporarily unavailable", PayPal "Coming Soon"', /<label class="bk-off"[^>]*data-card><input type="radio" name="payment" value="stripe" disabled\s*\/?>/.test(bnOn) && bnOn.includes('Card payments temporarily unavailable') && /value="paypal" disabled/.test(bnOn) && /Deposit by Wise<\/b> \(no fee\)/.test(bnOn));
+  t('Wise-only: booking API says card payments are off', (await fetch(BASE + '/api/booking/boats').then((r) => r.json())).cardPayments === false);
+  const ws = await wisePaymentStep();
+  t('Wise-only journey (Pixel 7): price shown, card disabled, Wise pre-selected with its 24 h notice, no card fee, contact + WhatsApp present', ws.cardDisabled && ws.wiseChecked && ws.paypalDisabled && ws.wiseNote && /None \(Wise\)/.test(ws.sum) && !/Card processing fee/.test(ws.sum) && /\$800 USD/.test(ws.quoteTxt) && !/processing fee on the deposit/.test(ws.quoteTxt) && ws.help >= 2, JSON.stringify(ws));
+  const cw = await chatAnswer('how do I pay the deposit?');
+  t('Wise-only: chat payment answer = Wise only, card temporarily unavailable, PayPal coming soon', /deposit by Wise \(no fee\)\. Card payments temporarily unavailable\. PayPal: coming soon\./.test(cw) && !/\+6%/.test(cw), cw);
+  await stop(w);
+
+  // cards enabled later by configuration only (owner adds the live key + this flag): no rebuild of the booking system
+  section = 'Cards enabled later (configuration)';
+  build(true, true);
+  const bnCard = page('book-now.html');
+  t('card option active again with its 6 % label', /<label data-card><input type="radio" name="payment" value="stripe" required\s*\/?> <span><b>Card via Stripe \(\+6% processing fee\)<\/b>/.test(bnCard) && !bnCard.includes('Card payments temporarily unavailable'));
+  w = await start(['STRIPE_SECRET_KEY:sk_live_placeholder_not_real', 'BOOKING_LIVE:approved']);
+  t('with a live key + BOOKING_LIVE=approved, the API reports card payments active', (await fetch(BASE + '/api/booking/boats').then((r) => r.json())).cardPayments === true);
+  await stop(w);
+  w = await start(['STRIPE_SECRET_KEY:sk_live_placeholder_not_real']);
+  t('live key WITHOUT BOOKING_LIVE=approved → card payments stay off', (await fetch(BASE + '/api/booking/boats').then((r) => r.json())).cardPayments === false);
   await stop(w);
 } finally {
   writeFileSync(LAUNCH, original);

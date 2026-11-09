@@ -1,5 +1,5 @@
 // Pre-launch audit B2/B6: environment detection and admin links (pure functions). Usage: npx tsx tests/env-unit.ts
-import { isProductionEnv, isStagingEnv, adminUrl, isProductionHost, bookingOpen } from '../worker/booking/envmode';
+import { isProductionEnv, isStagingEnv, adminUrl, isProductionHost, bookingOpen, cardEnabled } from '../worker/booking/envmode';
 
 const results: boolean[] = [];
 const t = (name: string, ok: boolean) => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}`); };
@@ -28,6 +28,11 @@ t('untrusted SITE_URL (other domain, http, path, javascript:) → production add
 t('production + switch off → booking API closed', bookingOpen({ SITE_ENV: 'production' }, false) === false);
 t('production + switch on → open', bookingOpen({ SITE_ENV: 'production' }, true) === true);
 t('staging / local → always open (switch ignored)', bookingOpen({ SITE_ENV: 'staging' }, false) && bookingOpen({ SITE_ENV: 'development' }, false));
+
+// Card payments (Wise-only launch)
+t('production + CARD_PAYMENTS_ENABLED false → cards off by configuration', cardEnabled({ SITE_ENV: 'production' }, false) === false);
+t('production + CARD_PAYMENTS_ENABLED true → allowed (the key and BOOKING_LIVE still decide)', cardEnabled({ SITE_ENV: 'production' }, true) === true);
+t('staging → allowed (the Stripe test key decides)', cardEnabled({ SITE_ENV: 'staging' }, false) === true);
 
 console.log(`\n${results.filter(Boolean).length}/${results.length} passed`);
 process.exit(results.every(Boolean) ? 0 : 1);
