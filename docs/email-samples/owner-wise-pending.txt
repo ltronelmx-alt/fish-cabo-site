@@ -1,0 +1,32 @@
+SUBJECT: [TEST] ⏳ WISE — PENDING PAYMENT EFC-7KQ2MZ — 8 HOURS — Boat #3, 2026-12-11
+
+[TEST] WISE — PENDING PAYMENT
+
+Payment has NOT been verified. This booking is NOT confirmed.
+Check your Wise account for $200 USD with the reference EFC-7KQ2MZ, then mark it verified in the booking dashboard before Tuesday, November 10, 2026 at 12:09 PM (Los Cabos time).
+
+Status: WISE — PENDING PAYMENT (not verified, not confirmed)
+Booking reference: EFC-7KQ2MZ
+CUSTOMER EMAIL: ana@example.com
+Customer: Ana Ux
+Phone / WhatsApp: +1 555 000 2222
+Boat: Boat #3 (27 ft)
+Fishing date: Friday, December 11, 2026
+TRIP DURATION: 8 HOURS
+Total charter price: $800 USD
+Expected Wise deposit: $200 USD
+Remaining balance (cash on the fishing day): $600 USD
+Verify the payment before: Tuesday, November 10, 2026 at 12:09 PM (Los Cabos time) (24-hour hold; the date is released automatically after that)
+
+Customer (contact form fields)
+First name: Ana
+Last name: Ux
+Email: ana@example.com
+Phone: +1 555 000 2222
+Date: 2026-12-11
+People aboard: 3
+Duration: Full day (8 hours)
+Boat: Boat #3 (27 ft)
+Message: Two kids aboard
+
+Booking dashboard: https://booking-system-fish-cabo.small-boat-4235.workers.dev/booking-admin

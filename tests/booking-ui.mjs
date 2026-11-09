@@ -62,6 +62,8 @@ async function run(label, ctxOpts, boatId, number, hours, total, deposit) {
   await p.locator('.bk-go').click(); await p.waitForURL(/\/book-now\/confirmation/, { timeout: 15000 });
   await p.waitForSelector('main h1'); const conf = await p.locator('main').innerText();
   t(`${label}: Wise booking → confirmation page (awaiting verification, not "confirmed")`, /Wise/i.test(conf) && !/booking is confirmed/i.test(conf), conf.slice(0, 200));
+  // local run = email not really sent (dry run) → honest fallback, never "We also sent…"
+  t(`${label}: Wise confirmation does not claim the email was sent when it was not accepted; WhatsApp + Contact Form fallback`, !conf.includes('We also sent these instructions') && conf.includes('We could not confirm that our email') && (await p.locator('main a[href^="https://wa.me/526241223506"]').count()) === 1 && (await p.locator('main a[href="/contact"]').count()) >= 1);
   t(`${label}: only single-combination quotes (SHOW MY PRICE + re-check before payment), never a price grid`, reqs.filter((u) => u.includes('/api/booking/quote')).length <= 4 && !reqs.some((u) => /price|grid/i.test(u.replace('/api/booking/quote', ''))));
   // same boat + date again → booked → WhatsApp request
   const p2 = await ctx.newPage(); await p2.goto(`${BASE}/book-now?boat=${boatId}`, { waitUntil: 'networkidle' });

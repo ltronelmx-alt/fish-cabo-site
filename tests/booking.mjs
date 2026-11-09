@@ -332,7 +332,21 @@ try {
   [s, j] = await reserve(customer('boat-07', day(41), 8, 'wise'));
   const wq = qs(j.redirect); let wst = await status(j.redirect);
   t('Wise → AWAITING_PAYMENT_VERIFICATION, 24 h hold, deposit without fee', s === 200 && wst.status === 'AWAITING_PAYMENT_VERIFICATION' && wst.chargeCents === 40000 && wst.feeCents === 0 && Math.abs(Date.parse(wst.holdExpiresAt) - Date.now() - 24 * 3600e3) < 120e3 && wst.wiseUrl === 'https://wise.com/pay/me/loict92');
-  t('Wise pending → customer instructions only, NO owner email', emails(wq.ref, 'customer_wise_pending').length === 1 && emails(wq.ref).every((e) => e.recipient !== 'owner@example.test'));
+  t('Wise pending → customer instructions + ONE "WISE — PENDING PAYMENT" owner alert, no confirmation/receipt', emails(wq.ref, 'customer_wise_pending').length === 1 && emails(wq.ref, 'owner_wise_pending').length === 1 && emails(wq.ref, 'owner_wise_pending')[0].recipient === 'owner@example.test' && emails(wq.ref, 'owner_confirmed').length === 0 && emails(wq.ref, 'customer_deposit_receipt').length === 0);
+  {
+    const ob = sql(`SELECT e.subject, e.body FROM email_log e JOIN reservations r ON r.id=e.reservation_id WHERE r.ref='${wq.ref}' AND e.kind='owner_wise_pending'`)[0] || {};
+    const rr = sql(`SELECT * FROM reservations WHERE ref='${wq.ref}'`)[0];
+    t('Wise owner alert: label, NOT verified/NOT confirmed, all fields, deadline, dashboard link', ob.subject?.includes('WISE — PENDING PAYMENT') && ob.subject.includes(wq.ref)
+      && ob.body.includes('Payment has NOT been verified. This booking is NOT confirmed.') && ob.body.includes(`Booking reference: ${wq.ref}`)
+      && ob.body.includes(`CUSTOMER EMAIL: ${rr.email}`) && ob.body.includes(`Phone / WhatsApp: ${rr.phone}`) && ob.body.includes(`${rr.first_name} ${rr.last_name}`)
+      && ob.body.includes('Boat: Boat #7') && ob.body.includes('TRIP DURATION: 8 HOURS') && ob.body.includes('Total charter price: $1,900 USD')
+      && ob.body.includes('Expected Wise deposit: $400 USD') && ob.body.includes('Remaining balance (cash on the fishing day): $1,500 USD')
+      && /Verify the payment before: .+\(24-hour hold/.test(ob.body) && ob.body.includes(BASE + '/booking-admin') && !/CONFIRMED —|VERIFIED\b/.test(ob.subject), (ob.body || '').slice(0, 400));
+    t('Wise status: instructionsEmailed false while the email was not actually accepted (local dry run)', wst.instructionsEmailed === false);
+    sql(`UPDATE email_log SET status='sent' WHERE kind='customer_wise_pending' AND reservation_id='${rr.id}'`);
+    t('Wise status: instructionsEmailed true once the sending service accepted it', (await status(j.redirect)).instructionsEmailed === true);
+    sql(`UPDATE email_log SET status='dry_run' WHERE kind='customer_wise_pending' AND reservation_id='${rr.id}'`);
+  }
   t('Wise pending blocks the day', (await avail('boat-07', day(41))) === 'unavailable' && (await reserve(customer('boat-07', day(41))))[0] === 409);
   const wid = sql(`SELECT id FROM reservations WHERE ref='${wq.ref}'`)[0].id;
   [s, j] = await admin('action', { id: wid, action: 'confirm_wise', amount: 400, confirm: 'yes' });
@@ -346,6 +360,13 @@ try {
   t('owner verifies the Wise payment → CONFIRMED, 1 owner email + 1 customer deposit receipt', s === 200 && wst.status === 'CONFIRMED' && emails(wq.ref, 'owner_confirmed').length === 1 && emails(wq.ref, 'customer_deposit_receipt').length === 1);
   [s] = await admin('action', { id: wid, action: 'confirm_wise', amount: 400, confirm: 'VERIFIED' });
   t('confirming twice → refused, still one owner email', s === 409 && emails(wq.ref, 'owner_confirmed').length === 1);
+  t('after verification: still exactly ONE Wise pending alert (no duplicate), separate final owner email kept', emails(wq.ref, 'owner_wise_pending').length === 1 && emails(wq.ref, 'owner_confirmed').length === 1);
+  {
+    const [ls, lj] = await reserve(customer('boat-09', day(43), 6, 'wise', { email: 'Mixed.Case@Example.TEST' }));
+    const lr = ls === 200 ? sql(`SELECT email FROM reservations WHERE ref='${qs(lj.redirect).ref}'`)[0] : {};
+    t('new booking: customer email stored in lowercase', ls === 200 && lr.email === 'mixed.case@example.test', JSON.stringify([ls, lr]));
+    if (ls === 200) t('lowercase address used for the Wise instructions', emails(qs(lj.redirect).ref, 'customer_wise_pending')[0]?.recipient === 'mixed.case@example.test');
+  }
   // Wise expiry + cron
   [s, j] = await reserve(customer('boat-08', day(42), 6, 'wise'));
   const wq2 = qs(j.redirect);
@@ -478,7 +499,10 @@ try {
   const perRes = sql(`SELECT reservation_id, COUNT(*) n FROM email_log WHERE kind='owner_confirmed' GROUP BY reservation_id HAVING n > 1`);
   t('owner confirmation emails exist only for paid+confirmed bookings', all.length > 0 && all.every((e) => ['CONFIRMED', 'REFUND_PENDING', 'REFUNDED'].includes(e.status)));
   t('never two owner confirmations for the same booking', perRes.length === 0);
-  t('no owner email for pending / expired / canceled attempts', sql(`SELECT COUNT(*) n FROM email_log e JOIN reservations r ON r.id=e.reservation_id WHERE e.recipient='owner@example.test' AND r.status IN ('EXPIRED','CANCELED','AWAITING_PAYMENT','AWAITING_PAYMENT_VERIFICATION','HELD') AND e.kind <> 'owner_exception'`)[0].n === 0);
+  t('no owner email for pending / expired / canceled attempts (except the "WISE — PENDING PAYMENT" alert)', sql(`SELECT COUNT(*) n FROM email_log e JOIN reservations r ON r.id=e.reservation_id WHERE e.recipient='owner@example.test' AND r.status IN ('EXPIRED','CANCELED','AWAITING_PAYMENT','AWAITING_PAYMENT_VERIFICATION','HELD') AND e.kind NOT IN ('owner_exception','owner_wise_pending')`)[0].n === 0);
+  t('"WISE — PENDING PAYMENT" alerts: Wise website bookings only, never twice for one booking', sql(`SELECT COUNT(*) n FROM email_log e JOIN reservations r ON r.id=e.reservation_id WHERE e.kind='owner_wise_pending' AND (r.payment_method <> 'wise' OR r.source <> 'online')`)[0].n === 0
+    && sql(`SELECT COUNT(*) n FROM (SELECT reservation_id FROM email_log WHERE kind='owner_wise_pending' GROUP BY reservation_id HAVING COUNT(*) > 1)`)[0].n === 0
+    && sql(`SELECT COUNT(*) n FROM email_log WHERE kind='owner_wise_pending'`)[0].n > 0);
   t('owner subjects all carry the trip duration and the boat number', sql(`SELECT subject FROM email_log WHERE kind='owner_confirmed'`).every((m) => /CONFIRMED EFC-[A-Z0-9]{6} — [68] HOURS — Boat #\d+, /.test(m.subject)));
   t('no vessel names in any email sent to a customer', sql(`SELECT body FROM email_log WHERE recipient <> 'owner@example.test'`).every((m) => !/Panga|Center Console|Cuddy|Flybridge|Catamaran|Fishing Machine/.test(m.body)));
   t('no automatic email ever contains the official confirmation (TORO / marina directions)', sql(`SELECT body FROM email_log`).every((m) => !m.body.includes('just ask for TORO') && !m.body.includes('maps.app.goo.gl/CXbVM7vW1abnT1cbA')));

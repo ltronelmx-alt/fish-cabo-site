@@ -221,7 +221,7 @@ export async function apiReserve(request: Request, env: BEnv) {
 
   const get = (k: string, max = 200) => String(fd.get(k) ?? '').trim().slice(0, max);
   const f = {
-    firstName: get('fname', 80), lastName: get('lname', 80), email: get('email', 120), phone: get('phone', 40), date: get('date', 10),
+    firstName: get('fname', 80), lastName: get('lname', 80), email: get('email', 120).toLowerCase() /* new bookings only */, phone: get('phone', 40), date: get('date', 10),
     people: Number(get('people', 3)), hours: Number(get('duration', 2)), boatId: get('boat', 10), message: get('message', 5000),
     payment: get('payment', 10), lang: get('lang', 5) || 'en',
   };
@@ -271,7 +271,8 @@ export async function apiReserve(request: Request, env: BEnv) {
   const r = (await loadRes(d, 'r.id = ?', id))!;
   const statusUrl = `${u.origin}/book-now/confirmation?ref=${ref}&t=${token}`;
   if (f.payment === 'wise') {
-    await sendLogged(env, d, r, 'customer_wise_pending', r.email, M.customerWisePending(r));
+    await sendLogged(env, d, r, 'customer_wise_pending', r.email, M.customerWisePending(r), env.CONTACT_TO);
+    await notifyWisePending(env, d, r, `${u.origin}/booking-admin`);
     return json({ ok: true, ref, redirect: statusUrl });
   }
   const sess = await createCheckout(env, d, r, u.origin);
@@ -444,6 +445,14 @@ export async function sendLogged(env: BEnv, d: D1Database, r: Res | null, kind: 
   return res.ok;
 }
 
+/** "WISE — PENDING PAYMENT" alert to the owner, at most once per booking (email_log is the record; sent at creation). */
+export async function notifyWisePending(env: BEnv, d: D1Database, r: Res, adminUrl: string) {
+  if (!env.CONTACT_TO || r.payment_method !== 'wise') return;
+  const done = await d.prepare(`SELECT 1 FROM email_log WHERE reservation_id = ? AND kind = 'owner_wise_pending' AND status IN ('sent','dry_run')`).bind(r.id).first();
+  if (done) return;
+  await sendLogged(env, d, r, 'owner_wise_pending', env.CONTACT_TO, M.ownerWisePending(r, adminUrl), r.email || undefined);
+}
+
 /** Owner notification + customer deposit receipt, each sent at most once (atomic claim; released again if the send fails → retried by the cron). */
 export async function notifyConfirmed(env: BEnv, d: D1Database, id: string) {
   const r = await loadRes(d, `r.id = ? AND r.status = 'CONFIRMED'`, id);
@@ -475,6 +484,7 @@ export async function apiStatus(request: Request, env: BEnv) {
   return json({
     ok: true, ref: r.ref, status: r.status, boat: boatLabel(r), date: r.date, hours: r.hours, people: r.people, firstName: r.first_name,
     total: r.total_usd, deposit: r.deposit_usd, balance: r.balance_usd, chargeCents: r.charge_cents, feeCents: r.fee_cents, payment: r.payment_method,
+    instructionsEmailed: r.payment_method === 'wise' ? !!(await d.prepare(`SELECT 1 FROM email_log WHERE reservation_id = ? AND kind IN ('customer_wise_pending','customer_wise_pending_resend') AND status = 'sent'`).bind(r.id).first()) : null,
     holdExpiresAt: r.hold_expires_at, wiseUrl: r.payment_method === 'wise' ? M.WISE_PAY_URL : null, test: !!r.is_test,
     canPay: r.payment_method === 'stripe' && r.status === 'AWAITING_PAYMENT' && !!r.hold_expires_at && Date.parse(r.hold_expires_at) > Date.now(),
   });

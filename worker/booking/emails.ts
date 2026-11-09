@@ -98,6 +98,32 @@ export function ownerConfirmed(r: Res) {
   return { subject, text, html };
 }
 
+/** Owner alert as soon as a customer chooses Wise (owner request 2026-11-09). The deposit is NOT verified and the
+ * booking is NOT confirmed; the separate ✅ CONFIRMED email still follows the owner's manual verification. */
+export function ownerWisePending(r: Res, adminUrl = ADMIN_URL) {
+  const email = r.email || '(no email given)';
+  const deadline = r.hold_expires_at ? localDateTime(r.hold_expires_at) : '(not set)';
+  const warn = 'Payment has NOT been verified. This booking is NOT confirmed.';
+  const rows: [string, string][] = [
+    ['Status', 'WISE — PENDING PAYMENT (not verified, not confirmed)'],
+    ['Booking reference', r.ref],
+    ['CUSTOMER EMAIL', email],
+    ['Customer', `${r.first_name} ${r.last_name}`.trim()],
+    ['Phone / WhatsApp', r.phone || '(not given)'],
+    ['Boat', B(r)],
+    ['Fishing date', longDate(r.date)],
+    ['TRIP DURATION', DUR(r.hours)],
+    ['Total charter price', usd(r.total_usd)],
+    ['Expected Wise deposit', usd(r.deposit_usd)],
+    ['Remaining balance (cash on the fishing day)', usd(r.balance_usd)],
+    ['Verify the payment before', `${deadline} (24-hour hold; the date is released automatically after that)`],
+  ];
+  const subject = `${test(r)}⏳ WISE — PENDING PAYMENT ${r.ref} — ${DUR(r.hours)} — Boat #${r.boat_number}, ${r.date}`;
+  const text = `${test(r)}WISE — PENDING PAYMENT\n\n${warn}\nCheck your Wise account for ${usd(r.deposit_usd)} with the reference ${r.ref}, then mark it verified in the booking dashboard before ${deadline}.\n\n${lines(rows)}\n\nCustomer (contact form fields)\n${lines(customerRows(r))}\n\nBooking dashboard: ${adminUrl}`;
+  const html = wrap('WISE — PENDING PAYMENT', `<p style="font-size:18px;font-weight:800;margin:0 0 10px;padding:12px 14px;background:#fff3e0;border-left:5px solid #fb7704">${esc(warn)}</p><p style="margin:0 0 16px">Check your Wise account for <b>${esc(usd(r.deposit_usd))}</b> with the reference <b>${esc(r.ref)}</b>, then mark it verified in the booking dashboard before <b>${esc(deadline)}</b>.</p>${table(rows)}<h2 style="font-size:16px;margin:22px 0 8px">Customer</h2>${table(customerRows(r))}<p style="margin-top:20px"><a href="${esc(adminUrl)}" style="color:#111">Open the booking dashboard</a></p>`);
+  return { subject, text, html };
+}
+
 /** Automatic customer email after a verified deposit (owner decision 2026-11-08): a deposit RECEIPT only.
  * No meeting time, no marina directions, not the official confirmation (Loïc sends that one personally). */
 export function customerDepositReceipt(r: Res) {

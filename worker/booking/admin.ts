@@ -266,7 +266,7 @@ async function secondTrip(request: Request, env: BEnv, d: D1Database, b: Record<
   const date = String(b.date || ''), hours = Number(b.hours), people = Number(b.people);
   const total = priceOf(boat, hours); // approved price for that boat and duration (never typed by hand)
   const str = (k: string, max: number) => String(b[k] ?? '').trim().slice(0, max);
-  const f = { first: str('fname', 80), last: str('lname', 80), email: str('email', 120), phone: str('phone', 40), message: str('message', 5000) || '(second trip recorded by the owner)' };
+  const f = { first: str('fname', 80), last: str('lname', 80), email: str('email', 120).toLowerCase(), phone: str('phone', 40), message: str('message', 5000) || '(second trip recorded by the owner)' };
   if (!isDate(date) || date < localToday()) return fail('Choose a future date');
   if (total == null) return fail(`Boat #${boat.number} offers ${durationsOf(boat).join(' or ')}-hour trips only.`);
   if (!f.first || !f.last || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email) || (f.phone.match(/\d/g) || []).length < 6) return fail('Customer name, valid email and phone are required');
@@ -312,7 +312,7 @@ async function phoneBooking(request: Request, env: BEnv, d: D1Database, b: Recor
   if (total == null) return fail(`Boat #${boat.number} offers ${durationsOf(boat).join(' or ')}-hour trips only.`);
   if (!isDate(date) || date < localToday()) return fail('Choose today or a future date');
   const str = (k: string, max: number) => String(b[k] ?? '').trim().slice(0, max);
-  const f = { first: str('fname', 80), last: str('lname', 80), email: str('email', 120), phone: str('phone', 40), message: str('message', 5000) || '(telephone booking)' };
+  const f = { first: str('fname', 80), last: str('lname', 80), email: str('email', 120).toLowerCase(), phone: str('phone', 40), message: str('message', 5000) || '(telephone booking)' };
   if (!f.first || (f.phone.match(/\d/g) || []).length < 6) return fail('Customer first name and phone are required');
   if (f.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email)) return fail('Email address looks wrong (leave it empty if the customer has none)');
   if ((b.payment === 'stripe' || b.payment === 'wise') && !f.email) return fail('An email is needed to send the payment instructions (or choose "deposit already received").');
@@ -359,6 +359,6 @@ async function phoneBooking(request: Request, env: BEnv, d: D1Database, b: Recor
     await notifyConfirmed(env, d, id); // owner record + customer confirmation (if an email was given)
     emailSent = !!f.email;
   } else if (method === 'stripe') emailSent = await sendLogged(env, d, r, 'customer_payment_request', r.email, M.customerPaymentRequest(r, payUrl), env.CONTACT_TO);
-  else emailSent = await sendLogged(env, d, r, 'customer_wise_pending', r.email, M.customerWisePending(r));
+  else emailSent = await sendLogged(env, d, r, 'customer_wise_pending', r.email, M.customerWisePending(r), env.CONTACT_TO);
   return json({ ok: true, id, ref, status, total, deposit: boat.deposit_usd, balance: total - boat.deposit_usd, payUrl: method === 'stripe' ? payUrl : null, emailSent });
 }
