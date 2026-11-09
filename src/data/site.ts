@@ -1,3 +1,4 @@
+import { BOOKING_OPEN } from '../lib/launch';
 // Central business data. Edit here (or via the CMS later) — every page reads from this file.
 export const SITE = {
   name: 'Exotic Fish Cabo',
@@ -10,12 +11,11 @@ export const SITE = {
     'https://www.google.com/maps/dir/?api=1&destination=23.060275%2C-109.670677&travelmode=driving',
   directionsUrl:
     'https://www.google.com/maps/dir/?api=1&destination=23.060275%2C-109.670677&travelmode=driving',
-  bookUrl: '/book-now', // online booking (was /fishing-boats)
-  // LAUNCH SWITCH (owner, 2026-11-08): the old direct-payment buttons (Stripe / PayPal / Wise) on the 10 boat pages stay
-  // until the owner approves the production launch of /book-now. At launch, build with PUBLIC_BOOKING_LAUNCHED=true
-  // (Cloudflare build variable) — or set this to false — and the boat pages keep BOOK THIS BOAT only, so nobody can pay
-  // a deposit without going through the availability calendar.
-  legacyPaymentButtons: import.meta.env.PUBLIC_BOOKING_LAUNCHED !== 'true',
+  bookUrl: BOOKING_OPEN ? '/book-now' : '/fishing-boats', // online booking after the launch switch (src/data/launch.json)
+  // LAUNCH SWITCH (owner, 2026-11-09): the old direct-payment buttons (Stripe / PayPal / Wise) on the 10 boat pages stay
+  // exactly as long as online booking is closed, and disappear in the same deploy that opens it (src/data/launch.json),
+  // so there is never a moment with two payment systems, nor one with none.
+  legacyPaymentButtons: !BOOKING_OPEN,
   gps: { lat: 23.060275, lng: -109.670677 },
   googleReviews: 'https://g.page/r/CVkU9WoXqp_DEBM',
   googleLeaveReview: 'https://g.page/r/CVkU9WoXqp_DEBM/review',

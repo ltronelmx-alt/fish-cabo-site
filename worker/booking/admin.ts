@@ -3,7 +3,7 @@
 // Every change is written to audit_log. An override never confirms a booking by itself: payment must still be verified.
 import { getSettings } from './schema';
 import { json, nowIso, newId, newRef, newToken, hmacHex, sha256Hex, safeEqual, rateLimit, isDate, localToday, addDays } from './util';
-import { db, boats, audit, loadRes, runSweep, cron, isProductionEnv, isStagingEnv, adminUrl, notifyConfirmed, sendLogged, sendOnce, chargeCents, dayStates, priceOf, durationsOf, BOOKED_MSG, TERMS_VERSION, type BEnv, type Boat } from './core';
+import { db, boats, audit, loadRes, runSweep, cron, isProductionEnv, isStagingEnv, adminUrl, bookingOpen, stripeMode as stripeModeOf, notifyConfirmed, sendLogged, sendOnce, chargeCents, dayStates, priceOf, durationsOf, BOOKED_MSG, TERMS_VERSION, type BEnv, type Boat } from './core';
 import * as M from './emails';
 import type { Res } from './emails';
 import { ADMIN_HTML } from './admin-page';
@@ -125,6 +125,12 @@ export async function adminApi(request: Request, env: BEnv): Promise<Response> {
     const csv = [cols.join(','), ...results.map((r) => cols.map((c) => cell(r[c])).join(','))].join('\r\n');
     await audit(d, 'admin', 'export_csv', null, { rows: results.length }).run();
     return new Response('﻿' + csv, { headers: { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': `attachment; filename="bookings-${localToday()}.csv"`, 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } });
+  }
+  if (path === 'readiness' && request.method === 'GET') {
+    // LAUNCH READINESS (owner, 2026-11-09): admin session only, available in production. Says what is configured and
+    // whether it works — NEVER a secret value (only key types, the last 4 characters of the Stripe account id, counts).
+    // Read-only: no email, no payment; the Stripe calls are GET /v1/account and GET /v1/webhook_endpoints.
+    return json({ ok: true, readiness: await readiness(env, d, u) });
   }
   if (request.method !== 'POST') return json({ ok: false, error: 'Not found' }, 404);
   const body = (await request.json().catch(() => ({}))) as Record<string, any>;
@@ -370,4 +376,45 @@ async function phoneBooking(request: Request, env: BEnv, d: D1Database, b: Recor
   } else if (method === 'stripe') emailSent = await sendLogged(env, d, r, 'customer_payment_request', r.email, M.customerPaymentRequest(r, payUrl), env.CONTACT_TO);
   else emailSent = (await sendOnce(env, d, r, 'customer_wise_pending', r.email, M.customerWisePending(r), env.CONTACT_TO)) === 'sent';
   return json({ ok: true, id, ref, status, total, deposit: boat.deposit_usd, balance: total - boat.deposit_usd, payUrl: method === 'stripe' ? payUrl : null, emailSent });
+}
+
+async function readiness(env: BEnv, d: D1Database, u: URL) {
+  const e = env as BEnv & { TURNSTILE_SECRET?: string; SITE_ENV?: string; BOOKING_LIVE?: string };
+  const tables = (await d.prepare(`SELECT name FROM sqlite_master WHERE type IN ('table','index') ORDER BY name`).all<{ name: string }>()).results.map((r) => r.name);
+  const need = ['meta', 'boats', 'prices', 'settings', 'blocked_dates', 'reservations', 'payments', 'payment_events', 'audit_log', 'email_log', 'rate_limits', 'res_active_slot', 'res_stripe_session'];
+  const blocks = (await d.prepare(`SELECT boat_id, date, reason FROM blocked_dates WHERE reason LIKE 'MANUAL BOOKING%' ORDER BY date`).all<{ boat_id: string; date: string; reason: string }>()).results;
+  const counts = await d.prepare(`SELECT (SELECT COUNT(*) FROM reservations) reservations, (SELECT COUNT(*) FROM payments) payments, (SELECT COUNT(*) FROM reservations WHERE is_test = 1) test_reservations`).first();
+  const prices = (await d.prepare(`SELECT b.number n, p.hours h, p.price_usd price, b.deposit_usd deposit FROM prices p JOIN boats b ON b.id = p.boat_id WHERE p.price_usd IS NOT NULL ORDER BY b.number, p.hours`).all<{ n: number; h: number; price: number; deposit: number }>()).results;
+  const s = await getSettings(d);
+  // Stripe (read-only)
+  const k = e.STRIPE_SECRET_KEY || '';
+  const keyType = !k ? 'missing' : /^(sk|rk)_live_/.test(k) ? `${k.slice(0, 2)}_live` : /^(sk|rk)_test_/.test(k) ? `${k.slice(0, 2)}_test` : 'unknown format';
+  const stripe: Record<string, unknown> = { keyType, mode: stripeModeOf(e), BOOKING_LIVE: e.BOOKING_LIVE === 'approved' ? 'approved' : e.BOOKING_LIVE ? 'set (not "approved")' : 'not set',
+    webhookSecret: !e.STRIPE_WEBHOOK_SECRET ? 'missing' : e.STRIPE_WEBHOOK_SECRET.startsWith('whsec_') ? 'set (whsec_)' : 'set (unexpected format)' };
+  if (k) {
+    const get = (path: string) => fetch(`https://api.stripe.com${path}`, { headers: { authorization: `Bearer ${k}` } }).then(async (r) => ({ status: r.status, j: (await r.json().catch(() => ({}))) as any })).catch(() => ({ status: 0, j: {} as any }));
+    const a = await get('/v1/account');
+    stripe.account = a.status === 200 ? { idLast4: String(a.j.id || '').slice(-4), country: a.j.country, currency: a.j.default_currency, chargesEnabled: a.j.charges_enabled, payoutsEnabled: a.j.payouts_enabled, name: a.j.settings?.dashboard?.display_name || a.j.business_profile?.name || null } : `not readable (HTTP ${a.status}${a.j?.error?.type ? ', ' + a.j.error.type : ''})`;
+    const w = await get('/v1/webhook_endpoints?limit=20');
+    const want = ['checkout.session.completed', 'checkout.session.async_payment_succeeded', 'checkout.session.expired', 'checkout.session.async_payment_failed', 'charge.refunded'];
+    stripe.webhooks = w.status === 200 ? (w.j.data || []).map((x: any) => ({ url: x.url, status: x.status, livemode: x.livemode, forThisSite: x.url === 'https://fish-cabo.com/api/stripe/webhook',
+      missingEvents: (x.enabled_events || []).includes('*') ? [] : want.filter((ev) => !(x.enabled_events || []).includes(ev)), extraEvents: (x.enabled_events || []).filter((ev: string) => ev !== '*' && !want.includes(ev)).length })) : `not readable (HTTP ${w.status})`;
+  }
+  // Resend (read-only: a sending-only key answers "restricted" = valid)
+  let resend = 'missing';
+  if (e.RESEND_API_KEY) {
+    const r = await fetch('https://api.resend.com/domains', { headers: { authorization: `Bearer ${e.RESEND_API_KEY}` } }).catch(() => null);
+    const j: any = r ? await r.json().catch(() => ({})) : {};
+    resend = !r ? 'unreachable' : r.ok ? `valid (full access); fish-cabo.com: ${((j.data || []).find((x: any) => x.name === 'fish-cabo.com') || {}).status || 'not found'}` : /restricted/i.test(`${j.name} ${j.message}`) ? 'valid (sending access)' : `rejected (${j.name || r.status})`;
+  }
+  const from = e.CONTACT_FROM || '';
+  const fromAddr = (from.match(/<([^<>\s@]+@[^<>\s@]+)>\s*$/) || [])[1] || '';
+  return {
+    host: u.hostname, SITE_ENV: e.SITE_ENV || '(not set)', productionRules: isProductionEnv(e, u), publicBookingOpen: bookingOpen(e),
+    database: { tablesAndIndexesOk: need.every((n) => tables.includes(n)), missing: need.filter((n) => !tables.includes(n)), manualBlocks: blocks.map((b) => `Boat #${Number(b.boat_id.slice(5))} ${b.date}`), ...counts },
+    prices: prices.map((p) => `#${p.n} ${p.h}h $${p.price} (deposit $${p.deposit})`), settings: { stripe_fee_pct: s.stripe_fee_pct, wise_hold_hours: s.wise_hold_hours, min_lead_hours: s.min_lead_hours },
+    ADMIN_PASSWORD: e.ADMIN_PASSWORD ? 'set' : 'missing', TURNSTILE_SECRET: e.TURNSTILE_SECRET ? 'set' : 'missing',
+    CONTACT_TO: e.CONTACT_TO || 'missing', CONTACT_FROM: !from ? 'missing' : { name: from.replace(/<[^>]*>\s*$/, '').trim(), address: fromAddr || 'invalid format' },
+    RESEND_API_KEY: resend, adminLinkInOwnerEmails: adminUrl(e), stripe,
+  };
 }

@@ -5,6 +5,7 @@ import Rich from './Rich.astro';
 import { liWrap } from '../lib/design-markup';
 import OImg from './OImg.astro';
 import OBtn from './OBtn.astro';
+import { BOOKING_OPEN } from '../lib/launch';
 import LatestLog from './LatestLog.astro';
 import ContactForm from './ContactForm.astro';
 import { byH2, type Page, type Block } from '../lib/original';
@@ -97,7 +98,7 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
             return chunks.length > 1
               ? <div class="o-text">{chunks.map((c) => <Rich html={pictures(c)} mode="cards" class="reveal o-chunk" />)}</div>
               : <>
-                  {pay && bookBoat && !bookShown && (bookShown = true) && (
+                  {BOOKING_OPEN && pay && bookBoat && !bookShown && (bookShown = true) && (
                     <div class="o-book" data-booking>
                       <p class="o-book-t"><strong>Book online</strong> — choose your date and pay the deposit securely.</p>
                       <div class="btn-row"><a class="btn btn-primary" href={`/book-now?boat=${bookBoat.id}`} data-track={`book_this_boat_${bookBoat.id}`}>BOOK THIS BOAT</a></div>

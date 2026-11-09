@@ -13,7 +13,7 @@ async function start(extraVars, upstream = true) {
   const args = ['wrangler', 'dev', '--port', String(PORT), '--persist-to', '/tmp/wp-env', ...(upstream ? ['--local-upstream', 'fish-cabo.small-boat-4235.workers.dev'] : []),
     '--var', `ADMIN_PASSWORD:${PASS}`, '--var', 'CONTACT_TO:owner@example.test', ...extraVars.flatMap((v) => ['--var', v])];
   const p = spawn('npx', args, { stdio: 'ignore', detached: true });
-  for (let i = 0; i < 60; i++) { try { if ((await fetch(BASE + '/api/booking/boats')).ok) return p; } catch {} await sleep(1000); }
+  for (let i = 0; i < 60; i++) { try { if ((await fetch(BASE + '/')).status < 500) return p; } catch {} await sleep(1000); }
   throw new Error('wrangler dev did not start');
 }
 const stop = async (p) => { try { process.kill(-p.pid); } catch {} await sleep(1500); };
@@ -37,7 +37,7 @@ let cookie = await login();
 t('production Worker: admin login still works', cookie.startsWith('efc_admin='));
 t('production Worker: staging-only "run hourly job" → 404 even for the signed-in admin', (await adminPost(cookie, 'run-hourly-job')).status === 404);
 let [s, j] = await reserve();
-t('production Worker: Turnstile NOT bypassed (no secret configured → booking refused)', s === 403 && /Verification failed/.test(j.error || ''), JSON.stringify([s, j]));
+t('production Worker: booking refused on a non-production hostname (closed before the launch = 503; after it, Turnstile = 403 — see launch-switch.mjs)', (s === 503 || (s === 403 && /Verification failed/.test(j.error || ''))) && !j.ok, JSON.stringify([s, j]));
 const cf = new FormData(); for (const [k, v] of Object.entries({ firstName: 'A', lastName: 'B', email: 'a@example.test', phone: '1', 'people-aboard-10-max': '2', duration: '6', boats: 'x', message: 'm', date: day(30), 'cf-turnstile-response': 'x' })) cf.append(k, v);
 const cr = await fetch(BASE + '/api/contact', { method: 'POST', body: cf }); const cj = await cr.json().catch(() => ({}));
 t('production Worker: contact form never answers "test mode" and exposes no Turnstile debug codes', cj.test !== true && !('codes' in cj), JSON.stringify([cr.status, cj]));

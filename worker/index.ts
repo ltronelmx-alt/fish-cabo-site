@@ -21,7 +21,7 @@ export interface Env {
 }
 import REDIRECTS from '../src/data/redirects.json';
 import { publishNotify } from './notify';
-import { apiBoats, apiAvailability, apiQuote, apiSummary, apiReserve, apiStatus, apiCancelCheckout, apiPay, apiStripeWebhook, cron, isProductionEnv, isStagingEnv, adminUrl } from './booking/core';
+import { apiBoats, apiAvailability, apiQuote, apiSummary, apiReserve, apiStatus, apiCancelCheckout, apiPay, apiStripeWebhook, cron, isProductionEnv, isStagingEnv, adminUrl, bookingOpen } from './booking/core';
 import { adminPage, adminApi } from './booking/admin';
 const TEST_TURNSTILE_SECRET = '1x0000000000000000000000000000000AA';
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
@@ -159,6 +159,8 @@ async function handle(request: Request, env: Env): Promise<Response> {
     // /booking-admin = owner dashboard (Worker). /admin/ stays Sveltia CMS (static files) and is never handled here.
     if (url.pathname.startsWith('/api/booking/') || url.pathname.startsWith('/api/admin/') || url.pathname === '/booking-admin') {
       if (!env.DB) return json({ ok: false, error: 'Online booking is not available yet.' }, 503);
+      // before the owner-authorised public launch (src/data/launch.json): booking API closed on production
+      if (url.pathname.startsWith('/api/booking/') && !bookingOpen(env)) return json({ ok: false, error: 'Online booking is not open yet. Please contact us on WhatsApp +52 624 122 3506.' }, 503);
       try {
         switch (url.pathname) {
           case '/api/booking/boats': return await apiBoats(env);

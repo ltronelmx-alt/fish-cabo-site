@@ -31,6 +31,8 @@ t(`no price grid in any public file (${pub.length} files under dist/)`, bad.leng
 const bk = readFileSync('dist/book-now.html', 'utf8');
 t('/book-now HTML: no dollar amount at all', !/\$\s?\d/.test(bk));
 const legacyPages = walk('dist/fishing-boats').filter((f) => f.endsWith('.html')).map((f) => readFileSync(f, 'utf8'));
-t('pre-launch build: old Stripe/Wise payment links still on the 10 boat pages (production fallback) + BOOK THIS BOAT', legacyPages.length === 10 && legacyPages.every((h) => /href="https:\/\/buy\.stripe\.com/.test(h) && /href="https:\/\/wise\.com\/pay/.test(h) && h.includes('BOOK THIS BOAT')));
+// Owner 2026-11-09: no parallel payment systems. An OPEN build (staging, or production after the launch switch) has BOOK
+// THIS BOAT and none of the old direct-payment links; the CLOSED production build is checked in tests/launch-switch.mjs.
+t('open build: BOOK THIS BOAT on the 10 boat pages and NO old Stripe/Wise/PayPal payment link', legacyPages.length === 10 && legacyPages.every((h) => h.includes('BOOK THIS BOAT') && !/buy\.stripe\.com|wise\.com\/pay|paypal\./.test(h)));
 console.log(`\n${results.filter(Boolean).length}/${results.length} passed`);
 process.exit(results.every(Boolean) ? 0 : 1);

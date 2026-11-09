@@ -1,0 +1,4 @@
+{
+  "_doc": "PUBLIC LAUNCH SWITCH (owner, 2026-11-09) — the ONLY place that opens online booking on fish-cabo.com. false: the production site behaves as before the booking system (BOOK NOW → /fishing-boats, chat → /contact, the original Stripe/Wise/PayPal buttons on the boat pages, no BOOK THIS BOAT, no /book-now page, booking API closed (503); /booking-admin and the signed Stripe webhook stay available). true (one commit, one deploy): every BOOK NOW / BOOK THIS BOAT / chat link → /book-now, old direct-payment buttons removed, /book-now and the booking API open — all at the same time. Staging and local builds (not PUBLIC_SITE_ENV=production / not SITE_ENV=production) are always open. Change only with the owner's explicit authorization.",
+  "PUBLIC_BOOKING_LAUNCHED": false
+}

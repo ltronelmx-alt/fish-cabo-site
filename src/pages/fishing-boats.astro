@@ -7,6 +7,7 @@ import OImg from '../components/OImg.astro';
 import OBtn from '../components/OBtn.astro';
 import { PAGES, type Block } from '../lib/original';
 import catalogue from '../data/boats.json';
+import { BOOKING_OPEN } from '../lib/launch';
 const bookId = (href = '') => catalogue.boats.find((x) => x.url === href.replace(/^https?:\/\/[^/]+/, '').replace(/\/$/, ''))?.id;
 
 const P = PAGES['fishing-boats'];
@@ -40,7 +41,7 @@ const faq = s4.blocks.filter((b) => b.ga[3] - b.ga[1] > 12);
         <div class="container boats" style={`--n:${cs.length}`}>
           {ordered.map((b) =>
             b.kind === 'img' ? <OImg block={b} class="boat-media" sizes="(min-width: 1000px) 30vw, 92vw" style={pos.get(b)} /> :
-            b.kind === 'button' ? <div class="boat-btn" style={pos.get(b)}><OBtn block={b} track={`boat_${(b.href || '').split('/').pop()}`} />{bookId(b.href) && <a class="btn btn-primary" data-booking href={`/book-now?boat=${bookId(b.href)}`} data-track={`book_this_boat_${bookId(b.href)}`}>BOOK THIS BOAT</a>}</div> :
+            b.kind === 'button' ? <div class="boat-btn" style={pos.get(b)}><OBtn block={b} track={`boat_${(b.href || '').split('/').pop()}`} />{BOOKING_OPEN && bookId(b.href) && <a class="btn btn-primary" data-booking href={`/book-now?boat=${bookId(b.href)}`} data-track={`book_this_boat_${bookId(b.href)}`}>BOOK THIS BOAT</a>}</div> :
             <div class="boat-text rich" style={pos.get(b)} set:html={b.html} />
           )}
         </div>

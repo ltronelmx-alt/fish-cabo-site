@@ -1,5 +1,5 @@
 // Pre-launch audit B2/B6: environment detection and admin links (pure functions). Usage: npx tsx tests/env-unit.ts
-import { isProductionEnv, isStagingEnv, adminUrl, isProductionHost } from '../worker/booking/envmode';
+import { isProductionEnv, isStagingEnv, adminUrl, isProductionHost, bookingOpen } from '../worker/booking/envmode';
 
 const results: boolean[] = [];
 const t = (name: string, ok: boolean) => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}`); };
@@ -23,6 +23,11 @@ t('staging → the staging /booking-admin', adminUrl(stg) === 'https://booking-s
 t('staging SITE_URL with trailing slash → normalised', adminUrl({ SITE_ENV: 'staging', SITE_URL: 'https://booking-system-fish-cabo.small-boat-4235.workers.dev/' }) === 'https://booking-system-fish-cabo.small-boat-4235.workers.dev/booking-admin');
 t('local test origin accepted off production', adminUrl({ SITE_ENV: 'staging', SITE_URL: 'http://127.0.0.1:8787' }) === 'http://127.0.0.1:8787/booking-admin');
 t('untrusted SITE_URL (other domain, http, path, javascript:) → production address', ['https://evil.example.com', 'http://booking-system.workers.dev', 'https://x.workers.dev/phish', 'javascript:alert(1)', ''].every((u) => adminUrl({ SITE_ENV: 'staging', SITE_URL: u }) === 'https://fish-cabo.com/booking-admin'));
+
+// Public launch switch (worker side)
+t('production + switch off → booking API closed', bookingOpen({ SITE_ENV: 'production' }, false) === false);
+t('production + switch on → open', bookingOpen({ SITE_ENV: 'production' }, true) === true);
+t('staging / local → always open (switch ignored)', bookingOpen({ SITE_ENV: 'staging' }, false) && bookingOpen({ SITE_ENV: 'development' }, false));
 
 console.log(`\n${results.filter(Boolean).length}/${results.length} passed`);
 process.exit(results.every(Boolean) ? 0 : 1);

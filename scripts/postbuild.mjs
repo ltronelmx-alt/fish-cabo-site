@@ -1,12 +1,16 @@
 // Runs after `astro build`. Writes _headers, robots.txt and sitemap.xml.
 // Staging (default): everything is noindex and robots.txt blocks all crawlers.
 // Production: only when PUBLIC_SITE_ENV=production is set explicitly.
-import { readdirSync, statSync, writeFileSync, readFileSync } from 'node:fs';
+import { readdirSync, statSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const DIST = 'dist';
 const SITE = 'https://fish-cabo.com';
 const isProd = process.env.PUBLIC_SITE_ENV === 'production';
+// PUBLIC LAUNCH SWITCH (src/data/launch.json): a production build made while online booking is closed carries NO
+// /book-now pages (they answer 404 like any unknown URL) and no /book-now sitemap entry.
+const bookingOpen = !isProd || JSON.parse(readFileSync('src/data/launch.json', 'utf8')).PUBLIC_BOOKING_LAUNCHED === true;
+if (!bookingOpen) { rmSync(join(DIST, 'book-now.html'), { force: true }); rmSync(join(DIST, 'book-now'), { recursive: true, force: true }); console.log('postbuild: online booking CLOSED (launch.json) — /book-now pages removed from the production build'); }
 
 const csp = [
   "default-src 'self'",

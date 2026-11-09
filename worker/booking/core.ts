@@ -33,8 +33,8 @@ export interface BEnv {
 
 export const HOLDING = ['HELD', 'AWAITING_PAYMENT', 'AWAITING_PAYMENT_VERIFICATION'] as const;
 const TEST_TURNSTILE_SECRET = '1x0000000000000000000000000000000AA'; // Cloudflare's public test secret (pairs with test site key 1x00000000000000000000AA)
-import { isProductionHost, isProductionEnv, isStagingEnv, isLocalHost as isLocal, adminUrl } from './envmode';
-export { isProductionHost, isProductionEnv, isStagingEnv, adminUrl };
+import { isProductionHost, isProductionEnv, isStagingEnv, isLocalHost as isLocal, adminUrl, bookingOpen } from './envmode';
+export { isProductionHost, isProductionEnv, isStagingEnv, adminUrl, bookingOpen };
 /** Terms & Privacy versions the customer accepts by completing a booking ("Last updated" dates of the published pages). */
 export const TERMS_VERSION = 'terms:2026-03;privacy:2026-02';
 /** Public boat reference: "Boat #3 (27 ft)" — boat numbers and sizes only, never vessel or captain names. */
@@ -215,7 +215,8 @@ export const chargeCents = cardChargeCents;
 export function stripeMode(env: BEnv): 'test' | 'live' | 'off' | 'blocked' {
   const k = env.STRIPE_SECRET_KEY || '';
   if (!k) return 'off';
-  if (k.startsWith('sk_test_') || k.startsWith('rk_test_')) return 'test';
+  // production never sends a real customer to a Stripe test checkout (owner, 2026-11-09): a test key there = card payments off
+  if (k.startsWith('sk_test_') || k.startsWith('rk_test_')) return env.SITE_ENV === 'production' ? 'blocked' : 'test';
   if ((k.startsWith('sk_live_') || k.startsWith('rk_live_')) && env.BOOKING_LIVE === 'approved') return 'live';
   return 'blocked';
 }

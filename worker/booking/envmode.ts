@@ -6,6 +6,8 @@
 // Worker answering on *.workers.dev is therefore still production (real Turnstile, no TEST label, no diagnostics).
 // Staging = Cloudflare Previews, which set SITE_ENV=staging in "previews.vars".
 
+import launch from '../../src/data/launch.json';
+
 export type EnvLike = { SITE_ENV?: string; SITE_URL?: string };
 
 export const isProductionHost = (u: URL) => u.hostname === 'fish-cabo.com' || u.hostname === 'www.fish-cabo.com';
@@ -29,3 +31,8 @@ export function adminUrl(env: EnvLike): string {
   const s = (env.SITE_URL || '').trim().replace(/\/+$/, '');
   return TRUSTED_STAGING_ORIGIN.test(s) || TRUSTED_LOCAL_ORIGIN.test(s) ? `${s}/booking-admin` : PRODUCTION_ADMIN_URL;
 }
+
+/** PUBLIC LAUNCH SWITCH (src/data/launch.json, the same file the pages are built from). Staging/local: always open.
+ * Production: the public booking API (/api/booking/*) answers only after the owner-authorised switch. /booking-admin
+ * and the signed Stripe webhook are not affected (the owner can verify the production database before the launch). */
+export const bookingOpen = (env: EnvLike, launched: boolean = launch.PUBLIC_BOOKING_LAUNCHED === true) => env.SITE_ENV !== 'production' || launched;
