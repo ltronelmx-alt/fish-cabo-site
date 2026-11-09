@@ -46,8 +46,8 @@ Tests : booking **370/370**, booking-ui **36/36**, catalogue 11/11, qa 150/150, 
 | Deuxième sortie SECOND TRIP | ♻️ ✅ | Utilise maintenant le prix approuvé (plus de total saisi à la main) |
 | Vérification Wise manuelle | ♻️ ✅ local | Confirmation uniquement après saisie de VERIFIED par le propriétaire |
 | Webhook Stripe signé et idempotent | ♻️ ✅ local (mock) | 🟡 Jamais testé avec le vrai Stripe (mode test) |
-| Un email propriétaire et un email client, uniquement après paiement vérifié | ♻️ ✅ local (dry-run) | 🟡 Envoi réel via Resend non testé |
-| Modèle d'email client | ♻️ ✅ | `tests/fixtures/...txt` est **identique mot pour mot** au modèle du prompt maître ; comparaison exacte sur 19 combinaisons |
+| Un email propriétaire et un reçu d'acompte client, uniquement après paiement vérifié | ♻️ ✅ local (dry-run) | 🟡 Envoi réel via Resend non testé |
+| Modèle d'email officiel | ♻️ ✅ | `tests/fixtures/...txt` est identique mot pour mot au modèle. Il n'est **plus envoyé automatiquement** (voir 0) : il est prérempli dans `/booking-admin` |
 | Aucun nom de bateau dans les textes destinés aux clients | ✅ | Stripe, emails et statut utilisent « Boat #N (X ft) » |
 | BOOK NOW → `/book-now`, préselection depuis les pages bateaux | ♻️ ✅ | Menu, barre mobile, 20 boutons BOOK THIS BOAT |
 | Chatbot EN/FR/ES | ✅ | Bouton réserver → `/book-now` (avant : `/contact`), étapes mises à jour, PayPal conservé ; `tests/chat.mjs` 96/96 |
@@ -98,10 +98,10 @@ Tests : booking **370/370**, booking-ui **36/36**, catalogue 11/11, qa 150/150, 
 
 ## D. SEO de l'accueil
 
-**Comparaison** de la production `main` avec la branche, build de production, 105 pages : **12 pages changent**, et rien d'autre.
+**Comparaison** de la production `main` avec la branche, build de production, 105 pages : **12 pages changent**, plus F13 sur toutes les pages, et rien d'autre. Les mentions « $350 » et « $600 » sont identiques sur toutes les pages, sauf sur la page du bateau #1.
 - Accueil : ajout d'un H3 « A Reputation for Excellence Since 2014 » avec le texte du propriétaire, en tête de « Why Choose Exotic Fish Cabo? ».
 - Accueil : suppression de la phrase d'« About » qui répétait « Why Choose » (« From your first questions… prepare for your trip. »).
-- Accueil : correction de « $600USD » en « $600 USD » dans un H3.
+- Accueil : « From $600USD » laissé **tel quel** (correction annulée à la demande du propriétaire).
 - Accueil : titre, meta description, H1, canonical, OG et Twitter **inchangés**.
 - Pages bateaux : prix retirés du texte, des titles et des meta (accord du 8 novembre). Le « From $500 » du #2 était faux (le prix réel est $550).
 - Fleet et pages bateaux : boutons BOOK THIS BOAT (déjà dans la branche).
