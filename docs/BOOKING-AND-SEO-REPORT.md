@@ -7,6 +7,21 @@ Légende : ✅ fait et testé · ♻️ existait déjà, conservé · 🟡 fait,
 
 ---
 
+## 0. Corrections finales du propriétaire (8 nov. 2026, soir) — commit `575a844`
+
+| Décision | État |
+|---|---|
+| Email client automatique = **reçu d'acompte seulement** (« Exotic Fish Cabo — Deposit Received ») : nom, référence, Boat #N, date, durée, total, acompte reçu, solde, texte « Loïc will personally send… / Please wait… ». Aucune indication de la marina ni de l'heure | ✅ local (19 combinaisons) |
+| L'email de confirmation officiel n'est **plus envoyé automatiquement**. Le modèle est conservé mot pour mot et proposé prérempli dans `/booking-admin` (bouton « Write official confirmation ») | ✅ local |
+| Email au propriétaire : **CUSTOMER EMAIL** (lien mailto) et téléphone/WhatsApp en tête | ✅ local |
+| Calendrier public : seulement Available / Unavailable, aucun jour passé, mois passés et mois hors fenêtre refusés côté serveur, message neutre, limite de 90 consultations/h par IP. L'historique complet reste dans `/booking-admin` | ✅ local |
+| 3 réservations manuelles (#2 26/11/2026, #4 15/12/2026, #6 19/01/2027) importées comme jours bloqués « MANUAL BOOKING », une seule fois, sans doublon, sans client/prix/paiement inventé, sans email | ✅ local. ⏳ sur staging dès que D1 est en place |
+| « From $350 » / « From $600 » : la correction « $600USD » de l'accueil est **annulée** ; texte identique à la production. Seule la page bateau #1 n'affiche plus son « From $350 », car c'est un prix propre au bateau (point 5.1) | ✅ (vérifié page par page contre `main`) |
+| Boutons de paiement directs des pages bateaux : **conservés** jusqu'à l'autorisation de mise en production | ✅ |
+| Lien court à envoyer aux clients : `/book-now?boat=3` | ✅ |
+
+Tests : booking **370/370**, booking-ui **36/36**, catalogue 11/11, qa 150/150, chat 96/96, reviews 51/51, layout 252/252, design 332/332. Build Cloudflare Preview : success.
+
 ## A. État par exigence
 
 | Exigence | État | Preuve |
@@ -105,8 +120,8 @@ Légende : ✅ fait et testé · ♻️ existait déjà, conservé · 🟡 fait,
 
 | Commande | Résultat |
 |---|---|
-| `node tests/booking.mjs` (Stripe simulé, emails en dry-run) | **321/321** |
-| `node tests/booking-ui.mjs` (Playwright, desktop + Pixel 7) | **31/31** |
+| `node tests/booking.mjs` (Stripe simulé, emails en dry-run) | **370/370** (après les corrections finales) |
+| `node tests/booking-ui.mjs` (Playwright, desktop + Pixel 7) | **36/36** |
 | `node tests/catalogue.mjs` | **11/11** |
 | `tests/qa.mjs` / `chat.mjs` / `reviews.mjs` | 150/150 · 96/96 · 51/51 |
 | `tests/layout.mjs` / `design.mjs` | 252/252 · 332/332 |
