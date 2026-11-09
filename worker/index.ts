@@ -126,6 +126,32 @@ async function handle(request: Request, env: Env): Promise<Response> {
     if (url.pathname === '/api/contact') return contact(request, env);
     if (url.pathname === '/api/publish-notify') return publishNotify(request, env);
     // Booking system. The Stripe webhook is reachable without the staging password (Stripe cannot send one; it is signed).
+    // Staging-only configuration check (never on fish-cabo.com): says WHICH settings are present and valid, never a value.
+    // Sends no email and creates no payment. The Resend key is checked with a read-only call that a sending-only key
+    // answers with "restricted" (= valid key) and a wrong key with "invalid".
+    if (url.pathname === '/api/booking/config-check') {
+      if (isProductionHost(url)) return new Response('Not found', { status: 404 });
+      const from = env.CONTACT_FROM || '';
+      const fromAddr = (from.match(/<([^<>\s@]+@[^<>\s@]+)>\s*$/) || [])[1] || '';
+      let resend = 'missing';
+      if (env.RESEND_API_KEY) {
+        const r = await fetch('https://api.resend.com/domains', { headers: { authorization: `Bearer ${env.RESEND_API_KEY}` } }).catch(() => null);
+        const j: any = r ? await r.json().catch(() => ({})) : {};
+        resend = !r ? 'unreachable' : r.ok ? 'valid (full access)' : /restricted/i.test(`${j.name} ${j.message}`) ? 'valid (sending access)' : `rejected (${j.name || r.status})`;
+        if (r?.ok) { const dom = (j.data || []).find((x: any) => x.name === fromAddr.split('@')[1]); resend += dom ? `; domain ${dom.name}: ${dom.status}` : ''; }
+      }
+      const k = env.STRIPE_SECRET_KEY || '';
+      return Response.json({
+        ADMIN_PASSWORD: env.ADMIN_PASSWORD ? 'set' : 'missing',
+        STRIPE_SECRET_KEY: !k ? 'missing' : k.startsWith('sk_test_') || k.startsWith('rk_test_') ? 'set (test key)' : 'set (NOT a test key: card payments refused)',
+        STRIPE_WEBHOOK_SECRET: !env.STRIPE_WEBHOOK_SECRET ? 'missing' : env.STRIPE_WEBHOOK_SECRET.startsWith('whsec_') ? 'set (whsec_)' : 'set (unexpected format)',
+        RESEND_API_KEY: resend,
+        CONTACT_TO: !env.CONTACT_TO ? 'missing' : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(env.CONTACT_TO) ? env.CONTACT_TO : 'invalid format',
+        CONTACT_FROM: !from ? 'missing' : fromAddr ? { name: from.replace(/<[^>]*>\s*$/, '').trim(), address: fromAddr, domainIsFishCabo: fromAddr.endsWith('@fish-cabo.com') } : 'invalid format (expected: Name <address>)',
+        DB: env.DB ? 'bound' : 'missing',
+      }, { headers: { 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } });
+    }
+
     // /booking-admin = owner dashboard (Worker). /admin/ stays Sveltia CMS (static files) and is never handled here.
     if (url.pathname.startsWith('/api/booking/') || url.pathname.startsWith('/api/admin/') || url.pathname === '/booking-admin') {
       if (!env.DB) return json({ ok: false, error: 'Online booking is not available yet.' }, 503);

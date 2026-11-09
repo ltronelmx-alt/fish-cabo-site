@@ -29,7 +29,14 @@
   // Previews inherit NOTHING from production: no vars, no D1, no secrets. Assets, compatibility_date and cron triggers
   // stay at the top level (crons never run on Previews). Secrets for Previews are set separately (Previews base config).
   "previews": {
-    "vars": { "SITE_ENV": "staging" },
+    // Plain-text staging variables live here (the source of truth for every Preview deploy; values typed in the dashboard
+    // would be replaced by this block on the next deploy). Secrets (ADMIN_PASSWORD, STRIPE_*, RESEND_API_KEY) stay in
+    // the dashboard and are NOT affected. Production vars (top-level "vars") are unchanged.
+    "vars": {
+      "SITE_ENV": "staging",
+      "CONTACT_TO": "contact@fish-cabo.com",
+      "CONTACT_FROM": "Exotic Fish Cabo STAGING <bookings@fish-cabo.com>"
+    },
     // Staging-only booking database (created by the owner 2026-11-09). Never the production database.
     "d1_databases": [
       { "binding": "DB", "database_name": "fish-cabo-bookings-staging", "database_id": "360ad3c7-d0e5-42ee-84ea-8e5038044bed" }
