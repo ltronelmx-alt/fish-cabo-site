@@ -14,7 +14,11 @@ const title = 'Book a Fishing Charter in San Jose del Cabo | Exotic Fish Cabo';
 const description = `Book your private fishing charter from Puerto Los Cabos Marina online: choose your boat, date and 6 or 8 hour trip, and pay the deposit by ${BOOKING_CARD ? 'card or Wise' : 'Wise'}.`;
 const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY || '0x4AAAAAAFyrH2-R96GEy7AN'; // real key; replaced by the test key off fish-cabo.com (public/js/efc-turnstile.js)
 // public data only: number, size, capacity, photo (prices/deposits are server-side, worker/booking/pricing.ts)
-const boats = catalogue.boats.map((b) => ({ id: b.id, number: b.number, name: b.name, capacity: b.capacity, img: media(b.image.path)?.at(480) ?? '', alt: b.image.alt }));
+const boats = catalogue.boats.map((b) => { const m = media(b.image.path); return { id: b.id, number: b.number, name: b.name, capacity: b.capacity, img: m?.at(480) ?? '', srcset: m?.webp ?? '', alt: b.image.alt }; });
+// boat cards (owner 2026-11-10): 5 × 2 on large screens, 3 / 2 / 1 columns below — the browser picks the photo width it needs
+// 4:3 frame on photos that are wider (3:2 – 16:10): horizontal framing per photo so the whole hull stays visible
+const boatFocus: Record<string, string> = { 'boat-01': '60%', 'boat-02': '62%', 'boat-04': '55%', 'boat-05': '100%', 'boat-08': '40%' };
+const boatSizes = '(min-width: 1300px) min(300px, 19vw), (min-width: 900px) 31vw, (min-width: 560px) 46vw, 42vw';
 const isProd = import.meta.env.PUBLIC_SITE_ENV === 'production';
 const wa = SITE.whatsapp.replace(/\D/g, '');
 ---
@@ -44,13 +48,13 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     <div class="container">
       <form id="bk" class="bk" novalidate data-wa={wa}>
         <noscript><p class="bk-note">Online booking needs JavaScript. You can also <a href="/contact">contact us</a> or WhatsApp +52 624 122 3506.</p></noscript>
-        <div class="bk-step">
+        <div class="bk-step bk-pick">
           <h2><span>1</span> Choose your boat</h2>
           <div class="bk-boats" role="radiogroup" aria-label="Boat">
             {boats.map((b) => (
               <label class="bk-boat" data-id={b.id}>
                 <input type="radio" name="boat" value={b.id} required />
-                {b.img && <img src={b.img} alt={b.alt} loading="lazy" decoding="async" width="320" height="200" />}
+                {b.img && <img src={b.img} srcset={b.srcset || undefined} sizes={b.srcset ? boatSizes : undefined} style={boatFocus[b.id] ? `object-position:${boatFocus[b.id]} 50%` : undefined} alt={b.alt} loading="lazy" decoding="async" width="400" height="300" />}
                 <span class="bk-bn">#{b.number} · {b.name}</span>
                 <span class="bk-bm">Up to {b.capacity} {b.capacity === 1 ? 'person' : 'people'}</span>
                 <span class="bk-bp" data-durs></span>
@@ -522,15 +526,20 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
   .bk { display: grid; gap: clamp(28px, 3vw, 44px); max-width: 980px; margin-inline: auto; }
   .bk-step h2 { font-family: var(--font-head); font-size: clamp(20px, 2vw, 28px); margin: 0 0 16px; display: flex; gap: 12px; align-items: center; }
   .bk-step h2 span { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--orange); color: #fff; font-size: 16px; flex: none; }
-  .bk-boats { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 14px; }
-  .bk-boat { position: relative; display: grid; gap: 4px; padding: 10px 10px 14px; border: 2px solid var(--line); border-radius: var(--radius-sm); background: var(--white); cursor: pointer; font-family: var(--font-ui); transition: border-color .15s, box-shadow .15s; }
+  /* step 1 only: the boat grid uses more of the screen (max ≈ 1560 px) — every other step keeps the 980 px column */
+  .bk-pick { --pick-w: min(1560px, calc(100vw - 2 * clamp(20px, 2.5vw, 48px))); width: var(--pick-w); margin-inline: calc((100% - var(--pick-w)) / 2); }
+  .bk-boats { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  @media (min-width: 560px) { .bk-boats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; } }
+  @media (min-width: 900px) { .bk-boats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; } }
+  @media (min-width: 1300px) { .bk-boats { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 18px; } }
+  .bk-boat { position: relative; display: grid; grid-template-rows: auto 1fr auto auto; align-content: start; gap: 4px; padding: 10px 10px 14px; border: 2px solid var(--line); border-radius: var(--radius-sm); background: var(--white); cursor: pointer; font-family: var(--font-ui); transition: border-color .15s, box-shadow .15s; }
   .bk-boat:hover { border-color: #f5c08a; }
   .bk-boat:has(input:checked) { border-color: var(--orange); box-shadow: 0 0 0 3px rgb(251 119 4 / .18); }
   .bk-boat:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 2px; }
   .bk-boat input { position: absolute; opacity: 0; pointer-events: none; }
-  .bk-boat img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 6px; margin-bottom: 6px; }
-  .bk-bn { font-weight: 700; font-size: 15px; color: var(--ink); }
-  .bk-bm, .bk-bp { font-size: 13px; color: var(--muted); }
+  .bk-boat img { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; object-position: 50% 50%; border-radius: 6px; margin-bottom: 8px; background: var(--sand, #f4efe6); }
+  .bk-bn { font-weight: 700; font-size: 16px; line-height: 1.3; color: var(--ink); align-self: start; overflow-wrap: anywhere; }
+  .bk-bm, .bk-bp { font-size: 14px; color: var(--muted); }
   .bk-bp { color: var(--ink); font-weight: 600; }
   .bk-boat.off { opacity: .5; }
   .bk fieldset { border: 0; padding: 0; margin: 0 0 18px; }
@@ -602,5 +611,12 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
   .bk-msg { font-weight: 700; font-family: var(--font-ui); min-height: 1.4em; }
   .bk-test { font-size: 13px; color: #075985; font-family: var(--font-ui); }
   .bk-note { font-family: var(--font-ui); }
-  @media (max-width: 640px) { .bk-boats { grid-template-columns: 1fr 1fr; gap: 10px; } .bk-boat { padding: 8px 8px 10px; } .bk-bn { font-size: 13.5px; } .bk-bm, .bk-bp { font-size: 12px; } .bk-two { grid-template-columns: 1fr; } .bk-sum dl { grid-template-columns: 1fr; } .bk-sum dd { margin-bottom: 6px; } }
+  /* one boat per row on phones: photo left, details right (readable names, all 10 boats directly accessible) */
+  @media (max-width: 559px) {
+    .bk-boat { grid-template-columns: minmax(0, 44%) minmax(0, 1fr); grid-template-rows: auto auto 1fr; column-gap: 12px; row-gap: 3px; padding: 8px; align-items: start; }
+    .bk-boat img { grid-row: 1 / span 3; grid-column: 1; margin: 0; }
+    .bk-bn, .bk-bm, .bk-bp { grid-column: 2; }
+    .bk-bn { font-size: 15px; } .bk-bm, .bk-bp { font-size: 13.5px; }
+  }
+  @media (max-width: 640px) { .bk-two { grid-template-columns: 1fr; } .bk-sum dl { grid-template-columns: 1fr; } .bk-sum dd { margin-bottom: 6px; } }
 </style>
