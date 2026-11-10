@@ -25,12 +25,15 @@ for (const w of widths) {
       const skip = (el) => el.closest('header, .hdr, .mmenu, #efc-chat, .efc-chat, [class*="chat"], .wa, footer, iframe, .visually-hidden, .hp, .skip-link');
       const sel = 'main a.btn, main img, main h1, main h2, main h3, main h4, main p, main li, main .card, main form';
       const els = [...document.querySelectorAll(sel)].filter((e) => !skip(e)).filter((e) => { const s = getComputedStyle(e); const r = e.getBoundingClientRect(); return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 2 && r.height > 2; });
+      // slideshow photos that are scrolled out of their slideshow are not on screen (horizontal scroll container)
+      const inView = (e) => { const t = e.closest('.ss-track'); if (!t) return true; const a = e.getBoundingClientRect(), b = t.getBoundingClientRect(); return a.left < b.right - 2 && a.right > b.left + 2; };
+      els.splice(0, els.length, ...els.filter(inView));
       const sy = window.scrollY;
       const box = (e) => { const r = e.getBoundingClientRect(); return { x: r.left, y: r.top + sy, r: r.right, b: r.bottom + sy }; };
       const B = els.map(box);
       const name = (e) => `${e.tagName.toLowerCase()}${e.className && typeof e.className === 'string' ? '.' + e.className.trim().split(/\s+/).slice(0, 2).join('.') : ''} "${(e.innerText || e.alt || '').trim().slice(0, 40)}"`;
       // content outside the viewport horizontally
-      els.forEach((e, i) => { if (!e.closest('.rv-viewport') && (B[i].r > vw + 2 || B[i].x < -2)) issues.push(`outside viewport: ${name(e)} [${Math.round(B[i].x)}–${Math.round(B[i].r)}]`); });
+      els.forEach((e, i) => { if (!e.closest('.rv-viewport, .ss-track') && (B[i].r > vw + 2 || B[i].x < -2)) issues.push(`outside viewport: ${name(e)} [${Math.round(B[i].x)}–${Math.round(B[i].r)}]`); });
       // pairwise overlaps between unrelated boxes (images inside the hero are backgrounds by design)
       const leaf = els.filter((e) => /^(A|IMG|H1|H2|H3|H4|P|FORM)$/.test(e.tagName));
       const LB = leaf.map(box);
@@ -52,7 +55,11 @@ for (const w of widths) {
       document.querySelectorAll('main img').forEach((im) => {
         if (skip(im) || im.closest('.hero, .o-hero, .banner')) return;
         const r = im.getBoundingClientRect(); if (r.width < 2) return;
-        const nat = +im.getAttribute('width') || 0;
+        const nat0 = +im.getAttribute('width') || 0, natH = +im.getAttribute('height') || 0, fit = getComputedStyle(im).objectFit;
+        // contain / scale-down: the painted picture, not the box, is what can be blurry
+        const k = nat0 && natH && (fit === 'contain' || fit === 'scale-down') ? Math.min(r.width / nat0, r.height / natH) : 0;
+        const nat = nat0;
+        if (k && (fit === 'scale-down' ? Math.min(1, k) : k) <= 1.25) return;
         if (nat && r.width > nat * 1.25 && r.width > 300) issues.push(`image upscaled ${Math.round(r.width)}px > natural ${nat}px: ${name(im)}`);
         if (r.height > vh * 1.0) issues.push(`image taller than the screen (${Math.round(r.height)}px): ${name(im)}`);
         if (vw >= 1000 && r.width > 1000 && im.closest('.article')) issues.push(`image very wide on desktop (${Math.round(r.width)}px): ${name(im)}`);
@@ -72,6 +79,8 @@ for (const w of widths) {
         if (!hit) continue;
         // ignore the floating WhatsApp/chat bubble and the fixed header (they float over everything by design)
         if (hit.closest('header, .hdr, .mbar, [id*="efc"], [class*="efc"]')) continue;
+        // slideshow controls float over the photo by design; offscreen slides are not visible
+        if (e.closest('.ss-track') && (hit.closest('.ss-arrow, .ss-foot') || hit.closest('.ss') !== e.closest('.ss'))) continue;
         if (!(e === hit || e.contains(hit) || hit.contains(e) || (e.tagName === 'IMG' && hit.closest('picture, a, .media')?.contains(e)))) res.push(`covered: ${e.tagName.toLowerCase()} "${(e.innerText || e.alt || '').trim().slice(0, 40)}" under ${hit.tagName.toLowerCase()}.${String(hit.className).split(' ')[0]}`);
       }
       return res.slice(0, 15);

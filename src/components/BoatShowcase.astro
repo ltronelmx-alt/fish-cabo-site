@@ -1,0 +1,125 @@
+---
+// One large boat showcase on /fishing-boats (owner, 2026-11-09): automatic photo slideshow (authentic photos of THIS boat
+// only, from its own page gallery) + detailed description (rewritten from that page's verified content) + ONE action:
+// BOOK THIS BOAT → /book-now?boat=… . No price, no link to the individual boat page.
+import { media } from '../lib/media';
+interface Photo { path: string; alt: string }
+interface Props {
+  boat: { id: string; number: number; title: string; capacity: number; paras: string[]; highlights: string[]; photos: Photo[] };
+  included: string;
+  flip?: boolean;
+  first?: boolean;
+}
+const { boat, included, flip = false, first = false } = Astro.props;
+const photos = boat.photos.map((p) => ({ ...p, m: media(p.path) })).filter((p) => p.m);
+const many = photos.length > 1;
+const sizes = '(min-width: 980px) 50vw, 100vw';
+---
+<section class:list={['showcase', flip && 'flip']} id={`boat-${boat.number}`} aria-labelledby={`boat-${boat.number}-title`}>
+  <div class="container sc-grid">
+    <div class="ss" data-ss={many ? '' : undefined} role="region" aria-roledescription="carousel" aria-label={`Photos of Boat #${boat.number} — ${boat.title}`}>
+      <div class="ss-track" tabindex="0" aria-live="off">
+        {photos.map((p, i) => (
+          <figure class:list={['ss-slide', (p.m!.height > p.m!.width || p.m!.width < 900) && 'fit']} role="group" aria-roledescription="slide" aria-label={`${i + 1} of ${photos.length}`}>
+            <picture>
+              <source type="image/avif" srcset={p.m!.avif} sizes={sizes} />
+              <source type="image/webp" srcset={p.m!.webp} sizes={sizes} />
+              <img src={p.m!.at(1200)} alt={p.alt} width={p.m!.width} height={p.m!.height} loading={first && i === 0 ? 'eager' : 'lazy'} decoding="async" draggable="false" />
+            </picture>
+          </figure>
+        ))}
+      </div>
+      {many && (
+        <>
+          <button type="button" class="ss-arrow ss-prev" aria-label="Previous photo">‹</button>
+          <button type="button" class="ss-arrow ss-next" aria-label="Next photo">›</button>
+          <div class="ss-foot">
+            <div class="ss-dots">{photos.map((_, i) => <button type="button" class="ss-dot" aria-label={`Show photo ${i + 1} of ${photos.length}`} aria-current={i === 0 ? 'true' : undefined}></button>)}</div>
+            <span class="ss-count" aria-hidden="true"><b>1</b> / {photos.length}</span>
+          </div>
+        </>
+      )}
+    </div>
+
+    <div class="sc-text">
+      <p class="sc-eyebrow">Boat #{boat.number} · Up to {boat.capacity} {boat.capacity === 1 ? 'guest' : 'guests'} · Private charter</p>
+      <h2 class="sc-title" id={`boat-${boat.number}-title`}>{boat.title}</h2>
+      {boat.paras.map((t) => <p>{t}</p>)}
+      <ul class="sc-hl">{boat.highlights.map((h) => <li>{h}</li>)}</ul>
+      <p class="sc-incl">{included}</p>
+      <a class="btn btn-primary sc-book" href={`/book-now?boat=${boat.id}`} data-booking data-track={`book_this_boat_${boat.id}`}>BOOK THIS BOAT</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .showcase { padding-block: clamp(44px, 6vw, 96px); background: var(--white); }
+  .showcase:nth-of-type(even) { background: var(--sand); }
+  .sc-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(28px, 4vw, 64px); align-items: start; }
+  @media (min-width: 981px) { .ss { position: sticky; top: 100px; } }
+  .flip .ss { order: 2; }
+  .sc-text { font-family: var(--font-body); }
+  .sc-eyebrow { font-family: var(--font-ui); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: #a84d00; font-weight: 700; margin: 0 0 10px; } /* darker brand orange: WCAG AA contrast on white and sand */
+  .sc-title { font-family: var(--font-head); font-size: clamp(28px, 3.2vw, 44px); line-height: 1.08; margin: 0 0 18px; text-transform: uppercase; }
+  .sc-text p { margin: 0 0 14px; }
+  .sc-hl { list-style: none; margin: 18px 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; font-family: var(--font-ui); font-size: 15px; }
+  .sc-hl li { position: relative; padding-left: 22px; }
+  .sc-hl li::before { content: '✓'; position: absolute; left: 0; color: var(--orange); font-weight: 700; }
+  .sc-incl { font-size: 14px; color: var(--muted); border-left: 3px solid var(--orange); padding-left: 12px; }
+  .sc-book { margin-top: 10px; min-width: 260px; justify-content: center; font-size: 16px; }
+
+  /* slideshow */
+  .ss { position: relative; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); background: var(--black, #111); }
+  .ss-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; aspect-ratio: 4 / 3; overscroll-behavior-x: contain; }
+  .ss-track::-webkit-scrollbar { display: none; }
+  .ss-track:focus-visible { outline: 3px solid var(--orange); outline-offset: -3px; }
+  .ss-slide { flex: 0 0 100%; margin: 0; scroll-snap-align: start; position: relative; }
+  .ss-slide picture, .ss-slide img { display: block; width: 100%; height: 100%; }
+  .ss-slide img { object-fit: cover; user-select: none; }
+  .ss-slide.fit img { object-fit: scale-down; background: #111; } /* portrait or small photos: never cropped, never enlarged (no blur) */
+  .ss-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 46px; height: 46px; border-radius: 50%; border: 0; background: rgba(255,255,255,.88); color: #111; font-size: 30px; line-height: 1; cursor: pointer; display: grid; place-items: center; box-shadow: 0 2px 10px rgba(0,0,0,.25); }
+  .ss-prev { left: 12px; } .ss-next { right: 12px; }
+  .ss-arrow:hover, .ss-arrow:focus-visible { background: var(--yellow, #ffcd38); }
+  .ss-foot { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: linear-gradient(transparent, rgba(0,0,0,.55)); }
+  .ss-dots { display: flex; gap: 6px; flex-wrap: wrap; }
+  .ss-dot { width: 11px; height: 11px; border-radius: 50%; border: 2px solid #fff; background: transparent; padding: 0; cursor: pointer; }
+  .ss-dot[aria-current='true'] { background: #fff; }
+  .ss-count { color: #fff; font-family: var(--font-ui); font-size: 13px; }
+  @media (max-width: 980px) {
+    .sc-grid { grid-template-columns: 1fr; }
+    .flip .ss { order: 0; }
+    .ss { margin-inline: calc(-1 * var(--gutter, 20px)); border-radius: 0; position: relative; }
+    .sc-hl { grid-template-columns: 1fr; }
+    .sc-book { width: 100%; min-width: 0; }
+    .ss-arrow { width: 40px; height: 40px; font-size: 26px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .ss-track { scroll-behavior: auto; } }
+</style>
+
+<script>
+  // Slideshows: native swipe (scroll-snap), arrows, dots, counter. Autoplay every 4.5 s only while visible, stopped for good
+  // as soon as the visitor touches that slideshow (swipe, arrow, dot, keyboard, focus); never with "reduce motion".
+  const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll<HTMLElement>('[data-ss]').forEach((ss) => {
+    const track = ss.querySelector<HTMLElement>('.ss-track')!;
+    const slides = [...track.children] as HTMLElement[];
+    const dots = [...ss.querySelectorAll<HTMLButtonElement>('.ss-dot')];
+    const count = ss.querySelector('.ss-count b');
+    let i = 0, stopped = reduce(), visible = false, timer = 0;
+    const set = (n: number) => { i = n; dots.forEach((d, k) => (k === n ? d.setAttribute('aria-current', 'true') : d.removeAttribute('aria-current'))); if (count) count.textContent = String(n + 1); ss.dataset.index = String(n); };
+    const go = (n: number) => { n = (n + slides.length) % slides.length; track.scrollTo({ left: n * track.clientWidth, behavior: reduce() ? 'auto' : 'smooth' }); set(n); };
+    const stop = () => { stopped = true; clearInterval(timer); ss.dataset.autoplay = 'off'; };
+    const tick = () => { if (!stopped && visible && !document.hidden) go(i + 1); };
+    let raf = 0;
+    track.addEventListener('scroll', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { const n = Math.round(track.scrollLeft / track.clientWidth); if (n !== i) set(n); }); }, { passive: true });
+    ss.querySelector('.ss-prev')?.addEventListener('click', () => { stop(); go(i - 1); });
+    ss.querySelector('.ss-next')?.addEventListener('click', () => { stop(); go(i + 1); });
+    dots.forEach((d, k) => d.addEventListener('click', () => { stop(); go(k); }));
+    for (const ev of ['pointerdown', 'touchstart', 'wheel', 'focusin']) ss.addEventListener(ev, stop, { passive: true });
+    track.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') { stop(); go(i + 1); } if (e.key === 'ArrowLeft') { stop(); go(i - 1); } });
+    new IntersectionObserver((es) => { visible = es[0].isIntersecting; }, { threshold: 0.5 }).observe(ss);
+    ss.dataset.autoplay = stopped ? 'off' : 'on';
+    if (!stopped) timer = window.setInterval(tick, 4500);
+    set(0);
+  });
+</script>

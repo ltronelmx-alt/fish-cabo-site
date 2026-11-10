@@ -8,6 +8,8 @@ import OBtn from '../components/OBtn.astro';
 import { PAGES, type Block } from '../lib/original';
 import catalogue from '../data/boats.json';
 import { BOOKING_OPEN } from '../lib/launch';
+import BoatShowcase from '../components/BoatShowcase.astro';
+import showcase from '../data/boat-showcase.json';
 const bookId = (href = '') => catalogue.boats.find((x) => x.url === href.replace(/^https?:\/\/[^/]+/, '').replace(/\/$/, ''))?.id;
 
 const P = PAGES['fishing-boats'];
@@ -30,8 +32,11 @@ const faq = s4.blocks.filter((b) => b.ga[3] - b.ga[1] > 12);
     <div class="container">{intro.map((b) => <Rich html={b.html!} class="boats-intro reveal" />)}</div>
   </section>
 
-  <!-- Boat sections: blocks in ORIGINAL DOM order; each boat card is assembled visually with CSS grid -->
-  {[s1, s2, s3, s4].map((sec, si) => {
+  <!-- Online booking open: 10 large boat showcases (owner 2026-11-09). Closed: the original cards below. -->
+  {BOOKING_OPEN && showcase.boats.map((b, k) => <BoatShowcase boat={b} included={showcase.included} flip={k % 2 === 1} first={k === 0} />)}
+
+  <!-- Boat sections (booking closed): blocks in ORIGINAL DOM order; each boat card is assembled visually with CSS grid -->
+  {!BOOKING_OPEN && [s1, s2, s3, s4].map((sec, si) => {
     const cs = cards(sec.blocks);
     const pos = new Map<Block, string>();
     cs.forEach((card, ci) => card.forEach((b, ri) => pos.set(b, `grid-column:${ci + 1};grid-row:${ri + 1};--o:${ci * 10 + ri}`)));
@@ -41,13 +46,23 @@ const faq = s4.blocks.filter((b) => b.ga[3] - b.ga[1] > 12);
         <div class="container boats" style={`--n:${cs.length}`}>
           {ordered.map((b) =>
             b.kind === 'img' ? <OImg block={b} class="boat-media" sizes="(min-width: 1000px) 30vw, 92vw" style={pos.get(b)} /> :
-            b.kind === 'button' ? <div class="boat-btn" style={pos.get(b)}><OBtn block={b} track={`boat_${(b.href || '').split('/').pop()}`} />{BOOKING_OPEN && bookId(b.href) && <a class="btn btn-primary" data-booking href={`/book-now?boat=${bookId(b.href)}`} data-track={`book_this_boat_${bookId(b.href)}`}>BOOK THIS BOAT</a>}</div> :
+            b.kind === 'button' ? <div class="boat-btn" style={pos.get(b)}>{!(BOOKING_OPEN && bookId(b.href)) && <OBtn block={b} track={`boat_${(b.href || '').split('/').pop()}`} />}{BOOKING_OPEN && bookId(b.href) && <a class="btn btn-primary" data-booking href={`/book-now?boat=${bookId(b.href)}`} data-track={`book_this_boat_${bookId(b.href)}`}>BOOK THIS BOAT</a>}</div> :
             <div class="boat-text rich" style={pos.get(b)} set:html={b.html} />
           )}
         </div>
       </section>
     );
   })}
+
+  <!-- Owner 2026-11-09: the catalogue books directly (BOOK THIS BOAT → /book-now). The 10 boat pages stay published and
+       indexable; this one discreet list keeps them linked from the site (no orphan pages) outside the booking path. -->
+  {BOOKING_OPEN && (
+    <section class="section bg-white boat-guides-sec">
+      <div class="container">
+        <p class="boat-guides"><span>Boat specifications:</span>{catalogue.boats.slice().sort((a, b) => a.number - b.number).map((x, i) => <>{i > 0 && ' · '}<a href={x.url}>Boat #{x.number} — {x.name}</a></>)}</p>
+      </div>
+    </section>
+  )}
 
   <section class="section bg-white">
     <div class="container">{faq.map((b) => <Rich html={b.html!} class="faq-list reveal" />)}
@@ -57,6 +72,11 @@ const faq = s4.blocks.filter((b) => b.ga[3] - b.ga[1] > 12);
 </Base>
 
 <style>
+  .boat-guides-sec { padding-block: 28px 0; }
+  .boat-guides { margin: 0; font-family: var(--font-ui); font-size: 14px; line-height: 1.9; color: var(--muted); }
+  .boat-guides span { font-weight: 700; margin-right: 6px; color: var(--ink, inherit); }
+  .boat-guides a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+  .boat-btn .btn-primary { min-width: 220px; justify-content: center; }
   :global(.boats-intro) { max-width: none; }
   .fleet { padding-block: clamp(40px, 5vw, 72px); }
   .boats { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); column-gap: clamp(18px, 2vw, 28px); row-gap: 0; }
