@@ -21,13 +21,15 @@ for (const [label, opts] of [['desktop', { viewport: { width: 1440, height: 900 
     slides: [...document.querySelectorAll('section.showcase')].map((s) => s.querySelectorAll('.ss-slide').length),
     boatLinksInShowcases: [...document.querySelectorAll('section.showcase a[href^="/fishing-boats/"]')].length,
     guides: [...document.querySelectorAll('.boat-guides a')].map((a) => a.getAttribute('href')),
+    specText: /boat specifications/i.test(document.body.innerText),
+    boatPageLinks: document.querySelectorAll('a[href^="/fishing-boats/"], a[href*="fish-cabo.com/fishing-boats/"]').length,
     prices: [...document.querySelectorAll('section.showcase')].some((s) => /\$\s?\d/.test(s.textContent)),
     overflow: document.documentElement.scrollWidth > innerWidth + 1,
   }));
   t(`${label}: 10 large showcases`, info.showcases === 10);
   t(`${label}: ZERO "View …" / "More details" buttons on the page`, info.view.length === 0, JSON.stringify(info.view));
   t(`${label}: each showcase has exactly ONE link — BOOK THIS BOAT → /book-now?boat=boat-NN (right boat)`, info.actions.every((a, k) => a.length === 1 && a[0] === `/book-now?boat=${data.boats[k].id}`), JSON.stringify(info.actions));
-  t(`${label}: no link to an individual boat page inside the showcases; 10 discreet links in "Boat specifications"`, info.boatLinksInShowcases === 0 && info.guides.length === 10);
+  t(`${label}: no "Boat specifications" section and no link to an individual boat page anywhere on the page (owner 2026-11-09)`, info.boatLinksInShowcases === 0 && info.guides.length === 0 && !info.specText && info.boatPageLinks === 0);
   t(`${label}: slides per boat = authentic photos of that boat (${info.slides.join(',')})`, JSON.stringify(info.slides) === JSON.stringify(data.boats.map((x) => x.photos.length)));
   t(`${label}: no price or deposit in the showcases`, !info.prices);
   t(`${label}: no horizontal overflow`, !info.overflow);
@@ -81,6 +83,10 @@ for (const x of data.boats) {
   if (!ok || !p.url().endsWith(`/book-now?boat=${x.id}`)) badBook.push(x.number);
   await p.evaluate(() => sessionStorage.clear());
 }
+const catalogue = JSON.parse(readFileSync('src/data/boats.json', 'utf8'));
+const pages = [];
+for (const x of catalogue.boats) { const r = await p.goto(BASE + x.url); const h = await p.evaluate(() => ({ c: document.querySelector('link[rel=canonical]')?.href, r: document.querySelector('meta[name=robots]')?.content || '' })); pages.push({ u: x.url, s: r.status(), ok: r.status() === 200 && !!h.c && !/noindex/i.test(h.r) }); }
+t(`all 10 individual boat pages still answer 200, canonical present, indexable`, pages.length === 10 && pages.every((x) => x.ok), JSON.stringify(pages.filter((x) => !x.ok)));
 t('all 10 BOOK THIS BOAT buttons open /book-now with the right boat preselected', badBook.length === 0, JSON.stringify(badBook));
 await ctx.close(); await b.close();
 console.log(`\n${results.filter(Boolean).length}/${results.length} passed`);

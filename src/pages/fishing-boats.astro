@@ -54,16 +54,6 @@ const faq = s4.blocks.filter((b) => b.ga[3] - b.ga[1] > 12);
     );
   })}
 
-  <!-- Owner 2026-11-09: the catalogue books directly (BOOK THIS BOAT → /book-now). The 10 boat pages stay published and
-       indexable; this one discreet list keeps them linked from the site (no orphan pages) outside the booking path. -->
-  {BOOKING_OPEN && (
-    <section class="section bg-white boat-guides-sec">
-      <div class="container">
-        <p class="boat-guides"><span>Boat specifications:</span>{catalogue.boats.slice().sort((a, b) => a.number - b.number).map((x, i) => <>{i > 0 && ' · '}<a href={x.url}>Boat #{x.number} — {x.name}</a></>)}</p>
-      </div>
-    </section>
-  )}
-
   <section class="section bg-white">
     <div class="container">{faq.map((b) => <Rich html={b.html!} class="faq-list reveal" />)}
       <div class="btn-row">{s5.blocks.map((b) => <OBtn block={b} />)}</div>
@@ -72,10 +62,6 @@ const faq = s4.blocks.filter((b) => b.ga[3] - b.ga[1] > 12);
 </Base>
 
 <style>
-  .boat-guides-sec { padding-block: 28px 0; }
-  .boat-guides { margin: 0; font-family: var(--font-ui); font-size: 14px; line-height: 1.9; color: var(--muted); }
-  .boat-guides span { font-weight: 700; margin-right: 6px; color: var(--ink, inherit); }
-  .boat-guides a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
   .boat-btn .btn-primary { min-width: 220px; justify-content: center; }
   :global(.boats-intro) { max-width: none; }
   .fleet { padding-block: clamp(40px, 5vw, 72px); }
