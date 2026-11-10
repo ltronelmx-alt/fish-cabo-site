@@ -8,6 +8,8 @@ import OBtn from '../components/OBtn.astro';
 import { PAGES, type Block } from '../lib/original';
 import catalogue from '../data/boats.json';
 import { BOOKING_OPEN } from '../lib/launch';
+import BoatShowcase from '../components/BoatShowcase.astro';
+import showcase from '../data/boat-showcase.json';
 const bookId = (href = '') => catalogue.boats.find((x) => x.url === href.replace(/^https?:\/\/[^/]+/, '').replace(/\/$/, ''))?.id;
 
 const P = PAGES['fishing-boats'];
@@ -30,8 +32,11 @@ const faq = s4.blocks.filter((b) => b.ga[3] - b.ga[1] > 12);
     <div class="container">{intro.map((b) => <Rich html={b.html!} class="boats-intro reveal" />)}</div>
   </section>
 
-  <!-- Boat sections: blocks in ORIGINAL DOM order; each boat card is assembled visually with CSS grid -->
-  {[s1, s2, s3, s4].map((sec, si) => {
+  <!-- Online booking open: 10 large boat showcases (owner 2026-11-09). Closed: the original cards below. -->
+  {BOOKING_OPEN && showcase.boats.map((b, k) => <BoatShowcase boat={b} included={showcase.included} flip={k % 2 === 1} first={k === 0} />)}
+
+  <!-- Boat sections (booking closed): blocks in ORIGINAL DOM order; each boat card is assembled visually with CSS grid -->
+  {!BOOKING_OPEN && [s1, s2, s3, s4].map((sec, si) => {
     const cs = cards(sec.blocks);
     const pos = new Map<Block, string>();
     cs.forEach((card, ci) => card.forEach((b, ri) => pos.set(b, `grid-column:${ci + 1};grid-row:${ri + 1};--o:${ci * 10 + ri}`)));

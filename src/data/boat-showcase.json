@@ -1,0 +1,389 @@
+{
+ "_doc": "Fishing Boats showcases (owner, 2026-11-09). Descriptions rewritten ONLY from the verified content of each boat page (src/data/original/fishing-boats/*.json) — nothing added. Photos = the authentic gallery of each boat page, alts verbatim. No prices.",
+ "included": "Every private charter includes an experienced local captain and crew, fishing rods, reels and basic tackle, plus bottled water and soft drinks. Fishing licenses, bait, meals, transportation and fish cleaning are confirmed with you before the trip.",
+ "boats": [
+  {
+   "id": "boat-01",
+   "number": 1,
+   "url": "/fishing-boats/23ft-panga",
+   "title": "23ft Panga",
+   "capacity": 2,
+   "paras": [
+    "Boat #1 is a 23-foot fiberglass panga reserved for one or two anglers — the most direct way to fish San José del Cabo on your own private boat. Its wide beam keeps it steady while you cast, and its outboard motor makes quick runs from calm bays to the moderate swells off the coast.",
+    "The open deck stays uncluttered, with rod holders, a livewell for bait and an insulated fish box to keep your catch fresh. Simple, practical and easy to fish from, it suits solo anglers, couples and first-timers alike; depending on the season, dorado, yellowtail, snapper or marlin can be on the menu."
+   ],
+   "highlights": [
+    "Private boat for 1–2 guests",
+    "Rugged fiberglass hull with a wide, stable beam",
+    "Outboard motor for quick runs to nearby spots",
+    "Rod holders, bait livewell and insulated fish box",
+    "Open, clutter-free fishing deck"
+   ],
+   "photos": [
+    {
+     "path": "505fc072-1705-4425-aa79-71de7ea28485/23-ft+Fishing+San+Jose+del+Cabo.webp",
+     "alt": "A small white motorboat with a blue canopy floating in a marina. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "1762993775191-A7GF6ATBWY0U3JW2IEU1/23-ft+Fishing+San+Jose+del+Cabo.webp",
+     "alt": "A small blue and white motorboat with a canopy is docked in a marina with residential buildings and palm trees in the background. San Jose del Cabo fishing charters"
+    }
+   ]
+  },
+  {
+   "id": "boat-02",
+   "number": 2,
+   "url": "/fishing-boats/26ft-super-panga",
+   "title": "26ft Super Panga",
+   "capacity": 3,
+   "paras": [
+    "Boat #2 is a 26-foot super panga for up to three guests — a step up in space from a classic panga while keeping the personal, close-to-the-water feel that many anglers prefer to a large sportfisher.",
+    "It is a practical platform for both coastal and offshore fishing around Los Cabos. When weather and sea conditions allow, your captain may head to grounds such as Gordo Banks or Iman Bank and, depending on the season, target yellowfin tuna, dorado (mahi-mahi), wahoo, roosterfish or snapper. Fishing spots are always chosen for safety, current fish activity and your group's preferences."
+   ],
+   "highlights": [
+    "Private boat for 1–3 guests",
+    "More room than a traditional panga",
+    "Coastal and offshore fishing",
+    "Ideal for couples, friends and small groups"
+   ],
+   "photos": [
+    {
+     "path": "ae474e4c-80fd-4491-91c5-fdabc0d00cb7/26ft+super+panga+fishing+san+jose+del+cabo.webp",
+     "alt": "A white yacht docked at a marina during a colorful sunset sky."
+    },
+    {
+     "path": "94d80e51-5dbd-43e7-aae8-eabdde32b7d6/fishing+san+jose+del+cabo+on+a+superpanga+26Ft.webp",
+     "alt": "A small white motorboat docked at a marina with other boats, overlooking water and a hotel with palm trees at sunset. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "1762993859797-JMC2UCS93TEWURVBR40Y/26ft%2Bsuper%2Bpanga%2Bfishing%2Bsan%2Bjose%2Bdel%2Bcabo.webp",
+     "alt": "A white and black boat docked at a marina during a colorful sunset, with other boats and palm trees in the background. San Jose del Cabo fishing charters"
+    }
+   ]
+  },
+  {
+   "id": "boat-03",
+   "number": 3,
+   "url": "/fishing-boats/27ft-premium-center-console",
+   "title": "27ft Premium Center Console",
+   "capacity": 4,
+   "paras": [
+    "Boat #3 is a 27-foot premium center console for up to four guests, built around a balance of sportfishing and comfort. The center-console layout leaves an open deck to move around freely while fighting fish, without the need for a much larger boat.",
+    "Comfortable seating and an onboard toilet make it an easy choice for couples, families and small groups who want a little extra comfort on the water. Departing from Puerto Los Cabos Marina, it fishes the Sea of Cortez, where seasonal targets include yellowfin tuna, dorado, wahoo and marlin; techniques and locations follow the weather, the sea and current fish activity."
+   ],
+   "highlights": [
+    "Private boat for 1–4 guests",
+    "Center-console layout with an open fishing deck",
+    "Comfortable seating",
+    "Onboard toilet",
+    "Great for couples, families and small groups"
+   ],
+   "photos": [
+    {
+     "path": "529f2243-d23b-4633-a5ef-75f62bca6a4f/fishing+San+Jose+del+Cabo+27Ft.webp",
+     "alt": "A white fishing boat with a canopy on a calm body of water during a colorful sunset, with a person on board at the helm. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "33ed2906-0e7a-4296-8770-9227b2b6bb06/fishing+san+jose+del+cabo+on+a+27ft+premiun+Cent.Console.webp",
+     "alt": "The interior of a boat features white cushioned seating with blue accents, circular speakers, and a padded sunbathing area. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "8728f1b2-b392-48e2-83c7-3dbe872d4c5a/fishing+san+jose+del+cabo+on+a+premium+27ft+center+console.webp",
+     "alt": "A white motorboat with a person standing at the helm on a body of water during a colorful sunset. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "20dad811-194c-4279-9538-4ba7c2429d67/fishing+san+jose+del+cabo+on+a+27ft+premium+boat.webp",
+     "alt": "Compact bathroom with a toilet, small sink, and storage shelves, all in white. San Jose del Cabo fishing charters"
+    }
+   ]
+  },
+  {
+   "id": "boat-04",
+   "number": 4,
+   "url": "/fishing-boats/30ft-cuddy-cabin",
+   "title": "30ft Cuddy Cabin",
+   "capacity": 6,
+   "paras": [
+    "Boat #4 is a 30-foot cuddy cabin for up to six guests that combines open fishing space with a sheltered cabin. Unlike smaller open boats, the cuddy gives your group a protected place to take a break from the sun and wind between bites.",
+    "Comfortable seating and an onboard toilet make it a practical option for families and groups of friends who appreciate extra amenities during a day of fishing. It explores the Sea of Cortez from Puerto Los Cabos Marina, with seasonal opportunities for yellowfin tuna, dorado (mahi-mahi), wahoo and marlin; the crew adapts spots and techniques to ocean conditions and your group's wishes."
+   ],
+   "highlights": [
+    "Private boat for 1–6 guests",
+    "Sheltered cuddy cabin out of the sun and wind",
+    "Open fishing deck",
+    "Comfortable seating and onboard toilet",
+    "Family-friendly"
+   ],
+   "photos": [
+    {
+     "path": "b0c7dbc5-74df-480f-a6d1-1afd79712cf4/30ft+cuddy+cabin+fishing+San+Jose+del+Cabo.webp",
+     "alt": "A white boat docked at a marina during a sunset with pink and orange sky, with buildings and other boats in the background. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "0002d7d6-a986-4141-8f6c-7e3301a0d951/spacious+decl+with+fighting+chair+on+a+30ft+cuddy+cabin+to+fish+san+jose+del+cabo.webp",
+     "alt": "A marina at sunset with several boats docked, including a large white fishing boat in the center with a blue shade and buildings with balconies and palm trees in the background. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "1762993561565-K6QCF3O2GO3W8I3B83QF/30ft%2Bcuddy%2Bcabin%2Bfishing%2BSan%2BJose%2Bdel%2BCabo.webp",
+     "alt": "A white fishing boat docked at a marina during sunset with a multi-tiered tower and antennas, modern buildings in the background, and several other boats docked nearby. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "5165816e-3588-4190-8e51-a55f6c0212ee/bathroom+in+our+boat+to+fish+san+jose+del+cabo.webp",
+     "alt": "Small boat bathroom with a compact sink, a mirror, a toilet, and small windows, with wood trim and light-colored walls. San Jose del Cabo fishing charters"
+    }
+   ]
+  },
+  {
+   "id": "boat-05",
+   "number": 5,
+   "url": "/fishing-boats/38ft-flybridge",
+   "title": "38ft Flybridge",
+   "capacity": 8,
+   "paras": [
+    "Boat #5 is a 38-foot flybridge sportfishing boat for up to eight guests, designed for groups and families who want room to fish and room to relax. Its elevated flybridge sits above a dedicated fishing area, with a sheltered cabin and comfortable seating below.",
+    "That layout lets part of the group follow the action while others rest out of the sun — ideal for a full private day with friends or family. When weather and sea conditions permit, trips can explore the Sea of Cortez around Gordo Banks and Iman Bank, with seasonal opportunities for yellowfin tuna, dorado (mahi-mahi), wahoo and marlin."
+   ],
+   "highlights": [
+    "Private boat for 1–8 guests",
+    "Elevated flybridge",
+    "Sheltered cabin and comfortable seating",
+    "Dedicated fishing area",
+    "Ideal for larger families and groups"
+   ],
+   "photos": [
+    {
+     "path": "8d45feed-30fd-40cc-b61c-efc171be3a11/38Ft+Flybridge+fishing+San+Jose+del+Cabo.webp",
+     "alt": "A luxury white yacht docked at marina with modern apartment buildings and palm trees in the background during a colorful sunset sky. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "018efeca-95a1-4544-81aa-116696e72863/38ft-2+Fishing+San+Jose+del+Cabo.webp",
+     "alt": "A white yacht docked at a marina during a colorful sunset with pink, orange, and purple sky, surrounded by other boats and palm trees in the background. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "4110a63b-fd47-4331-ab8c-b12bd33ec23f/38ft-3+Fishing+San+Jose+del+Cabo.webp",
+     "alt": "View of the interior of a white boat, showing seating, a steering area, and a deck with hatch openings."
+    },
+    {
+     "path": "ea9f412c-1149-4d31-8168-7aaeacad83ba/38ft-4+Fishing+San+Jose+del+Cabo+Fishing+San+Jose+del+Cabo.webp",
+     "alt": "Interior of a boat featuring a curved cream-colored cushioned seat, a wooden table, and various fixtures, with a view of the outside through a large window. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "da10c994-5e62-46c9-aa2a-5f1c5eff32c7/38ft-5+Fishing+San+Jose+del+Cabo.webp",
+     "alt": "Small bathroom with a toilet, a sink with a cabinet, a mirror, and a window inside a boat . San Jose del Cabo fishing charters"
+    }
+   ]
+  },
+  {
+   "id": "boat-06",
+   "number": 6,
+   "url": "/fishing-boats/31ft-premium-center-console",
+   "title": "31ft Premium Center Console",
+   "capacity": 5,
+   "paras": [
+    "Boat #6 is a 31-foot premium center console for up to five guests, combining offshore performance with comfort. Twin engines, a shaded T-top, comfortable seating and an onboard toilet make it a strong all-round choice for couples, families and small groups.",
+    "Its open deck gives anglers space to work around the boat, whether you are an experienced angler or on your first fishing adventure. Depending on weather, sea conditions and seasonal fish activity, your captain may choose grounds such as Gordo Banks or Iman Bank to target yellowfin tuna, dorado (mahi-mahi), wahoo or marlin."
+   ],
+   "highlights": [
+    "Private boat for 1–5 guests",
+    "Twin engines for offshore runs",
+    "Shaded T-top",
+    "Open fishing deck and comfortable seating",
+    "Onboard toilet"
+   ],
+   "photos": [
+    {
+     "path": "0109b493-9700-4fc8-8848-ace8dd7069f8/Fishing+San+Jose+del+Cabo+31Ft.webp",
+     "alt": "White motorboat docked at a marina during sunset, with palm trees and buildings in the background. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "b7b86b30-9a82-4af4-9d4c-730f8358bb27/31ft+wide+bow+to+fish+san+jose+del+cabo.webp",
+     "alt": "Empty boat deck with blue cushioned seating, overlooking a marina with several boats and a modern hotel building at sunset. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "edbb9a29-5512-4c27-b789-584d89454d80/31ft+center+console+fishing+station++fishing+san+jose+del+cabo.webp",
+     "alt": "View from the cockpit of a white boat docked at a marina with several other boats and a white hotel building in the background at sunset. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "8f525560-b7fa-4a18-ae81-7972025b85e4/spacious+stern+and+twin+outboard+on+a++31ft+center+console+to+fish+san+jose+del+cabo.webp",
+     "alt": "Empty boat with two outboard motors docked at a marina against a sunset sky. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "3e7bdd7b-18b1-4b5c-a24d-81f0702227f3/bathroom+on+a+31ft+premium+center+consloe+to+fish+san+jose+del+cabo.webp",
+     "alt": "Compact bathroom with a toilet, a small sink, and a mirror cabinet above. San Jose del Cabo fishing charters"
+    }
+   ]
+  },
+  {
+   "id": "boat-07",
+   "number": 7,
+   "url": "/fishing-boats/29-ft-catamaran-center-console",
+   "title": "29ft Catamaran Center Console",
+   "capacity": 6,
+   "paras": [
+    "Boat #7 is a 29-foot catamaran center console for up to six guests. Its twin-hull design creates a wide, stable fishing platform — a real alternative to traditional single-hull boats for anglers who want space and steadiness.",
+    "Twin outboard engines, comfortable seating and an onboard toilet complete the setup, and the center-console layout gives good access all around the deck when a fish is on. It suits families, groups of friends and keen sportfishing anglers heading into the Sea of Cortez for seasonal yellowfin tuna, dorado (mahi-mahi), wahoo and marlin, with spots chosen by weather, ocean conditions and recent fish activity."
+   ],
+   "highlights": [
+    "Private boat for 1–6 guests",
+    "Twin-hull catamaran: wide, stable platform",
+    "Twin outboard engines",
+    "Walk-around center-console deck",
+    "Comfortable seating and onboard toilet"
+   ],
+   "photos": [
+    {
+     "path": "ad2a6356-f668-4895-baed-dfe9e63b4516/29+Ft+Catamaran+Center+Console.webp",
+     "alt": "A white motorboat with a canopy moving through a waterway, with modern waterfront buildings and palm trees in the background."
+    },
+    {
+     "path": "a571fdc9-088d-4511-bb03-f497ef9f8311/29+Ft+Catamaran+Center+Console+back.webp",
+     "alt": "White motorboat docked at marina with two outboard engines and other boats in background."
+    },
+    {
+     "path": "c0cc63b9-1276-4c73-80d6-305282a6e482/29+CC+console.webp",
+     "alt": "View of a boat's cockpit showing a steering wheel, dashboard, and seating area, with other boats and a marina in the background."
+    },
+    {
+     "path": "f4478532-f101-488a-844b-3442d78494f1/29+Ft+Catamaran+Center+Console+engines.webp",
+     "alt": "View of a boat's deck with twin Yamaha outboard motors, set against a rocky shoreline with tropical palm trees and a blue sky."
+    },
+    {
+     "path": "153a1739-42b7-4fa9-85ef-0c722f983b5d/29+Ft+Catamaran+Center+Console+seats.webp",
+     "alt": "View from a boat showing the bow with cream-colored seats, a marina with boats, and a modern white apartment complex with multiple balconies in the background."
+    }
+   ]
+  },
+  {
+   "id": "boat-08",
+   "number": 8,
+   "url": "/fishing-boats/35ft-premium-cuddy-cabin",
+   "title": "35ft Premium Cuddy Cabin",
+   "capacity": 8,
+   "paras": [
+    "Boat #8 is a 35-foot premium cuddy cabin for up to eight guests, made for full-day offshore adventures. It pairs a spacious fishing deck with a sheltered cabin, shaded seating and an onboard toilet, so the whole group stays comfortable on longer trips.",
+    "Its standout feature is the onboard navigation and fish-finding equipment — GPS, radar and fish-finding electronics — which help the crew read conditions and locate underwater structure and fish activity. From San José del Cabo it reaches offshore grounds in the Sea of Cortez, with seasonal opportunities for yellowfin tuna, dorado (mahi-mahi), wahoo and marlin."
+   ],
+   "highlights": [
+    "Private boat for 1–8 guests",
+    "GPS, radar and fish-finding electronics",
+    "Spacious fishing deck",
+    "Sheltered cabin and shaded seating",
+    "Onboard toilet"
+   ],
+   "photos": [
+    {
+     "path": "d2d41a96-63bc-4cec-9f96-e481459465c9/Fishing+San+Jose+del+Cabo+35Ft.webp",
+     "alt": "A white motor yacht docked at a marina during sunset with palm trees and other boats in the background. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "422c274e-5d77-4d54-bfb9-6edca0534af2/35ft+premium+cuddy+cabin+wide+bow+and+fighting+chair+to+fish+san+jose+del+cabo.webp",
+     "alt": "A white yacht docked at a marina during a colorful sunset with palm trees in the background. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "7cf5591e-8c50-49b5-b15b-75b5250e9947/35ft+cuddy+cabin+to+fish+san+jose+del+cabo.webp",
+     "alt": "Marina at sunset with two docked white boats and a pink and purple sky. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "ca3afc33-9721-4674-966c-c2ae972ed309/35+ft+premium+cuddy+cabin+bathroom+to+fish+san+jose+del+cabo.webp",
+     "alt": "A small bathroom with a white toilet next to a wooden cabinet and a washing machine. San Jose del Cabo fishing charters"
+    }
+   ]
+  },
+  {
+   "id": "boat-09",
+   "number": 9,
+   "url": "/fishing-boats/44ft-premium-flybridge",
+   "title": "44ft Premium Flybridge",
+   "capacity": 10,
+   "paras": [
+    "Boat #9 is the 44-foot premium flybridge, one of the largest private charter options at Exotic Fish Cabo, for up to ten guests. Its elevated flybridge offers a higher vantage point to watch the ocean and spot surface activity.",
+    "Below, a generous fishing deck gives anglers room to move, while the sheltered cabin, comfortable seating and onboard bathroom offer comfortable spaces to relax between fishing sessions. It is the natural choice for larger private groups who want to combine serious sportfishing with a comfortable day on the water; the crew selects areas according to weather, currents and recent activity for seasonal yellowfin tuna, dorado (mahi-mahi), wahoo and marlin."
+   ],
+   "highlights": [
+    "Private boat for 1–10 guests",
+    "Elevated flybridge for spotting fish",
+    "Generous fishing deck",
+    "Sheltered cabin and comfortable seating",
+    "Onboard bathroom"
+   ],
+   "photos": [
+    {
+     "path": "a2bbbacc-b8c4-4a81-802e-8fe102218a74/44ft+premium+flybridge+yacht+fishing+san+jose+del+cabo.webp",
+     "alt": "A white fishing yacht on calm water during sunset with a pink and purple sky, palm trees in the background. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "3fc66027-7aba-48f9-beb1-4234ac63cd17/44ft+premium+flybridge+yacht+huge+wide+bow+and+dinghy+boat.webp",
+     "alt": "A large white yacht on water during sunset with calm water and distant land with palm trees. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "0ab97240-a3e8-454a-96d3-6871b25ab610/44ft+premium+flybridge+yacht+to+fish+san+jose+del+cabo.webp",
+     "alt": "A white yacht sailing on calm water with a colorful pink and purple sky and palm trees in the background. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "f134ee40-1b4d-443c-a742-c2244d8dac2d/44ft+premium+flybridge+yacht+pilot+station+to+fish+san+jose+del+cabo.webp",
+     "alt": "Boat dashboard with GPS, gauges, and steering wheel on a yacht. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "bfa36c54-6b1b-40f4-9ca7-221eb9bba4e4/44ft+premium+flybridge+yacht+extra+wide+bow+and+fighting+chair+for+fishing+in+san+jose+del+cabo.webp",
+     "alt": "A white yacht docked at a marina with several other boats and yachts in the background, under a clear sky. San Jose del Cabo fishing charters"
+    },
+    {
+     "path": "b20007a0-8e66-4bbe-8709-4ca636214bf1/44ft+premium+flybridge+yacht+basthroom+fishing+san+jose+del+cabo.webp",
+     "alt": "Small bathroom with a sink, mirror, toilet, glass shower enclosure, towels, and toiletries."
+    }
+   ]
+  },
+  {
+   "id": "boat-10",
+   "number": 10,
+   "url": "/fishing-boats/37ft-ultimate-fishing-machine",
+   "title": "37ft Offshore Catamaran",
+   "capacity": 6,
+   "paras": [
+    "Boat #10 is a 37-foot offshore catamaran for up to six guests, built for anglers who put fishing space and offshore performance first. Its twin-hull design and four outboard engines create a wide, stable and powerful fishing platform.",
+    "A spacious open deck leaves room to move while fighting fish, complemented by comfortable seating and advanced navigation electronics. Depending on weather, ocean conditions and seasonal fish activity, trips may run to offshore grounds such as Gordo Banks and Iman Bank in search of yellowfin tuna, dorado (mahi-mahi), wahoo and marlin."
+   ],
+   "highlights": [
+    "Private boat for 1–6 guests",
+    "Twin-hull catamaran with four outboard engines",
+    "Spacious open fishing deck",
+    "Advanced navigation electronics",
+    "Built for offshore sportfishing"
+   ],
+   "photos": [
+    {
+     "path": "c9e1cd77-6f97-4d43-90a4-5bccc9878876/Freeman+left.webp",
+     "alt": "37Ft Freeman catamaran left"
+    },
+    {
+     "path": "e2fcdcfc-21e7-4c49-b13d-85232796448a/Freeman+front.webp",
+     "alt": "37Ft Freeman catamaran front"
+    },
+    {
+     "path": "916f13e1-072e-484f-9b11-e8216aae2f58/Freeman+right.webp",
+     "alt": "37Ft Freeman catamaran right"
+    },
+    {
+     "path": "7c6301a2-a45c-4187-821a-79e1ed66f028/freeman+back+and+engines.webp",
+     "alt": "37Ft Freeman catamaran rear deck and engines"
+    },
+    {
+     "path": "78d1c76d-7ddb-4734-8094-c3521acb15a2/freeman+fishing+deck.webp",
+     "alt": "37Ft Freeman catamaran fishing deck"
+    },
+    {
+     "path": "cb1509fd-2695-4cc3-a147-47a3a3a209a4/Freeman+seats.webp",
+     "alt": "37Ft Freeman catamaran seats"
+    },
+    {
+     "path": "2049b5ed-5bed-4640-821f-53b0bdd40f4b/freeman+cruise2.webp",
+     "alt": "37Ft Freeman catamaran top view"
+    },
+    {
+     "path": "61e92809-a5d1-4df6-ae88-85efb07f9587/freeman+cruise.webp",
+     "alt": "37Ft Freeman catamaran cruising"
+    }
+   ]
+  }
+ ]
+}
