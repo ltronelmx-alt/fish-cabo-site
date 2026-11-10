@@ -6,9 +6,9 @@ date: 2026-04-27
 category: "Fishing Report"
 tags: []
 author: "EXOTIC FISH-CABO"
-image: null
-thumbnail: null
-thumbnailSource: "article first image (listing page 2 not exported)"
+image: {"src": "fishing-reports-original/dorado-66cef862.webp", "alt": "Bull mahi-mahi (dorado) caught off San José del Cabo, April 2026"}
+thumbnail: {"src": "fishing-reports-original/dorado-66cef862.webp", "alt": "Bull mahi-mahi (dorado) caught off San José del Cabo, April 2026"}
+thumbnailSource: "restored 2026-11-10: the article's original Squarespace featured image (its og:image, mirrored byte-for-byte in public/og/); listing page 2 and the photo were missing from the export"
 listingRank: 999
 excerpt: "Discover Sani's exciting mahi-mahi fishing adventure in April 2026. Big dorado, thrilling battles and unforgettable memories off San Jose del Cabo."
 excerptSource: "meta-description (original excerpt not in export)"

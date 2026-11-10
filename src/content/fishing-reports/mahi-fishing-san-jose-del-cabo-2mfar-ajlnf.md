@@ -6,9 +6,9 @@ date: 2026-01-08
 category: "Fishing Report"
 tags: []
 author: "EXOTIC FISH-CABO"
-image: null
-thumbnail: null
-thumbnailSource: "article first image (listing page 2 not exported)"
+image: {"src": "fishing-reports-original/dorado-faeea7ea.webp", "alt": "Cliff and Thomas holding a mahi-mahi (dorado), San José del Cabo"}
+thumbnail: {"src": "fishing-reports-original/dorado-faeea7ea.webp", "alt": "Cliff and Thomas holding a mahi-mahi (dorado), San José del Cabo"}
+thumbnailSource: "restored 2026-11-10: the article's original Squarespace featured image (its og:image, mirrored byte-for-byte in public/og/); listing page 2 and the photo were missing from the export"
 listingRank: 999
 excerpt: "Cliff and Thomas enjoy exciting mahi-mahi fishing in San José del Cabo in January 2026, with 15 fish reported and a personal-best dorado catch."
 excerptSource: "meta-description (original excerpt not in export)"

@@ -6,9 +6,9 @@ date: 2025-12-30
 category: "Fishing Report"
 tags: []
 author: "EXOTIC FISH-CABO"
-image: null
-thumbnail: null
-thumbnailSource: "article first image (listing page 2 not exported)"
+image: {"src": "fishing-reports-original/howard-yft-18a6ea5b.webp", "alt": "Howard with his personal-best yellowfin tuna, San José del Cabo"}
+thumbnail: {"src": "fishing-reports-original/howard-yft-18a6ea5b.webp", "alt": "Howard with his personal-best yellowfin tuna, San José del Cabo"}
+thumbnailSource: "restored 2026-11-10: the article's original Squarespace featured image (its og:image, mirrored byte-for-byte in public/og/); listing page 2 and the photo were missing from the export"
 listingRank: 999
 excerpt: "Howard lands his personal-best yellowfin tuna during a December 2025 fishing charter in San José del Cabo. Discover his unforgettable offshore adventure."
 excerptSource: "meta-description (original excerpt not in export)"

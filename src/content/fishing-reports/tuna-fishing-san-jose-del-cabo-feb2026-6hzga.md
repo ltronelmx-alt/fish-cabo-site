@@ -6,9 +6,9 @@ date: 2026-03-13
 category: "Fishing Report"
 tags: []
 author: "EXOTIC FISH-CABO"
-image: null
-thumbnail: null
-thumbnailSource: "article first image (listing page 2 not exported)"
+image: {"src": "fishing-reports-original/burt-tuna-6e52bbe6.webp", "alt": "Burt with the yellowfin tuna he caught on a fly rod, San José del Cabo"}
+thumbnail: {"src": "fishing-reports-original/burt-tuna-6e52bbe6.webp", "alt": "Burt with the yellowfin tuna he caught on a fly rod, San José del Cabo"}
+thumbnailSource: "restored 2026-11-10: the article's original Squarespace featured image (its og:image, mirrored byte-for-byte in public/og/); listing page 2 and the photo were missing from the export"
 listingRank: 999
 excerpt: "Discover Burt's dream yellowfin tuna catch on a fly rod in San José del Cabo. A memorable March 2026 fly fishing adventure with Exotic Fish Cabo."
 excerptSource: "meta-description (original excerpt not in export)"

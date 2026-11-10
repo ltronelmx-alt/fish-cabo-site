@@ -6,9 +6,9 @@ date: 2026-02-07
 category: "Fishing Report"
 tags: []
 author: "EXOTIC FISH-CABO"
-image: null
-thumbnail: null
-thumbnailSource: "article first image (listing page 2 not exported)"
+image: {"src": "fishing-reports-original/dorado-c1e56544.webp", "alt": "Father and son holding their mahi-mahi (dorado), San José del Cabo"}
+thumbnail: {"src": "fishing-reports-original/dorado-c1e56544.webp", "alt": "Father and son holding their mahi-mahi (dorado), San José del Cabo"}
+thumbnailSource: "restored 2026-11-10: the article's original Squarespace featured image (its og:image, mirrored byte-for-byte in public/og/); listing page 2 and the photo were missing from the export"
 listingRank: 999
 excerpt: "Join Dean and Damon for an exciting father-and-son mahi-mahi fishing adventure in San José del Cabo. Discover their memorable February 2026 dorado catches."
 excerptSource: "meta-description (original excerpt not in export)"

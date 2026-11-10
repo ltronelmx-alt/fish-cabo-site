@@ -6,9 +6,9 @@ date: 2026-02-26
 category: "Fishing Report"
 tags: []
 author: "EXOTIC FISH-CABO"
-image: null
-thumbnail: null
-thumbnailSource: "article first image (listing page 2 not exported)"
+image: {"src": "fishing-reports-original/dorothy-ae06f20f.webp", "alt": "Dorothy with a yellowfin tuna, San José del Cabo"}
+thumbnail: {"src": "fishing-reports-original/dorothy-ae06f20f.webp", "alt": "Dorothy with a yellowfin tuna, San José del Cabo"}
+thumbnailSource: "restored 2026-11-10: the article's original Squarespace featured image (its og:image, mirrored byte-for-byte in public/og/); listing page 2 and the photo were missing from the export"
 listingRank: 999
 excerpt: "Discover Dorothy's yellowfin tuna catch during a February 2026 private fishing charter in San José del Cabo. A memorable adventure with Exotic Fish Cabo."
 excerptSource: "meta-description (original excerpt not in export)"

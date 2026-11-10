@@ -6,9 +6,9 @@ date: 2025-10-26
 category: "Fishing Report"
 tags: []
 author: "EXOTIC FISH-CABO"
-image: null
-thumbnail: null
-thumbnailSource: "article first image (listing page 2 not exported)"
+image: {"src": "fishing-reports-original/shaun-fishing-san-jose-del-cabo-5641f7e8.webp", "alt": "Shaun with a mahi-mahi (dorado), San José del Cabo"}
+thumbnail: {"src": "fishing-reports-original/shaun-fishing-san-jose-del-cabo-5641f7e8.webp", "alt": "Shaun with a mahi-mahi (dorado), San José del Cabo"}
+thumbnailSource: "restored 2026-11-10: the article's original Squarespace featured image (its og:image, mirrored byte-for-byte in public/og/); listing page 2 and the photo were missing from the export"
 listingRank: 999
 excerpt: "Follow Shaun and Alana's mahi-mahi fishing adventure in San José del Cabo, October 2025. Discover their dorado catches during Cabo's tournament season."
 excerptSource: "meta-description (original excerpt not in export)"

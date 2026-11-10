@@ -6,9 +6,9 @@ date: 2026-06-27
 category: "Fishing Report"
 tags: []
 author: "EXOTIC FISH-CABO"
-image: null
-thumbnail: null
-thumbnailSource: "article first image (listing page 2 not exported)"
+image: {"src": "fishing-reports-original/captura-de-pantalla-2026-06-27-101720-32d59a4d.webp", "alt": "Noah with a giant roosterfish before its release, San José del Cabo"}
+thumbnail: {"src": "fishing-reports-original/captura-de-pantalla-2026-06-27-101720-32d59a4d.webp", "alt": "Noah with a giant roosterfish before its release, San José del Cabo"}
+thumbnailSource: "restored 2026-11-10: the article's original Squarespace featured image (its og:image, mirrored byte-for-byte in public/og/); listing page 2 and the photo were missing from the export"
 listingRank: 999
 excerpt: "Noah battles a giant roosterfish off San José del Cabo in June 2026. Discover his incredible catch-and-release adventure with Exotic Fish Cabo."
 excerptSource: "meta-description (original excerpt not in export)"

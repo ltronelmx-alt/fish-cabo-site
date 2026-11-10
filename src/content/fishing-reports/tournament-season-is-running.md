@@ -6,9 +6,9 @@ date: 2025-10-25
 category: "Fishing Report"
 tags: []
 author: "EXOTIC FISH-CABO"
-image: null
-thumbnail: null
-thumbnailSource: "article first image (listing page 2 not exported)"
+image: {"src": "fishing-reports-original/alana-fishing-san-jose-del-cabo-5e80e0e0.webp", "alt": "Mahi-mahi (dorado) caught off San José del Cabo, October 2025"}
+thumbnail: {"src": "fishing-reports-original/alana-fishing-san-jose-del-cabo-5e80e0e0.webp", "alt": "Mahi-mahi (dorado) caught off San José del Cabo, October 2025"}
+thumbnailSource: "restored 2026-11-10: the article's original Squarespace featured image (its og:image, mirrored byte-for-byte in public/og/); listing page 2 and the photo were missing from the export"
 listingRank: 999
 excerpt: "Discover Amanda's mahi-mahi fishing adventure in San José del Cabo in October 2025. Multiple dorado catches during the exciting Cabo tournament season."
 excerptSource: "meta-description (original excerpt not in export)"

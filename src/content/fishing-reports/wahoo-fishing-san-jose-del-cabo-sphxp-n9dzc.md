@@ -6,9 +6,9 @@ date: 2025-12-04
 category: "Fishing Report"
 tags: []
 author: "EXOTIC FISH-CABO"
-image: null
-thumbnail: null
-thumbnailSource: "article first image (listing page 2 not exported)"
+image: {"src": "fishing-reports-original/wahoo-a29db99f.webp", "alt": "Isaac with a wahoo, San José del Cabo"}
+thumbnail: {"src": "fishing-reports-original/wahoo-a29db99f.webp", "alt": "Isaac with a wahoo, San José del Cabo"}
+thumbnailSource: "restored 2026-11-10: the article's original Squarespace featured image (its og:image, mirrored byte-for-byte in public/og/); listing page 2 and the photo were missing from the export"
 listingRank: 999
 excerpt: "Discover Isaac's exciting wahoo fishing adventure in San José del Cabo in December 2025. Multiple wahoo catches during a private charter with Exotic Fish Cabo."
 excerptSource: "meta-description (original excerpt not in export)"

@@ -6,9 +6,9 @@ date: 2026-07-17
 category: "Fishing Report"
 tags: []
 author: "EXOTIC FISH-CABO"
-image: null
-thumbnail: null
-thumbnailSource: "article first image (listing page 2 not exported)"
+image: {"src": "fishing-reports-original/captura-de-pantalla-2026-07-17-195639-777f6a55.webp", "alt": "Karim with his giant roosterfish, San José del Cabo"}
+thumbnail: {"src": "fishing-reports-original/captura-de-pantalla-2026-07-17-195639-777f6a55.webp", "alt": "Karim with his giant roosterfish, San José del Cabo"}
+thumbnailSource: "restored 2026-11-10: the article's original Squarespace featured image (its og:image, mirrored byte-for-byte in public/og/); listing page 2 and the photo were missing from the export"
 listingRank: 999
 excerpt: "Karim from Montreal battles a giant roosterfish on live mullet off San José del Cabo in July 2026. Discover his memorable private fishing adventure."
 excerptSource: "meta-description (original excerpt not in export)"

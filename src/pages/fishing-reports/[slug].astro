@@ -16,6 +16,15 @@ export async function getStaticPaths() {
 const { entry, newer } = Astro.props;
 const d = entry.data;
 const isHtml = d.format === 'html';
+// Imported articles whose export lost the photo (owner 2026-11-10): the original featured image (front-matter `image`)
+// (or, for newer imported articles, their listing image) is shown under the title / date / author line, before the text. Never added when the body already has a photo.
+const leadImg = (h: string) => {
+  const lead = d.image ?? d.thumbnail; // featured image = article image, else its listing image (same original file)
+  if (!lead || /<img[^>]*data-path=/.test(h)) return h;
+  const fig = `<p class="art-lead"><img alt="${q(lead.alt)}" data-path="${lead.src}"/></p>`;
+  const at = h.search(/<(h2|h3|p)[\s>]/);
+  return at < 0 ? h : h.slice(0, at) + fig + h.slice(at);
+};
 const { Content } = isHtml ? { Content: null } : await render(entry);
 const url = `${SITE.url}/fishing-reports/${entry.id}`;
 const ogImg = d.image ? new URL(media(d.image.src)?.at(1500) ?? '/', SITE.url).href : undefined;
@@ -62,7 +71,7 @@ const mdy = d.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', 
   <section class="section bg-white o-first">
     <div class="container o-flow">
       {isHtml
-        ? <div class="rich o-html article" set:html={pictures(demoteBodyH1Keep(entry.body || ''), '(min-width: 1040px) 960px, 92vw')} />
+        ? <div class="rich o-html article" set:html={pictures(leadImg(demoteBodyH1Keep(entry.body || '')), '(min-width: 1040px) 960px, 92vw')} />
         : <div class="rich o-html article"><article>
             <h1>{d.title}</h1>
             {d.category && <a href={catUrl(d.category)}>{d.category}</a>}

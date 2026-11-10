@@ -6,9 +6,9 @@ date: 2026-01-19
 category: "Fishing Report"
 tags: []
 author: "EXOTIC FISH-CABO"
-image: null
-thumbnail: null
-thumbnailSource: "article first image (listing page 2 not exported)"
+image: {"src": "fishing-reports-original/rooster-mariko-5dcabc88.webp", "alt": "Mariko with her roosterfish, San José del Cabo"}
+thumbnail: {"src": "fishing-reports-original/rooster-mariko-5dcabc88.webp", "alt": "Mariko with her roosterfish, San José del Cabo"}
+thumbnailSource: "restored 2026-11-10: the article's original Squarespace featured image (its og:image, mirrored byte-for-byte in public/og/); listing page 2 and the photo were missing from the export"
 listingRank: 999
 excerpt: "Mariko fulfills her dream of catching a roosterfish during a January 2026 fishing adventure in San José del Cabo with Exotic Fish Cabo. Read her story."
 excerptSource: "meta-description (original excerpt not in export)"
