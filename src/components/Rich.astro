@@ -2,8 +2,11 @@
 // Renders an original text block. mode="cards" wraps each <h3> group in a card (markup only).
 import { byH3, byH4 } from '../lib/original';
 import { liWrap, ctaGroups } from '../lib/design-markup';
+import { BOOKING_OPEN } from '../lib/launch';
 interface Props { html: string; mode?: 'plain' | 'cards'; class?: string }
-const { html: raw, mode = 'plain', class: cls } = Astro.props;
+const { html: raw0, mode = 'plain', class: cls } = Astro.props;
+// links to /book-now inside page text (e.g. FAQ, owner 2026-11-10) follow bookHref(): → /fishing-boats while booking is closed
+const raw = BOOKING_OPEN ? raw0 : raw0.replace(/href="\/book-now(\?[^"]*)?"/g, 'href="/fishing-boats"');
 // Design hook only: paragraphs made entirely of bold text get class="sub" (styled as sub-headings). Text untouched.
 // (only short ones: a long all-bold paragraph is body text, styled as a lead paragraph instead)
 const html = raw.replace(/<p>(<strong>(?:(?!<\/?strong>)[\s\S])*<\/strong>)<\/p>/g, (_m, inner: string) => `<p class="${inner.replace(/<[^>]+>/g, '').length > 110 ? 'lead-strong' : 'sub'}">${inner}</p>`)

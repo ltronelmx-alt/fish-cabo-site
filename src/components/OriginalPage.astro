@@ -6,6 +6,8 @@ import { liWrap } from '../lib/design-markup';
 import OImg from './OImg.astro';
 import OBtn from './OBtn.astro';
 import { BOOKING_OPEN } from '../lib/launch';
+// links to /book-now written inside page text (e.g. FAQ, owner 2026-11-10) follow bookHref(): → /fishing-boats while booking is closed
+const bookLinks = (h: string) => (BOOKING_OPEN ? h : h.replace(/href="\/book-now(\?[^"]*)?"/g, 'href="/fishing-boats"'));
 import LatestLog from './LatestLog.astro';
 import ContactForm from './ContactForm.astro';
 import { byH2, type Page, type Block } from '../lib/original';
@@ -68,7 +70,7 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
           {sec.blocks.map((b) => b.kind === 'img'
             ? <OImg block={b} class={b === heroImgBlock ? 'o-hero-bg o-hero-abs' : 'o-hero-img'} sizes="100vw" priority={b === heroImgBlock} />
             : b.kind === 'button' ? <div class="btn-row"><OBtn block={b} primary /></div>
-            : <div class="hero-text" set:html={pictures(b.html || '')} />)}
+            : <div class="hero-text" set:html={bookLinks(pictures(b.html || ''))} />)}
         </div>
       </section>
     );
@@ -120,10 +122,10 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
                 </div>
               );
             }
-            return <div class="rich" set:html={liWrap(pictures(html))} />;
+            return <div class="rich" set:html={bookLinks(liWrap(pictures(html)))} />;
           }
           // gallery / item lists / collection items (articles, videos, listings)
-          return <div class:list={['rich o-html', b.kind === 'gallery' && 'o-gallery-html']} set:html={liWrap(pictures(isVideoItem ? videoH1(b.html || '') : (b.html || ''), '(min-width: 900px) 33vw, 92vw'))} />;
+          return <div class:list={['rich o-html', b.kind === 'gallery' && 'o-gallery-html']} set:html={bookLinks(liWrap(pictures(isVideoItem ? videoH1(b.html || '') : (b.html || ''), '(min-width: 900px) 33vw, 92vw')))} />;
         })}
         {si === 0 && page.videos && page.videos.length > 0 && page.videos.map((id) => (
           <div class="o-video media"><iframe src={`https://www.youtube.com/embed/${id}?feature=oembed`} title="YouTube video" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
