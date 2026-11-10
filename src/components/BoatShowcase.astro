@@ -3,9 +3,10 @@
 // only, from its own page gallery) + detailed description (rewritten from that page's verified content) + ONE action:
 // BOOK THIS BOAT → /book-now?boat=… . No price, no link to the individual boat page.
 import { media } from '../lib/media';
+import showcase from '../data/boat-showcase.json';
 interface Photo { path: string; alt: string }
 interface Props {
-  boat: { id: string; number: number; title: string; capacity: number; paras: string[]; highlights: string[]; photos: Photo[] };
+  boat: { id: string; number: number; title: string; capacity: number; paras: string[]; highlights: string[]; photos: Photo[]; priceTier?: number };
   included: string;
   flip?: boolean;
   first?: boolean;
@@ -48,6 +49,7 @@ const sizes = '(min-width: 980px) 50vw, 100vw';
       <p class="sc-eyebrow">Boat #{boat.number} · Up to {boat.capacity} {boat.capacity === 1 ? 'guest' : 'guests'} · Private charter</p>
       <h2 class="sc-title" id={`boat-${boat.number}-title`}>{boat.title}</h2>
       {boat.paras.map((t) => <p>{t}</p>)}
+      {boat.priceTier && <p class="sc-tier" aria-label={`Price range: ${'$'.repeat(boat.priceTier)} out of $$$$, ${(showcase.priceTiers as Record<string, string>)[boat.priceTier]}`}><b>{'$'.repeat(boat.priceTier)}</b><span aria-hidden="true">{'$'.repeat(4 - boat.priceTier)}</span> · {(showcase.priceTiers as Record<string, string>)[boat.priceTier]}</p>}
       <ul class="sc-hl">{boat.highlights.map((h) => <li>{h}</li>)}</ul>
       <p class="sc-incl">{included}</p>
       <a class="btn btn-primary sc-book" href={`/book-now?boat=${boat.id}`} data-booking data-track={`book_this_boat_${boat.id}`}>BOOK THIS BOAT</a>
@@ -65,6 +67,9 @@ const sizes = '(min-width: 980px) 50vw, 100vw';
   .sc-eyebrow { font-family: var(--font-ui); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: #a84d00; font-weight: 700; margin: 0 0 10px; } /* darker brand orange: WCAG AA contrast on white and sand */
   .sc-title { font-family: var(--font-head); font-size: clamp(28px, 3.2vw, 44px); line-height: 1.08; margin: 0 0 18px; text-transform: uppercase; }
   .sc-text p { margin: 0 0 14px; }
+  .sc-tier { font-family: var(--font-ui); font-size: 15px; margin: 14px 0 0; color: var(--ink, #111); }
+  .sc-tier b { color: var(--orange); letter-spacing: .06em; font-size: 17px; }
+  .sc-tier span { color: #c9c4bb; letter-spacing: .06em; font-size: 17px; font-weight: 700; }
   .sc-hl { list-style: none; margin: 18px 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; font-family: var(--font-ui); font-size: 15px; }
   .sc-hl li { position: relative; padding-left: 22px; }
   .sc-hl li::before { content: '✓'; position: absolute; left: 0; color: var(--orange); font-weight: 700; }

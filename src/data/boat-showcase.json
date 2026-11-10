@@ -28,7 +28,8 @@
      "path": "1762993775191-A7GF6ATBWY0U3JW2IEU1/23-ft+Fishing+San+Jose+del+Cabo.webp",
      "alt": "A small blue and white motorboat with a canopy is docked in a marina with residential buildings and palm trees in the background. San Jose del Cabo fishing charters"
     }
-   ]
+   ],
+   "priceTier": 1
   },
   {
    "id": "boat-02",
@@ -59,7 +60,8 @@
      "path": "1762993859797-JMC2UCS93TEWURVBR40Y/26ft%2Bsuper%2Bpanga%2Bfishing%2Bsan%2Bjose%2Bdel%2Bcabo.webp",
      "alt": "A white and black boat docked at a marina during a colorful sunset, with other boats and palm trees in the background. San Jose del Cabo fishing charters"
     }
-   ]
+   ],
+   "priceTier": 1
   },
   {
    "id": "boat-03",
@@ -95,7 +97,8 @@
      "path": "20dad811-194c-4279-9538-4ba7c2429d67/fishing+san+jose+del+cabo+on+a+27ft+premium+boat.webp",
      "alt": "Compact bathroom with a toilet, small sink, and storage shelves, all in white. San Jose del Cabo fishing charters"
     }
-   ]
+   ],
+   "priceTier": 1
   },
   {
    "id": "boat-04",
@@ -131,7 +134,8 @@
      "path": "5165816e-3588-4190-8e51-a55f6c0212ee/bathroom+in+our+boat+to+fish+san+jose+del+cabo.webp",
      "alt": "Small boat bathroom with a compact sink, a mirror, a toilet, and small windows, with wood trim and light-colored walls. San Jose del Cabo fishing charters"
     }
-   ]
+   ],
+   "priceTier": 1
   },
   {
    "id": "boat-05",
@@ -171,7 +175,8 @@
      "path": "da10c994-5e62-46c9-aa2a-5f1c5eff32c7/38ft-5+Fishing+San+Jose+del+Cabo.webp",
      "alt": "Small bathroom with a toilet, a sink with a cabinet, a mirror, and a window inside a boat . San Jose del Cabo fishing charters"
     }
-   ]
+   ],
+   "priceTier": 2
   },
   {
    "id": "boat-06",
@@ -211,7 +216,8 @@
      "path": "3e7bdd7b-18b1-4b5c-a24d-81f0702227f3/bathroom+on+a+31ft+premium+center+consloe+to+fish+san+jose+del+cabo.webp",
      "alt": "Compact bathroom with a toilet, a small sink, and a mirror cabinet above. San Jose del Cabo fishing charters"
     }
-   ]
+   ],
+   "priceTier": 2
   },
   {
    "id": "boat-07",
@@ -251,7 +257,8 @@
      "path": "153a1739-42b7-4fa9-85ef-0c722f983b5d/29+Ft+Catamaran+Center+Console+seats.webp",
      "alt": "View from a boat showing the bow with cream-colored seats, a marina with boats, and a modern white apartment complex with multiple balconies in the background."
     }
-   ]
+   ],
+   "priceTier": 2
   },
   {
    "id": "boat-08",
@@ -287,7 +294,8 @@
      "path": "ca3afc33-9721-4674-966c-c2ae972ed309/35+ft+premium+cuddy+cabin+bathroom+to+fish+san+jose+del+cabo.webp",
      "alt": "A small bathroom with a white toilet next to a wooden cabinet and a washing machine. San Jose del Cabo fishing charters"
     }
-   ]
+   ],
+   "priceTier": 3
   },
   {
    "id": "boat-09",
@@ -331,7 +339,8 @@
      "path": "b20007a0-8e66-4bbe-8709-4ca636214bf1/44ft+premium+flybridge+yacht+basthroom+fishing+san+jose+del+cabo.webp",
      "alt": "Small bathroom with a sink, mirror, toilet, glass shower enclosure, towels, and toiletries."
     }
-   ]
+   ],
+   "priceTier": 4
   },
   {
    "id": "boat-10",
@@ -383,7 +392,15 @@
      "path": "61e92809-a5d1-4df6-ae88-85efb07f9587/freeman+cruise.webp",
      "alt": "37Ft Freeman catamaran cruising"
     }
-   ]
+   ],
+   "priceTier": 4
   }
- ]
+ ],
+ "priceTiers": {
+  "_doc": "Owner 2026-11-10: price RANGE shown instead of prices (discourages mystery shoppers; exact price only in /book-now). Tier from the 6-hour price: 1 under $700, 2 $1,400–1,900, 3 $2,700–3,500, 4 top of the fleet. Update when prices change.",
+  "1": "Best value",
+  "2": "Mid-range",
+  "3": "Premium",
+  "4": "Top of the fleet"
+ }
 }
