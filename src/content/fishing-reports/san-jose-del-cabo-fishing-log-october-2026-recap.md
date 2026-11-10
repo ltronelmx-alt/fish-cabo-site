@@ -1,5 +1,5 @@
 ---
-title: "San Jose del Cabo Fishing Log — October 2026 Monthly Recap"
+title: "San Jose del Cabo Monthly Fishing Log — October 2026 Recap"
 seoTitle: "October 2026 Fishing Log | Fishing Charters San Jose del Cabo"
 description: "October 2026 fishing recap: tuna, wahoo, bottom fish and changing ocean conditions for anglers exploring Fishing Charters San Jose del Cabo."
 date: 2026-10-31
