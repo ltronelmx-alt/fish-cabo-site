@@ -70,7 +70,7 @@ const reserveForm = () => { const f = new FormData(); for (const [k, v] of Objec
 try {
   // ---------------- switch OFF (state of production until the owner-authorised launch)
   section = 'Switch OFF (production)';
-  build(false);
+  build(false, true); // = production now: closed, cards configured
   const home = page('index.html'), boatsPage = page('fishing-boats.html'), panga = page('fishing-boats/23ft-panga.html'), cabo = page('cabo-fishing.html');
   t('no /book-now page in the production build, no /book-now in the sitemap', !existsSync('dist/book-now.html') && !existsSync('dist/book-now') && !page('sitemap.xml').includes('/book-now'));
   t('header BOOK NOW → /fishing-boats (as today)', count(home, /href="\/fishing-boats"[^>]*>BOOK NOW</g) === 2 && !/href="\/book-now/.test(home));
@@ -89,6 +89,13 @@ try {
   t('readiness: the 3 manual bookings are blocked, once each', JSON.stringify(rd.database?.manualBlocks) === JSON.stringify(['Boat #2 2026-11-26', 'Boat #4 2026-12-15', 'Boat #6 2027-01-19']));
   t('readiness: 19 prices exactly as approved, 6 % card fee, 24 h Wise hold', rd.prices?.length === 19 && rd.prices.includes('#1 6h $350 (deposit $100)') && rd.prices.includes('#10 8h $5000 (deposit $1000)') && !rd.prices.some((x) => x.startsWith('#1 8h')) && rd.settings?.stripe_fee_pct === 6 && rd.settings?.wise_hold_hours === 24);
   t('readiness never returns a secret value', !JSON.stringify(rd).includes(PASS) && rd.ADMIN_PASSWORD === 'set');
+  await stop(w);
+  w = await start(['STRIPE_SECRET_KEY:sk_live_placeholder_not_real', 'BOOKING_LIVE:approved']);
+  const rdl = (await adminGet('readiness')).readiness || {};
+  t('cards ready (live key + approved) while CLOSED: readiness shows live mode, public stays closed', rdl.stripe?.keyType === 'sk_live' && rdl.stripe?.mode === 'live' && rdl.publicBookingOpen === false, JSON.stringify(rdl.stripe));
+  const rr = await fetch(BASE + '/api/booking/reserve', { method: 'POST', headers: { origin: BASE }, body: reserveForm() });
+  const rp = await fetch(BASE + '/api/booking/pay?ref=EFC-AAAAAA&t=' + 'a'.repeat(48), { redirect: 'manual' });
+  t('…and no Checkout Session can be created: /api/booking/reserve and /api/booking/pay answer 503', rr.status === 503 && rp.status === 503, JSON.stringify([rr.status, rp.status]));
   const ch = await chatBookLink();
   t('chat (switch off): booking answer as today, book button → /contact, no /book-now', !ch.hrefs.includes('/book-now') && ch.hrefs.includes('/contact') && /Choose your date/.test(ch.txt), JSON.stringify(ch));
   await stop(w);
@@ -137,7 +144,7 @@ try {
   w = await start(['STRIPE_SECRET_KEY:sk_live_placeholder_not_real', 'BOOKING_LIVE:approved']);
   t('with a live key + BOOKING_LIVE=approved, the API reports card payments active', (await fetch(BASE + '/api/booking/boats').then((r) => r.json())).cardPayments === true);
   await stop(w);
-  w = await start(['STRIPE_SECRET_KEY:sk_live_placeholder_not_real']);
+  w = await start(['STRIPE_SECRET_KEY:sk_live_placeholder_not_real', 'BOOKING_LIVE:no']);
   t('live key WITHOUT BOOKING_LIVE=approved → card payments stay off', (await fetch(BASE + '/api/booking/boats').then((r) => r.json())).cardPayments === false);
   await stop(w);
 } finally {

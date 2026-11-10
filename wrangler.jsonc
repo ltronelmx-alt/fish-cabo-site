@@ -25,7 +25,9 @@
   // always adds X-Robots-Tag noindex, serves robots.txt "Disallow: /" and applies the STAGING_PASSWORD lock.
   // keep variables the owner set in the Cloudflare dashboard (a deploy must never erase CONTACT_FROM or similar)
   "keep_vars": true,
-  "vars": { "SITE_ENV": "production" },
+  // BOOKING_LIVE=approved (owner, 2026-11-09): the live Stripe key may be used. It opens nothing by itself: card payments
+  // also need launch.json CARD_PAYMENTS_ENABLED, and customers can reach them only once PUBLIC_BOOKING_LAUNCHED is true.
+  "vars": { "SITE_ENV": "production", "BOOKING_LIVE": "approved" },
   // Worker Previews (branch builds). Since Wrangler 4.135, Workers Builds deploys non-production branches with
   // `npx wrangler preview`, which REQUIRES this block (error "Your Wrangler configuration is missing a `previews` block").
   // Previews inherit NOTHING from production: no vars, no D1, no secrets. Assets, compatibility_date and cron triggers
