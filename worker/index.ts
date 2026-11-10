@@ -25,12 +25,20 @@ export interface Env {
   PAYPAL_ENV?: string; // "live" | "sandbox"
   PAYPAL_LIVE?: string; // "approved" = owner explicitly approved live PayPal payments
   PAYPAL_API_BASE?: string; // local tests only
+  // Google Calendar one-way mirror of confirmed bookings (owner 2026-11-10) — worker/booking/gcal.ts
+  GCAL_CLIENT_ID?: string;
+  GCAL_CLIENT_SECRET?: string;
+  GCAL_REFRESH_TOKEN?: string;
+  GCAL_CALENDAR_ID?: string;
+  GCAL_API_BASE?: string; // local tests only
+  GCAL_TOKEN_URL?: string; // local tests only
 }
 import REDIRECTS from '../src/data/redirects.json';
 import { publishNotify } from './notify';
 import { apiBoats, apiAvailability, apiQuote, apiSummary, apiReserve, apiStatus, apiCancelCheckout, apiPay, apiStripeWebhook, cron, isProductionEnv, isStagingEnv, adminUrl, bookingOpen } from './booking/core';
 import { adminPage, adminApi } from './booking/admin';
 import { apiPaypalReturn, apiPaypalWebhook } from './booking/paypal';
+import { reconcile as gcalReconcile } from './booking/gcal';
 const TEST_TURNSTILE_SECRET = '1x0000000000000000000000000000000AA';
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
 const STAGING_OPEN_UNTIL = Date.parse('2026-11-04T16:55:00Z'); // = 2026-11-04 09:55 Mazatlán (post-deploy verification window)
@@ -99,8 +107,11 @@ async function contact(request: Request, env: Env) {
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const res = await handle(request, env);
+    // Google Calendar mirror: after anything that can confirm, move, cancel or refund a booking, in the background
+    // (never delays or affects the response; does nothing until the GCAL_* secrets are installed)
+    if (calendarRelevant(request) && env.DB) ctx.waitUntil(gcalReconcile(env).catch((e) => console.log('gcal error', String(e))));
     // *.workers.dev is never indexable, whatever the build mode (production builds carry no noindex of their own)
     if (!new URL(request.url).hostname.endsWith('.workers.dev')) return res;
     const h = new Headers(res.headers);
@@ -109,8 +120,15 @@ export default {
   },
   async scheduled(_c: ScheduledController, env: Env, ctx: ExecutionContext) {
     ctx.waitUntil(cron(env).catch((e) => console.log('cron error', String(e))));
+    ctx.waitUntil(gcalReconcile(env, true).catch((e) => console.log('gcal cron error', String(e)))); // safety net (retries, missed triggers)
   },
 } satisfies ExportedHandler<Env>;
+
+function calendarRelevant(request: Request) {
+  const p = new URL(request.url).pathname;
+  if (request.method !== 'GET' && request.method !== 'HEAD' && (p.startsWith('/api/admin/') || p === '/api/stripe/webhook' || p === '/api/paypal/webhook' || p === '/api/booking/cancel-checkout')) return true;
+  return p === '/api/booking/paypal/return';
+}
 
 async function handle(request: Request, env: Env): Promise<Response> {
     // Canonical host + old URLs: one permanent redirect, never a chain (www → apex and old path → new path together)

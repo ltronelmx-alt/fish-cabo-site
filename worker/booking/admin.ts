@@ -3,6 +3,7 @@
 // Every change is written to audit_log. An override never confirms a booking by itself: payment must still be verified.
 import { getSettings, paypalSchemaReady } from './schema';
 import { paypalMode, paypalPaymentsOn } from './paypal';
+import { gcalStatus } from './gcal';
 import { paypalEnabled } from './envmode';
 import { json, nowIso, newId, newRef, newToken, hmacHex, sha256Hex, safeEqual, rateLimit, isDate, localToday, addDays } from './util';
 import { db, boats, audit, loadRes, runSweep, cron, isProductionEnv, isStagingEnv, adminUrl, bookingOpen, cardPaymentsOn, cardEnabled, stripeMode as stripeModeOf, notifyConfirmed, sendLogged, sendOnce, chargeCents, dayStates, priceOf, durationsOf, BOOKED_MSG, TERMS_VERSION, type BEnv, type Boat } from './core';
@@ -427,5 +428,6 @@ async function readiness(env: BEnv, d: D1Database, u: URL) {
       clientId: e.PAYPAL_CLIENT_ID ? 'set' : 'missing', clientSecret: e.PAYPAL_CLIENT_SECRET ? 'set' : 'missing', webhookId: e.PAYPAL_WEBHOOK_ID ? 'set' : 'missing',
       PAYPAL_ENV: e.PAYPAL_ENV === 'live' || e.PAYPAL_ENV === 'sandbox' ? e.PAYPAL_ENV : e.PAYPAL_ENV ? 'set (unexpected value)' : 'not set',
       PAYPAL_LIVE: e.PAYPAL_LIVE === 'approved' ? 'approved' : e.PAYPAL_LIVE ? 'set (not "approved")' : 'not set', databaseReady: await paypalSchemaReady(d) },
+    googleCalendar: await gcalStatus(e as any).catch((err) => ({ error: String(err).slice(0, 200) })),
   };
 }
