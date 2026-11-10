@@ -4,6 +4,7 @@
 import { getSettings, paypalSchemaReady } from './schema';
 import { paypalMode, paypalPaymentsOn } from './paypal';
 import { gcalStatus } from './gcal';
+import { get2fa, enabled as twoFaOn, epochOf, setup2fa, enable2fa, verifyLogin, disable2fa, status2fa } from './totp';
 import { paypalEnabled } from './envmode';
 import { json, nowIso, newId, newRef, newToken, hmacHex, sha256Hex, safeEqual, rateLimit, isDate, localToday, addDays } from './util';
 import { db, boats, audit, loadRes, runSweep, cron, isProductionEnv, isStagingEnv, adminUrl, bookingOpen, cardPaymentsOn, cardEnabled, stripeMode as stripeModeOf, notifyConfirmed, sendLogged, sendOnce, chargeCents, dayStates, priceOf, durationsOf, BOOKED_MSG, TERMS_VERSION, type BEnv, type Boat } from './core';
@@ -19,13 +20,15 @@ const SETTING_RANGES: Record<string, [number, number]> = {
   stripe_hold_minutes: [31, 120], wise_hold_hours: [1, 168], override_hold_hours: [1, 336],
 };
 
-const key = async (env: BEnv) => sha256Hex(`${env.ADMIN_PASSWORD}|efc-admin-session-v1`);
-async function sessionOk(request: Request, env: BEnv) {
+// session key = password + 2FA epoch: enabling/disabling 2FA (or changing the password) signs every open session out
+const key = async (env: BEnv, d: D1Database) => sha256Hex(`${env.ADMIN_PASSWORD}|efc-admin-session-v1|${epochOf(await get2fa(d))}`);
+const twoFaBypassed = (env: BEnv) => (env as { ADMIN_2FA_DISABLED?: string }).ADMIN_2FA_DISABLED === 'yes'; // emergency only (Cloudflare variable)
+async function sessionOk(request: Request, env: BEnv, d: D1Database) {
   if (!env.ADMIN_PASSWORD) return false;
   const c = (request.headers.get('cookie') || '').split(/;\s*/).find((x) => x.startsWith(`${COOKIE}=`))?.slice(COOKIE.length + 1) || '';
   const [exp, sig] = c.split('.');
   if (!exp || !sig || Number(exp) < Date.now() / 1000) return false;
-  return safeEqual(sig, await hmacHex(await key(env), `admin|${exp}`));
+  return safeEqual(sig, await hmacHex(await key(env, d), `admin|${exp}`));
 }
 const secure = (request: Request) => (new URL(request.url).protocol === 'https:' ? '; Secure' : '');
 
@@ -51,15 +54,22 @@ export async function adminApi(request: Request, env: BEnv): Promise<Response> {
   const d = await db(env);
   if (path === 'login' && request.method === 'POST') {
     const ip = request.headers.get('cf-connecting-ip') || 'local';
-    if (!(await rateLimit(d, `login:${ip}`, 5, 900))) return json({ ok: false, error: 'Too many attempts. Wait 15 minutes.' }, 429);
-    const { password = '' } = (await request.json().catch(() => ({}))) as { password?: string };
+    if (!(await rateLimit(d, `login:${ip}`, 8, 900))) return json({ ok: false, error: 'Too many attempts. Wait 15 minutes.' }, 429);
+    const { password = '', code = '' } = (await request.json().catch(() => ({}))) as { password?: string; code?: string };
     const good = safeEqual(await sha256Hex(String(password)), await sha256Hex(env.ADMIN_PASSWORD));
-    await audit(d, 'admin', good ? 'login' : 'login_failed', null, { ip: ip.replace(/\d+$/, 'x') }).run();
-    if (!good) return json({ ok: false, error: 'Wrong password' }, 401);
+    const ipm = ip.replace(/\d+$/, 'x');
+    if (!good) { await audit(d, 'admin', 'login_failed', null, { ip: ipm }).run(); return json({ ok: false, error: 'Wrong password' }, 401); }
+    // second factor (Google Authenticator) once the owner has enabled it
+    if (twoFaOn(await get2fa(d)) && !twoFaBypassed(env)) {
+      if (!String(code).trim()) return json({ ok: false, need2fa: true, error: 'Enter the 6-digit code from Google Authenticator.' }, 401);
+      const v = await verifyLogin(d, String(code));
+      if (!v.ok) { await audit(d, 'admin', 'login_2fa_failed', null, { ip: ipm }).run(); return json({ ok: false, need2fa: true, error: 'Wrong or already used code. Wait for the next code and try again.' }, 401); }
+      await audit(d, 'admin', 'login', null, { ip: ipm, factor: v.via, ...(v.via === 'recovery' ? { recoveryLeft: v.recoveryLeft } : {}) }).run();
+    } else await audit(d, 'admin', twoFaBypassed(env) ? 'login_2fa_bypassed' : 'login', null, { ip: ipm }).run();
     const exp = Math.floor(Date.now() / 1000) + TTL;
-    return json({ ok: true }, 200, { 'set-cookie': `${COOKIE}=${exp}.${await hmacHex(await key(env), `admin|${exp}`)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${TTL}${secure(request)}` });
+    return json({ ok: true }, 200, { 'set-cookie': `${COOKIE}=${exp}.${await hmacHex(await key(env, d), `admin|${exp}`)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${TTL}${secure(request)}` });
   }
-  if (!(await sessionOk(request, env))) return json({ ok: false, error: 'Not signed in' }, 401);
+  if (!(await sessionOk(request, env, d))) return json({ ok: false, error: 'Not signed in' }, 401);
   if (path === 'logout') return json({ ok: true }, 200, { 'set-cookie': `${COOKIE}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${secure(request)}` });
   await runSweep(d);
 
@@ -129,6 +139,7 @@ export async function adminApi(request: Request, env: BEnv): Promise<Response> {
     await audit(d, 'admin', 'export_csv', null, { rows: results.length }).run();
     return new Response('﻿' + csv, { headers: { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': `attachment; filename="bookings-${localToday()}.csv"`, 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } });
   }
+  if (path === '2fa-status' && request.method === 'GET') return json({ ok: true, ...(await status2fa(d)), emergencyBypass: twoFaBypassed(env) });
   if (path === 'readiness' && request.method === 'GET') {
     // LAUNCH READINESS (owner, 2026-11-09): admin session only, available in production. Says what is configured and
     // whether it works — NEVER a secret value (only key types, the last 4 characters of the Stripe account id, counts).
@@ -138,6 +149,25 @@ export async function adminApi(request: Request, env: BEnv): Promise<Response> {
   if (request.method !== 'POST') return json({ ok: false, error: 'Not found' }, 404);
   const body = (await request.json().catch(() => ({}))) as Record<string, any>;
 
+  // two-factor authentication (Google Authenticator)
+  if (path === '2fa-setup') {
+    if (twoFaOn(await get2fa(d))) return json({ ok: false, error: 'Two-factor authentication is already on. Disable it first to change phone.' }, 409);
+    await audit(d, 'admin', '2fa_setup_started', null).run();
+    return json({ ok: true, ...(await setup2fa(d)) });
+  }
+  if (path === '2fa-enable') {
+    const r = await enable2fa(d, String(body.code || ''));
+    if (r.ok) await audit(d, 'admin', '2fa_enabled', null).run();
+    return json(r, r.ok ? 200 : 400);
+  }
+  if (path === '2fa-disable') {
+    const st = await get2fa(d);
+    if (!twoFaOn(st)) return json({ ok: true });
+    if (!twoFaBypassed(env) && !(await verifyLogin(d, String(body.code || ''))).ok) return json({ ok: false, error: 'Enter a current code from Google Authenticator (or a recovery code) to disable it.' }, 400);
+    await disable2fa(d);
+    await audit(d, 'admin', '2fa_disabled', null, { emergency: twoFaBypassed(env) }).run();
+    return json({ ok: true });
+  }
   if (path === 'run-hourly-job') {
     // STAGING ONLY (owner request 2026-11-09): run the existing hourly job on demand, because crons never run on
     // Cloudflare Previews. Same code as the cron; deadlines and one-time claims apply. Does not exist on fish-cabo.com.
@@ -429,5 +459,6 @@ async function readiness(env: BEnv, d: D1Database, u: URL) {
       PAYPAL_ENV: e.PAYPAL_ENV === 'live' || e.PAYPAL_ENV === 'sandbox' ? e.PAYPAL_ENV : e.PAYPAL_ENV ? 'set (unexpected value)' : 'not set',
       PAYPAL_LIVE: e.PAYPAL_LIVE === 'approved' ? 'approved' : e.PAYPAL_LIVE ? 'set (not "approved")' : 'not set', databaseReady: await paypalSchemaReady(d) },
     googleCalendar: await gcalStatus(e as any).catch((err) => ({ error: String(err).slice(0, 200) })),
+    twoFactor: { ...(await status2fa(d)), emergencyBypass: twoFaBypassed(env) },
   };
 }
