@@ -30,11 +30,11 @@ Wind, strong current and renewed heavy rain were important operational constrain
 
 ## Yellowfin Tuna: From Vinorama to the Gordo Banks
 
-Vinorama was a useful early-October reference point for yellowfin tuna. Once the water began clearing after the reopening, reports described fish commonly in the 25–55 lb range, with some much larger individual catches. One reported tuna weighed **about 185 lb** on October 9 (187 lb before rounding).
+Vinorama was a useful early-October reference point for yellowfin tuna. Once the water began clearing after the reopening, reports described fish commonly in the 25–55 lb range, with some much larger individual catches. One reported tuna weighed **about 185 lb** on October 9.
 
-The Inner and Outer Gordo Banks also held yellowfin tuna, although early-month action there was less dependable. A separate fish of **about 190 lb** was reported at Inner Gordo on October 10 (189 lb before rounding). These are individual regional catches, not expected charter results.
+The Inner and Outer Gordo Banks also held yellowfin tuna, although early-month action there was less dependable. A separate fish of **about 190 lb** was reported at Inner Gordo on October 10. These are individual regional catches, not expected charter results.
 
-By the middle of October, fishing at Vinorama had become less predictable. Tournament activity increased pressure on several grounds, while live sardines became harder to obtain. Later in the month, a **about 180 lb** tuna was reported from Vinorama on October 20, even as many outings found only limited tuna activity.
+By the middle of October, fishing at Vinorama had become less predictable. Tournament activity increased pressure on several grounds, while live sardines became harder to obtain. Later in the month, a tuna weighing **about 180 lb** was reported from Vinorama on October 20, even as many outings found only limited tuna activity.
 
 Toward October's end, reports pointed to renewed opportunities around Inner Gordo, with chiwili and squid among the baits used. The final reporting interval also described quality tuna around both Gordo Banks. Because that report spans October 26–November 1, its undated catch totals cannot reliably be assigned to October alone.
 
