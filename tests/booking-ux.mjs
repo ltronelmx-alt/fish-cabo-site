@@ -71,7 +71,7 @@ async function journey(label, ctxOpts) {
   steps.push(['s-pay', await helpOk(p, 's-pay')]);
   t(`${label}: CONTACT US + WHATSAPP visible at every step (6/6)`, steps.every(([, ok]) => ok), JSON.stringify(steps));
   const pp = p.locator('input[name=payment][value=paypal]');
-  t(`${label}: PayPal shown as "PayPal — Coming Soon", disabled, no link`, (await pp.isDisabled()) && (await p.locator('.bk-payopts').innerText()).includes('PayPal — Coming Soon') && (await p.locator('.bk-payopts a').count()) === 0);
+  t(`${label}: PayPal shown as a permanent option "PayPal (+6% processing fee)" (owner 2026-11-09), no "Coming Soon", no link`, (await pp.isEnabled()) && (await p.locator('.bk-payopts').innerText()).includes('PayPal (+6% processing fee)') && !/coming soon/i.test(await p.locator('.bk-payopts').innerText()) && (await p.locator('.bk-payopts a').count()) === 0);
   t(`${label}: Wise notice hidden while no method / card is chosen`, await p.locator('#wise-note').isHidden());
   await p.locator('input[name=payment][value=wise]').check();
   const wn = p.locator('#wise-note'); const wtxt = (await wn.innerText()).replace(/\s+/g, ' ').trim();

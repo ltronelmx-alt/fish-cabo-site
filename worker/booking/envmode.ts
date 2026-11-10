@@ -40,3 +40,7 @@ export const bookingOpen = (env: EnvLike, launched: boolean = launch.PUBLIC_BOOK
 /** Card payments allowed by configuration (Wise-only launch). Staging/local: yes (the Stripe key decides). Production:
  * only once launch.json CARD_PAYMENTS_ENABLED is true — and the Stripe key/BOOKING_LIVE rules still apply on top. */
 export const cardEnabled = (env: EnvLike, enabled: boolean = launch.CARD_PAYMENTS_ENABLED === true) => env.SITE_ENV !== 'production' || enabled;
+
+/** PayPal allowed by configuration (owner 2026-11-09). Staging/local: yes (the PayPal credentials decide). Production:
+ * only once launch.json PAYPAL_PAYMENTS_ENABLED is true — and the credential/PAYPAL_LIVE rules (paypal.ts) apply on top. */
+export const paypalEnabled = (env: EnvLike, enabled: boolean = (launch as { PAYPAL_PAYMENTS_ENABLED?: boolean }).PAYPAL_PAYMENTS_ENABLED === true) => env.SITE_ENV !== 'production' || enabled;

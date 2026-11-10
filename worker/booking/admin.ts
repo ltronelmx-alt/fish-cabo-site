@@ -1,7 +1,9 @@
 // Owner dashboard API (/booking-admin — separate from Sveltia CMS at /admin/). Password = Cloudflare secret ADMIN_PASSWORD (set by the owner, never in code).
 // Session: signed HttpOnly cookie (Secure, SameSite=Strict, 12 h). POSTs also require same Origin + a custom header (CSRF).
 // Every change is written to audit_log. An override never confirms a booking by itself: payment must still be verified.
-import { getSettings } from './schema';
+import { getSettings, paypalSchemaReady } from './schema';
+import { paypalMode, paypalPaymentsOn } from './paypal';
+import { paypalEnabled } from './envmode';
 import { json, nowIso, newId, newRef, newToken, hmacHex, sha256Hex, safeEqual, rateLimit, isDate, localToday, addDays } from './util';
 import { db, boats, audit, loadRes, runSweep, cron, isProductionEnv, isStagingEnv, adminUrl, bookingOpen, cardPaymentsOn, cardEnabled, stripeMode as stripeModeOf, notifyConfirmed, sendLogged, sendOnce, chargeCents, dayStates, priceOf, durationsOf, BOOKED_MSG, TERMS_VERSION, type BEnv, type Boat } from './core';
 import * as M from './emails';
@@ -421,5 +423,9 @@ async function readiness(env: BEnv, d: D1Database, u: URL) {
     ADMIN_PASSWORD: e.ADMIN_PASSWORD ? 'set' : 'missing', TURNSTILE_SECRET: e.TURNSTILE_SECRET ? 'set' : 'missing',
     CONTACT_TO: e.CONTACT_TO || 'missing', CONTACT_FROM: !from ? 'missing' : { name: from.replace(/<[^>]*>\s*$/, '').trim(), address: fromAddr || 'invalid format' },
     RESEND_API_KEY: resend, adminLinkInOwnerEmails: adminUrl(e), stripe,
+    paypal: { mode: paypalMode(e), allowedByConfig: paypalEnabled(e), checkoutActive: paypalPaymentsOn(e), feePctOnDeposit: s.paypal_fee_pct,
+      clientId: e.PAYPAL_CLIENT_ID ? 'set' : 'missing', clientSecret: e.PAYPAL_CLIENT_SECRET ? 'set' : 'missing', webhookId: e.PAYPAL_WEBHOOK_ID ? 'set' : 'missing',
+      PAYPAL_ENV: e.PAYPAL_ENV === 'live' || e.PAYPAL_ENV === 'sandbox' ? e.PAYPAL_ENV : e.PAYPAL_ENV ? 'set (unexpected value)' : 'not set',
+      PAYPAL_LIVE: e.PAYPAL_LIVE === 'approved' ? 'approved' : e.PAYPAL_LIVE ? 'set (not "approved")' : 'not set', databaseReady: await paypalSchemaReady(d) },
   };
 }

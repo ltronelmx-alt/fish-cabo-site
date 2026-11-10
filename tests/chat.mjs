@@ -89,9 +89,9 @@ for (const l of langs) {
     fr: ['Je peux payer avec PayPal ?', "Comment payer l'acompte ?", 'Vous acceptez Stripe ?', 'Je peux payer avec Wise ?'],
     es: ['¿Puedo pagar con PayPal?', '¿Cómo pago el depósito?', '¿Aceptan Stripe?', '¿Puedo pagar con Wise?'],
   };
-  // open build (staging / after the launch switch): online booking only, PayPal shown as coming soon (owner 2026-11-09:
+  // open build (staging / after the launch switch): online booking only, PayPal a permanent option, +6 % (owner 2026-11-09 evening; earlier: coming soon) (owner 2026-11-09:
   // the old boat-page payment buttons disappear at the launch). The pre-launch wording is checked in tests/launch-switch.mjs.
-  const NEED = { en: /Stripe \(\+6% processing fee\) or Wise \(no fee\)\. PayPal: coming soon\./, fr: /Stripe \(\+6 % de frais\) ou Wise \(sans frais\)\. PayPal : bientôt disponible\./, es: /Stripe \(\+6 % de comisión\) o Wise \(sin comisión\)\. PayPal: próximamente\./ };
+  const NEED = { en: /Stripe \(\+6% processing fee\), PayPal \(\+6% processing fee\) or Wise \(no fee\)\./, fr: /Stripe \(\+6 % de frais\), PayPal \(\+6 % de frais\) ou Wise \(sans frais\)\./, es: /Stripe \(\+6 % de comisión\), PayPal \(\+6 % de comisión\) o Wise \(sin comisión\)\./ };
   for (const l of langs) {
     const p = await page('en-US'); await open(p); await p.click('#btn-' + l);
     const YES = { en: 'Yes.', fr: 'Oui.', es: 'Sí.' };
@@ -107,7 +107,7 @@ for (const l of langs) {
       const ok = /PayPal/.test(txt) && NEED[l].test(txt) && /Stripe/.test(txt) && /6 ?%/.test(txt) && /Wise/.test(txt)
         && !/unavailable|indisponible|no est[áa] disponible/i.test(txt) && !links.some((h) => /paypal\./i.test(h))
         && wa.host === 'wa.me' && wa.path === '/526241223506' && !MIX[l].test(txt);
-      rec('PayPal', `${l.toUpperCase()} "${q}" → payment answer: Stripe +6 %, Wise, PayPal coming soon + WhatsApp button wa.me/526241223506`, ok, txt.replace(/\s+/g, ' ').slice(0, 160));
+      rec('PayPal', `${l.toUpperCase()} "${q}" → payment answer: Stripe +6 %, PayPal +6 % (permanent, owner 2026-11-09), Wise + WhatsApp button wa.me/526241223506`, ok, txt.replace(/\s+/g, ' ').slice(0, 160));
     }
     await p.context().close();
   }

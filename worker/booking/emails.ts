@@ -8,7 +8,7 @@ import { esc, usd, usdCents, longDate, localDateTime } from './util';
 
 export type Res = {
   id: string; ref: string; token: string; boat_id: string; boat_name: string; boat_number: number; boat_size_ft: number; payment_ref?: string | null; payment_amount_cents?: number | null; payment_at?: string | null; terms_version?: string | null; date: string; hours: number; status: string;
-  payment_method: 'stripe' | 'wise' | 'other'; total_usd: number; deposit_usd: number; balance_usd: number; fee_cents: number; charge_cents: number;
+  payment_method: 'stripe' | 'wise' | 'paypal' | 'other'; total_usd: number; deposit_usd: number; balance_usd: number; fee_cents: number; charge_cents: number;
   first_name: string; last_name: string; email: string; phone: string; people: number; message: string; slot: number;
   hold_expires_at: string | null; is_test: number; created_at: string; updated_at: string;
   source: 'online' | 'phone' | 'override'; holds_slot: number; stripe_session_id: string | null; stripe_payment_intent: string | null;
@@ -19,7 +19,7 @@ type Env = { RESEND_API_KEY?: string; CONTACT_TO?: string; CONTACT_FROM?: string
 const resendBase = (env: Env) => (env.SITE_ENV !== 'production' && /^http:\/\/127\.0\.0\.1:\d+$/.test(env.RESEND_API_BASE || '') ? env.RESEND_API_BASE! : 'https://api.resend.com');
 
 const B = (r: Res) => `Boat #${r.boat_number} (${r.boat_size_ft} ft)`;
-const PAY = (r: Res) => (r.payment_method === 'stripe' ? 'Card via Stripe' : r.payment_method === 'wise' ? 'Wise' : 'Received directly (verified by the owner)');
+const PAY = (r: Res) => (r.payment_method === 'stripe' ? 'Card via Stripe' : r.payment_method === 'wise' ? 'Wise' : r.payment_method === 'paypal' ? 'PayPal' : 'Received directly (verified by the owner)');
 export const ADMIN_URL = 'https://fish-cabo.com/booking-admin';
 export const WISE_PAY_URL = 'https://wise.com/pay/me/loict92'; // the Wise link already published on every boat page
 const WHATSAPP = '+52 624 122 3506';
@@ -68,7 +68,7 @@ const DUR = (h: number) => `${h} HOURS`; // owner rule: trip duration always spe
  * email address come first: the owner sends the official confirmation personally (owner decision 2026-11-08). */
 export function ownerConfirmed(r: Res, adminUrl = ADMIN_URL) {
   const email = r.email || '(no email given)';
-  const card = r.payment_method === 'stripe';
+  const card = r.payment_method === 'stripe' || r.payment_method === 'paypal'; // deposit + processing fee (fee on the deposit only)
   const received = r.payment_amount_cents ?? null; // what the payment record actually shows (Stripe amount_total or the amount the owner verified)
   const rows: [string, string][] = [
     ['TRIP DURATION', `${DUR(r.hours)} (${r.hours === 6 ? '3/4 day' : 'full day'})`],
@@ -84,7 +84,7 @@ export function ownerConfirmed(r: Res, adminUrl = ADMIN_URL) {
     ['Total charter price', usd(r.total_usd)],
     ['Required deposit', usdCents(r.deposit_usd * 100)],
     ['Deposit verified', card ? usdCents(r.deposit_usd * 100) : received != null ? usdCents(received) : '(amount not recorded)'],
-    ['Card processing fee', card ? usdCents(r.fee_cents) : 'none'],
+    [r.payment_method === 'paypal' ? 'PayPal processing fee' : 'Card processing fee', card ? usdCents(r.fee_cents) : 'none'],
     ['Total charged to the customer', card ? (received != null ? usdCents(received) : usdCents(r.charge_cents)) : received != null ? usdCents(received) : '(amount not recorded)'],
     ['Remaining balance (cash on the fishing day)', usd(r.balance_usd)],
     ['Payment method', PAY(r)],
@@ -153,7 +153,9 @@ export function ownerWiseExpired(r: Res, adminUrl = ADMIN_URL) {
 export function customerDepositReceipt(r: Res) {
   const received = r.payment_method === 'stripe'
     ? `${usdCents(r.deposit_usd * 100)} (card payment of ${usdCents(r.charge_cents)} including the ${usdCents(r.fee_cents)} processing fee)`
-    : usdCents(r.deposit_usd * 100);
+    : r.payment_method === 'paypal'
+      ? `${usdCents(r.deposit_usd * 100)} (PayPal payment of ${usdCents(r.charge_cents)} including the ${usdCents(r.fee_cents)} PayPal processing fee)`
+      : usdCents(r.deposit_usd * 100);
   const rows: [string, string][] = [
     ['Booking reference', r.ref],
     ['Boat', `Boat #${r.boat_number}`],

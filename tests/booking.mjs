@@ -199,7 +199,10 @@ try {
   [s, j] = await reserve(customer('boat-01', day(6), 6, 'stripe', { phone: 'abc' })); t('phone required', s === 400);
   [s, j] = await reserve(customer('boat-01', day(6), 6, 'stripe', { website: 'spam' })); t('honeypot refused', s === 400);
   [s, j] = await reserve(customer('boat-01', day(6)), { origin: 'https://evil.example' }); t('cross-origin reserve → 403', s === 403);
-  [s, j] = await reserve(customer('boat-01', day(6), 6, 'paypal')); t('unknown payment method refused', s === 400);
+  [s, j] = await reserve(customer('boat-01', day(6), 6, 'bitcoin')); t('unknown payment method refused', s === 400);
+  if (!(await (await fetch(BASE + '/api/booking/boats')).json()).paypalPayments) { const before = sql(`SELECT COUNT(*) n FROM reservations`)[0].n; // PayPal account not connected (production today); connected → tests/paypal.mjs
+    [s, j] = await reserve(customer('boat-01', day(6), 6, 'paypal'));
+    t('PayPal (account not connected) → 503 PAYPAL_UNAVAILABLE, nothing reserved, no charge possible', s === 503 && j.code === 'PAYPAL_UNAVAILABLE' && /not yet available/.test(j.error) && sql(`SELECT COUNT(*) n FROM reservations`)[0].n === before, JSON.stringify(j)); }
   t('no reservation created by refused attempts', sql(`SELECT COUNT(*) n FROM reservations`)[0].n === 0);
 
   // ---------------- 10 boats × Stripe, one trip per day ----------------

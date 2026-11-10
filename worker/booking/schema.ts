@@ -75,6 +75,8 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   stripe_hold_minutes: '35', // Stripe Checkout sessions expire after 30 min (minimum allowed by Stripe)
   wise_hold_hours: '24', // owner: a Wise booking keeps the date for 24 h while the payment is verified
   override_hold_hours: '48', // second trip recorded by the owner: the customer has 48 h to pay the deposit
+  paypal_fee_pct: '6', // owner 2026-11-09: PayPal deposits = deposit + 6 % (fee on the deposit only, never on the balance)
+  paypal_hold_minutes: '45', // date held while the customer approves the PayPal payment (nothing is captured before approval)
 };
 
 let ready = false;
@@ -150,4 +152,55 @@ export async function getSettings(db: D1Database): Promise<Record<string, number
   for (const [k, v] of Object.entries(DEFAULT_SETTINGS)) out[k] = Number(v);
   for (const r of results) out[r.k] = Number(r.v);
   return out;
+}
+
+/** PayPal columns (owner 2026-11-09). The original table only accepts payment_method stripe | wise | other, and SQLite
+ * cannot change a CHECK in place, so the table is rebuilt ONCE, in ONE atomic batch (all or nothing), keeping every row
+ * and index. It runs only when PayPal credentials are installed (see core.db) or right before the first PayPal booking —
+ * never while PayPal is not connected. Idempotent: does nothing once the table accepts 'paypal'. */
+const RES_COLUMNS = `id, ref, token, boat_id, date, hours, slot, holds_slot, hold_expires_at, status, payment_method, total_usd, deposit_usd, balance_usd,
+  fee_cents, charge_cents, first_name, last_name, email, phone, people, message, consent_at, terms_version, lang, stripe_session_id, stripe_payment_intent,
+  is_test, source, owner_notified_at, customer_notified_at, expiry_notified_at, admin_note, created_at, updated_at`;
+let paypalReady = false;
+export async function paypalSchemaReady(db: D1Database): Promise<boolean> {
+  if (paypalReady) return true;
+  const t = await db.prepare(`SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'reservations'`).first<{ sql: string }>();
+  paypalReady = !!t && t.sql.includes(`'paypal'`) && t.sql.includes('paypal_capture_id');
+  return paypalReady;
+}
+export async function ensurePaypalSchema(db: D1Database): Promise<void> {
+  if (await paypalSchemaReady(db)) return;
+  const now = new Date().toISOString();
+  const n = await db.prepare(`SELECT COUNT(*) n FROM reservations`).first<{ n: number }>();
+  await db.batch([
+    db.prepare(`DROP TABLE IF EXISTS reservations_pp`),
+    db.prepare(`CREATE TABLE reservations_pp (
+  id TEXT PRIMARY KEY, ref TEXT NOT NULL UNIQUE, token TEXT NOT NULL,
+  boat_id TEXT NOT NULL REFERENCES boats(id), date TEXT NOT NULL, hours INTEGER NOT NULL CHECK (hours IN (6, 8)),
+  slot INTEGER NOT NULL DEFAULT 0, holds_slot INTEGER NOT NULL DEFAULT 0, hold_expires_at TEXT,
+  status TEXT NOT NULL, payment_method TEXT NOT NULL CHECK (payment_method IN ('stripe', 'wise', 'paypal', 'other')),
+  total_usd INTEGER NOT NULL, deposit_usd INTEGER NOT NULL, balance_usd INTEGER NOT NULL,
+  fee_cents INTEGER NOT NULL DEFAULT 0, charge_cents INTEGER NOT NULL,
+  first_name TEXT NOT NULL, last_name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL, people INTEGER NOT NULL,
+  message TEXT NOT NULL, consent_at TEXT NOT NULL, terms_version TEXT, lang TEXT,
+  stripe_session_id TEXT, stripe_payment_intent TEXT, is_test INTEGER NOT NULL DEFAULT 0,
+  source TEXT NOT NULL DEFAULT 'online',
+  owner_notified_at TEXT, customer_notified_at TEXT, expiry_notified_at TEXT, admin_note TEXT,
+  created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+  paypal_order_id TEXT, paypal_capture_id TEXT
+)`),
+    db.prepare(`INSERT INTO reservations_pp (${RES_COLUMNS}) SELECT ${RES_COLUMNS} FROM reservations`),
+    db.prepare(`DROP TABLE reservations`),
+    db.prepare(`ALTER TABLE reservations_pp RENAME TO reservations`),
+    db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS res_active_slot ON reservations (boat_id, date, slot) WHERE holds_slot = 1`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS res_date ON reservations (date)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS res_status ON reservations (status)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS res_hold ON reservations (hold_expires_at) WHERE holds_slot = 1`),
+    db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS res_stripe_session ON reservations (stripe_session_id) WHERE stripe_session_id IS NOT NULL`),
+    db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS res_paypal_order ON reservations (paypal_order_id) WHERE paypal_order_id IS NOT NULL`),
+    db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS res_paypal_capture ON reservations (paypal_capture_id) WHERE paypal_capture_id IS NOT NULL`),
+    db.prepare(`INSERT INTO audit_log (at, actor, action, reservation_id, details) VALUES (?, 'system', 'schema_paypal', NULL, ?)`).bind(now, JSON.stringify({ rowsKept: n?.n ?? 0 })),
+  ]);
+  paypalReady = false;
+  if (!(await paypalSchemaReady(db))) throw new Error('PayPal schema migration did not apply');
 }
