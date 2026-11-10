@@ -167,6 +167,12 @@
       "_note": "Owner 2026-11-10: every reservation is completed and the deposit paid on /book-now; contact/WhatsApp = assistance only.",
       "find": "<p>You can contact Exotic Fish Cabo through WhatsApp, phone, email, or our online contact form.</p><p>Let us know your preferred date, number of guests, and fishing preferences. We'll help you choose a suitable boat and confirm availability, pricing, and booking details.</p>",
       "replace": "<p>All reservations are completed online on our <a href=\"/book-now\">Book Now</a> page: choose your boat, trip duration, and date, see the full charter price, and pay your deposit. This applies to every guest, including guests who have already contacted Exotic Fish Cabo through WhatsApp, email, or the contact form.</p><p>Contacting us does not confirm a reservation. Your reservation is confirmed only once your deposit has been successfully received and verified. You then receive an acknowledgment, and the owner personally sends your complete official booking confirmation, including your departure time, meeting point, and marina directions.</p><p>WhatsApp and our contact form remain available for any questions, help with your booking, or to discuss your fishing trip.</p>"
+    },
+    {
+      "page": "cabo-fishing-faq",
+      "_note": "Owner 2026-11-10: standard 6/8-hour charters on /book-now (Boat #1: 6 hours only); tournaments, custom private charters, extended trips and special arrangements are discussed first via contact form or WhatsApp.",
+      "find": "<p>We offer private 6-hour (3/4-day), 8-hour (full-day), and custom fishing charters, subject to availability.</p>",
+      "replace": "<p>Standard fishing charters are available for 6 or 8 hours, depending on the boat selected: Boat #1 offers 6-hour (3/4-day) trips only, and our other boats offer private 6-hour (3/4-day) and 8-hour (full-day) trips, subject to availability. Standard charters are booked online on our <a href=\"/book-now\">Book Now</a> page.</p><p>For tournament fishing, custom private fishing charters, extended trips, or special arrangements, please contact us through our <a href=\"/contact\">contact form</a> or <a href=\"https://wa.me/526241223506\" target=\"_blank\" rel=\"noopener\">WhatsApp</a> to discuss your requirements. These trips are not priced or booked through the online booking form: we confirm the details, the price, and the deposit with you directly before booking.</p>"
     }
   ]
 }

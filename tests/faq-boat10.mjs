@@ -28,7 +28,9 @@ if (existsSync('/tmp/base/dist/cabo-fishing-faq.html') && existsSync(NEW + '/cab
   t('FAQ: <head> (title, description, canonical, OG, JSON-LD) identical to production', head(faq) === head(old));
   t('FAQ: H1 identical, structured data identical (the page has no FAQPage schema — nothing to update)', h1(faq) === h1(old) && ld(faq) === ld(old) && !/FAQPage/.test(faq));
   const others = faq.replace(ans, ''), others0 = old.replace(old.slice(old.indexOf('<h4>How do we book'), old.indexOf('<h4>', old.indexOf('<h4>How do we book') + 10)), '');
-  t('FAQ: every other question/answer unchanged', others.replace(/efc-chat\.js\?v=[a-z0-9]+/, '') === others0.replace(/efc-chat\.js\?v=[a-z0-9]+/, ''));
+  // the trip-types answer was clarified separately (owner 2026-11-10, tests/faq-types.mjs)
+  const cut = (h) => { const i = h.indexOf('<h4>What types of fishing trips can we book?</h4>'); return i < 0 ? h : h.slice(0, i) + h.slice(h.indexOf('<h4>', i + 10)); };
+  t('FAQ: every other question/answer unchanged', cut(others).replace(/efc-chat\.js\?v=[a-z0-9]+/, '') === cut(others0).replace(/efc-chat\.js\?v=[a-z0-9]+/, ''));
   for (const f of ['fishing-boats/37ft-ultimate-fishing-machine.html', 'sitemap.xml', 'fishing-boats.html']) {
     const a = readFileSync('/tmp/base/dist/' + f, 'utf8'), b = readFileSync(NEW + '/' + f, 'utf8');
     t(`SEO unchanged (production builds): /${f} ${f.endsWith('.xml') ? 'identical' : '<head> (title, meta, canonical, structured data)'}`, f.endsWith('.xml') ? a === b : head(a) === head(b));
