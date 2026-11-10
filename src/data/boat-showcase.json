@@ -400,7 +400,7 @@
   "_doc": "Owner 2026-11-10: price RANGE shown instead of prices (discourages mystery shoppers; exact price only in /book-now). Tier from the 6-hour price: 1 under $700, 2 $1,400–1,900, 3 $2,700–3,500, 4 top of the fleet. Update when prices change.",
   "1": "Best value",
   "2": "Mid-range",
-  "3": "Premium",
+  "3": "High-end",
   "4": "Top of the fleet"
  },
  "priceScale": {
