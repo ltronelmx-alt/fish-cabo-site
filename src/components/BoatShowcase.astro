@@ -35,7 +35,10 @@ const sizes = '(min-width: 980px) 50vw, 100vw';
           <button type="button" class="ss-arrow ss-next" aria-label="Next photo">›</button>
           <div class="ss-foot">
             <div class="ss-dots">{photos.map((_, i) => <button type="button" class="ss-dot" aria-label={`Show photo ${i + 1} of ${photos.length}`} aria-current={i === 0 ? 'true' : undefined}></button>)}</div>
-            <span class="ss-count" aria-hidden="true"><b>1</b> / {photos.length}</span>
+            <span class="ss-right">
+              <span class="ss-count" aria-hidden="true"><b>1</b> / {photos.length}</span>
+              <button type="button" class="ss-play" aria-pressed="false" aria-label="Pause slideshow"><span class="i-pause" aria-hidden="true">❚❚</span><span class="i-play" aria-hidden="true">▶</span></button>
+            </span>
           </div>
         </>
       )}
@@ -85,6 +88,12 @@ const sizes = '(min-width: 980px) 50vw, 100vw';
   .ss-dot { width: 11px; height: 11px; border-radius: 50%; border: 2px solid #fff; background: transparent; padding: 0; cursor: pointer; }
   .ss-dot[aria-current='true'] { background: #fff; }
   .ss-count { color: #fff; font-family: var(--font-ui); font-size: 13px; }
+  .ss-right { display: flex; align-items: center; gap: 10px; }
+  .ss-play { width: 34px; height: 34px; border-radius: 50%; border: 0; background: rgba(255,255,255,.88); color: #111; cursor: pointer; display: grid; place-items: center; font-size: 12px; line-height: 1; }
+  .ss-play:hover, .ss-play:focus-visible { background: var(--yellow, #ffcd38); }
+  .ss-play .i-play, .ss-play[aria-pressed='true'] .i-pause { display: none; }
+  .ss-play[aria-pressed='true'] .i-play { display: inline; }
+  .ss[data-reduced] .ss-play { display: none; }
   @media (max-width: 980px) {
     .sc-grid { grid-template-columns: 1fr; }
     .flip .ss { order: 0; }
@@ -97,29 +106,79 @@ const sizes = '(min-width: 980px) 50vw, 100vw';
 </style>
 
 <script>
-  // Slideshows: native swipe (scroll-snap), arrows, dots, counter. Autoplay every 4.5 s only while visible, stopped for good
-  // as soon as the visitor touches that slideshow (swipe, arrow, dot, keyboard, focus); never with "reduce motion".
-  const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Slideshows (owner, 2026-11-09). One controller per slideshow, ONE timer at most (re-armed only by schedule()).
+  // Auto-advance every 3 s only while: ≥35 % on screen, tab visible, not paused with the Pause button, no manual
+  // interaction in the last 8 s, no "reduce motion", more than one photo. Manual = arrows, dots, keyboard, or the
+  // visitor scrolling the photos sideways (swipe / trackpad). Vertical page scrolling over a photo is NOT an interaction.
+  const INTERVAL = 3000, HOLD = 8000;
+  const reduceMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const all: Array<{ check: () => void }> = [];
   document.querySelectorAll<HTMLElement>('[data-ss]').forEach((ss) => {
     const track = ss.querySelector<HTMLElement>('.ss-track')!;
     const slides = [...track.children] as HTMLElement[];
+    if (slides.length < 2) return;
     const dots = [...ss.querySelectorAll<HTMLButtonElement>('.ss-dot')];
     const count = ss.querySelector('.ss-count b');
-    let i = 0, stopped = reduce(), visible = false, timer = 0;
-    const set = (n: number) => { i = n; dots.forEach((d, k) => (k === n ? d.setAttribute('aria-current', 'true') : d.removeAttribute('aria-current'))); if (count) count.textContent = String(n + 1); ss.dataset.index = String(n); };
-    const go = (n: number) => { n = (n + slides.length) % slides.length; track.scrollTo({ left: n * track.clientWidth, behavior: reduce() ? 'auto' : 'smooth' }); set(n); };
-    const stop = () => { stopped = true; clearInterval(timer); ss.dataset.autoplay = 'off'; };
-    const tick = () => { if (!stopped && visible && !document.hidden) go(i + 1); };
+    const play = ss.querySelector<HTMLButtonElement>('.ss-play');
+    let i = 0, visible = false, paused = false, holdUntil = 0, timer = 0;
+    // our own scrolls: ignored by the swipe detector until the track reaches the target (1.5 s safety cap)
+    let progIdx = -1, progUntil = 0;
+    const scrollTo = (n: number, behavior: ScrollBehavior) => { progIdx = n; progUntil = Date.now() + 1500; track.scrollTo({ left: n * track.clientWidth, behavior }); };
+    const eager = (n: number) => { const img = slides[(n + slides.length) % slides.length]?.querySelector('img'); if (img && img.loading !== 'eager') img.loading = 'eager'; };
+    const set = (n: number) => {
+      i = n; ss.dataset.index = String(n);
+      dots.forEach((d, k) => (k === n ? d.setAttribute('aria-current', 'true') : d.removeAttribute('aria-current')));
+      if (count) count.textContent = String(n + 1);
+      if (visible) eager(n + 1); // the next photo is fetched before it is needed (no blank slide); others stay lazy
+    };
+    const go = (n: number, auto = false) => {
+      const wrap = n >= slides.length || n < 0;
+      n = (n + slides.length) % slides.length;
+      scrollTo(n, reduceMQ.matches || wrap ? 'instant' : 'smooth');
+      set(n);
+      if (auto) ss.dataset.autoTicks = String(+(ss.dataset.autoTicks || 0) + 1);
+    };
+    const running = () => visible && !document.hidden && !paused && !reduceMQ.matches;
+    const schedule = () => {
+      clearTimeout(timer); timer = 0;
+      const on = running();
+      ss.dataset.autoplay = on ? (Date.now() < holdUntil ? 'hold' : 'on') : 'off';
+      if (!on) return;
+      const wait = Math.max(INTERVAL, holdUntil - Date.now());
+      timer = window.setTimeout(() => { timer = 0; if (running() && Date.now() >= holdUntil) go(i + 1, true); schedule(); }, wait);
+    };
+    const manual = () => { holdUntil = Date.now() + HOLD; schedule(); };
+    // sideways scroll by the visitor (swipe) → index follows the photo + 8 s hold; our own scrolls are ignored
     let raf = 0;
-    track.addEventListener('scroll', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { const n = Math.round(track.scrollLeft / track.clientWidth); if (n !== i) set(n); }); }, { passive: true });
-    ss.querySelector('.ss-prev')?.addEventListener('click', () => { stop(); go(i - 1); });
-    ss.querySelector('.ss-next')?.addEventListener('click', () => { stop(); go(i + 1); });
-    dots.forEach((d, k) => d.addEventListener('click', () => { stop(); go(k); }));
-    for (const ev of ['pointerdown', 'touchstart', 'wheel', 'focusin']) ss.addEventListener(ev, stop, { passive: true });
-    track.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') { stop(); go(i + 1); } if (e.key === 'ArrowLeft') { stop(); go(i - 1); } });
-    new IntersectionObserver((es) => { visible = es[0].isIntersecting; }, { threshold: 0.5 }).observe(ss);
-    ss.dataset.autoplay = stopped ? 'off' : 'on';
-    if (!stopped) timer = window.setInterval(tick, 4500);
-    set(0);
+    track.addEventListener('scroll', () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const pos = track.scrollLeft / track.clientWidth;
+        if (progIdx >= 0 && Date.now() < progUntil) { if (Math.abs(pos - progIdx) < 0.02) progIdx = -1; return; }
+        progIdx = -1;
+        if (Math.abs(pos - i) < 0.02) return; // already on the current photo (snap settling) — nothing to do
+        const n = Math.round(pos);
+        if (n !== i) set(n);
+        manual();
+      });
+    }, { passive: true });
+    ss.querySelector('.ss-prev')?.addEventListener('click', () => { go(i - 1); manual(); });
+    ss.querySelector('.ss-next')?.addEventListener('click', () => { go(i + 1); manual(); });
+    dots.forEach((d, k) => d.addEventListener('click', () => { go(k); manual(); }));
+    track.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') { go(i + 1); manual(); } else if (e.key === 'ArrowLeft') { go(i - 1); manual(); } });
+    play?.addEventListener('click', () => {
+      paused = !paused;
+      play.setAttribute('aria-pressed', String(paused));
+      play.setAttribute('aria-label', paused ? 'Play slideshow' : 'Pause slideshow');
+      holdUntil = 0; schedule();
+    });
+    new IntersectionObserver((es) => { const e = es[es.length - 1]; const v = e.isIntersecting && e.intersectionRatio >= 0.34; if (v !== visible) { visible = v; if (v) eager(i + 1); schedule(); } }, { threshold: [0, 0.35] }).observe(ss);
+    const reducedSync = () => { ss.toggleAttribute('data-reduced', reduceMQ.matches); schedule(); };
+    reduceMQ.addEventListener?.('change', reducedSync);
+    // keep the current photo aligned if the slideshow is resized (rotation, window resize)
+    new ResizeObserver(() => { if (Math.abs(track.scrollLeft - i * track.clientWidth) > 2) scrollTo(i, 'instant'); }).observe(track);
+    set(0); reducedSync();
+    all.push({ check: schedule });
   });
+  document.addEventListener('visibilitychange', () => all.forEach((s) => s.check()));
 </script>
