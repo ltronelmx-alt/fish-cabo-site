@@ -1,0 +1,16 @@
+---
+// Public $ → price scale (owner 2026-11-10). Based on the 6-hour starting price; tiers live in boat-showcase.json.
+import showcase from '../data/boat-showcase.json';
+const s = showcase.priceScale as Record<string, string>;
+const { class: cls = '' } = Astro.props as { class?: string };
+---
+<p class={`price-scale ${cls}`}>
+  <span class="ps-intro">{s.intro}</span>
+  {[1, 2, 3, 4].map((n) => <span class="ps-item"><b>{'$'.repeat(n)}</b> {s[String(n)]}</span>)}
+</p>
+<style>
+  .price-scale { font-family: var(--font-ui); font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: baseline; margin: 0 0 18px; }
+  .ps-intro { color: var(--ink, #111); font-weight: 600; }
+  .ps-item b { color: var(--orange); letter-spacing: .05em; margin-right: 3px; }
+  @media (max-width: 560px) { .price-scale { gap: 4px 16px; } .ps-intro { flex-basis: 100%; } }
+</style>

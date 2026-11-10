@@ -9,6 +9,7 @@ import { PAGES, type Block } from '../lib/original';
 import catalogue from '../data/boats.json';
 import { BOOKING_OPEN } from '../lib/launch';
 import BoatShowcase from '../components/BoatShowcase.astro';
+import PriceScale from '../components/PriceScale.astro';
 import showcase from '../data/boat-showcase.json';
 const bookId = (href = '') => catalogue.boats.find((x) => x.url === href.replace(/^https?:\/\/[^/]+/, '').replace(/\/$/, ''))?.id;
 
@@ -33,6 +34,7 @@ const faq = s4.blocks.filter((b) => b.ga[3] - b.ga[1] > 12);
   </section>
 
   <!-- Online booking open: 10 large boat showcases (owner 2026-11-09). Closed: the original cards below. -->
+  {BOOKING_OPEN && <div class="container ps-wrap"><PriceScale /></div>}
   {BOOKING_OPEN && showcase.boats.map((b, k) => <BoatShowcase boat={b} included={showcase.included} flip={k % 2 === 1} first={k === 0} />)}
 
   <!-- Boat sections (booking closed): blocks in ORIGINAL DOM order; each boat card is assembled visually with CSS grid -->

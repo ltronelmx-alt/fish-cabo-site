@@ -6,6 +6,7 @@
 import Base from '../layouts/Base.astro';
 import catalogue from '../data/boats.json';
 import showcase from '../data/boat-showcase.json';
+import PriceScale from '../components/PriceScale.astro';
 import { SITE } from '../data/site';
 import { media } from '../lib/media';
 import BookingHelp from '../components/BookingHelp.astro';
@@ -51,6 +52,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
         <noscript><p class="bk-note">Online booking needs JavaScript. You can also <a href="/contact">contact us</a> or WhatsApp +52 624 122 3506.</p></noscript>
         <div class="bk-step bk-pick">
           <h2><span>1</span> Choose your boat</h2>
+          <PriceScale />
           <div class="bk-boats" role="radiogroup" aria-label="Boat">
             {boats.map((b) => (
               <label class="bk-boat" data-id={b.id}>
