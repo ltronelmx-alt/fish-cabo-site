@@ -12,6 +12,8 @@ tags:
   - "bottom fishing"
 author: "EXOTIC FISH-CABO"
 excerpt: "October brought a storm-disrupted start, changing tuna grounds, limited live bait and the first more regular wahoo reports along the San Jose del Cabo coast."
+image: {"src": "1792370269004-2IYWHB1TV9VQO3C9V0RP/Weekly+Fishing+Log+Data+Banner.webp", "alt": "San Jose del Cabo monthly fishing log banner – Exotic Fish Cabo"}
+thumbnail: {"src": "1792368523318-BWMJG78P4VUPDDURU2LP/Weekly+Fishing+Log+Data+Banner.webp", "alt": "San Jose del Cabo monthly fishing log banner – Exotic Fish Cabo"}
 format: markdown
 draft: false
 ---
