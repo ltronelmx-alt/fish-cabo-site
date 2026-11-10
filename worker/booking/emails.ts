@@ -164,7 +164,7 @@ export function customerDepositReceipt(r: Res) {
     ['Remaining balance', usd(r.balance_usd)],
   ];
   const p1 = 'Thank you for your deposit. Your booking has been received and your fishing date has been reserved.';
-  const p2 = 'Loïc from Exotic Fish Cabo will personally send you a separate official confirmation email containing your meeting time, meeting point, marina directions, and all necessary information for your fishing trip.';
+  const p2 = 'Our team will personally send you a separate official booking confirmation email, including your departure time, meeting point, marina directions, and all necessary information for your fishing trip.';
   const p3 = 'Please wait for this personal confirmation email before making your way to the marina.';
   const text = `Dear ${r.first_name},\n\n${p1}\n\n${lines(rows)}\n\n${p2}\n\n${p3}\n\nQuestions? WhatsApp ${WHATSAPP} or https://fish-cabo.com/contact\n\nExotic Fish Cabo`;
   const html = wrap('Deposit received', `<p>Dear ${esc(r.first_name)},</p><p>${esc(p1)}</p>${table(rows)}<p style="margin-top:18px">${esc(p2)}</p><p><strong>${esc(p3)}</strong></p><p>Questions? WhatsApp ${WHATSAPP} or <a href="https://fish-cabo.com/contact">fish-cabo.com/contact</a></p><p>Exotic Fish Cabo</p>`, 'Exotic Fish Cabo · San José del Cabo, B.C.S., Mexico · fish-cabo.com'); // no marina in the receipt (meeting point comes from Loïc)
@@ -209,7 +209,7 @@ Loïc`;
 export function customerWisePending(r: Res) {
   const amount = usd(r.deposit_usd);
   const intro = `Hi ${r.first_name}, we have reserved ${B(r)} on ${longDate(r.date)} for you while we wait for your Wise deposit.`;
-  const steps = `1. Pay ${amount} with Wise: ${WISE_PAY_URL}\n2. Write your booking reference ${r.ref} in the payment note.\n3. Once we have verified the payment, you receive a deposit receipt by email, and Loïc then sends you your official confirmation personally.\nThe date is held until ${localDateTime(r.hold_expires_at!)} (24 hours). After that it is released.`;
+  const steps = `1. Pay ${amount} with Wise: ${WISE_PAY_URL}\n2. Write your booking reference ${r.ref} in the payment note.\n3. Once we have verified the payment, you receive a deposit receipt by email, and our team then personally sends your official booking confirmation.\nThe date is held until ${localDateTime(r.hold_expires_at!)} (24 hours). After that it is released.`;
   return {
     subject: `${test(r)}Complete your deposit with Wise — ${r.ref}`,
     text: `${intro}\n\n${steps}\n\n${lines(tripRows(r))}`,

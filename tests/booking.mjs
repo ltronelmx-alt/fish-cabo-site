@@ -238,11 +238,11 @@ try {
     t(`${tag}: no vessel name in customer-facing texts (Stripe line item, customer email)`, sess.params['line_items[0][price_data][product_data][name]'].includes(`Boat #${i + 1} (${SIZE[id]} ft)`) && !/Panga|Console|Cuddy|Flybridge|Catamaran|Machine/.test(sess.params['line_items[0][price_data][product_data][name]'] + sess.params['metadata[boat]']));
     const cb = body(st2.ref, 'customer_deposit_receipt')[0];
     const fee = (deposit * 0.06).toFixed(2), chargeTxt = (deposit * 1.06).toLocaleString('en-US', { minimumFractionDigits: 2 });
-    t(`${tag}: customer gets the DEPOSIT RECEIPT (subject, name, ref, Boat #${i + 1}, date, ${hours} hours, total, deposit received, balance, wait-for-Loïc text)`,
+    t(`${tag}: customer gets the DEPOSIT RECEIPT (subject, name, ref, Boat #${i + 1}, date, ${hours} hours, total, deposit received, balance, wait-for-neutral "our team" text, 2026-11-09)`,
       cb.subject === '[TEST] Exotic Fish Cabo — Deposit Received' && cb.body.startsWith('Dear Test,') &&
       ['Thank you for your deposit. Your booking has been received and your fishing date has been reserved.', `Booking reference: ${st2.ref}`, `Boat: Boat #${i + 1}`, `Trip date: ${longDate(date)}`, `Trip duration: ${hours} hours`,
         `Total charter price: $${total.toLocaleString('en-US')} USD`, `Deposit received: $${deposit.toLocaleString('en-US')}.00 USD (card payment of $${chargeTxt} USD including the $${fee} USD processing fee)`, `Remaining balance: $${balance.toLocaleString('en-US')} USD`,
-        'Loïc from Exotic Fish Cabo will personally send you a separate official confirmation email containing your meeting time, meeting point, marina directions, and all necessary information for your fishing trip.',
+        'Our team will personally send you a separate official booking confirmation email, including your departure time, meeting point, marina directions, and all necessary information for your fishing trip.',
         'Please wait for this personal confirmation email before making your way to the marina.'].every((x) => cb.body.includes(x)), cb.body);
     t(`${tag}: the automatic receipt is NOT the official confirmation (no marina link, no meeting time, no TORO)`, !cb.body.includes('maps.app.goo.gl') && !/6:30am|TORO|Logistics:/.test(cb.body) && emails(st2.ref).every((e) => e.kind !== 'customer_confirmed'));
     t(`${tag}: owner email shows the customer email address at the top`, ob.body.split('\n').slice(0, 4).join('\n').includes('CUSTOMER EMAIL: customer@example.test') && ob.body.includes('Phone / WhatsApp: +1 555 010 0000'));
