@@ -139,14 +139,14 @@
   {
    "id": "boat-10",
    "number": 10,
-   "name": "37ft Ultimate Fishing Machine",
-   "contactFormLabel": "Boat #10 (37FT Ultimate Fishing Machine)",
+   "name": "37ft Offshore Catamaran",
+   "contactFormLabel": "Boat #10 (37FT Offshore Catamaran)",
    "slug": "37ft-ultimate-fishing-machine",
    "url": "/fishing-boats/37ft-ultimate-fishing-machine",
    "capacity": 6,
    "image": {
     "path": "78d32865-8446-4e34-b090-e52c7d6a542b/freeman+cruise.webp",
-    "alt": "37ft Ultimate Fishing Machine"
+    "alt": "37ft Offshore Catamaran"
    },
    "description": "A powerful offshore fishing catamaran for up to 6 guests, featuring a twin-hull design, four outboard engines, and a spacious open deck. An excellent option for anglers prioritizing fishing space and offshore capability.",
    "sizeFt": 37
