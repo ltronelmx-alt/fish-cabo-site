@@ -12,10 +12,12 @@
 import { ensureSchema, getSettings } from './schema';
 import { json, nowIso, newId, newRef, newToken, hmacHex, safeEqual, rateLimit, localToday, localTs, isDate, addDays } from './util';
 import { cardChargeCents } from './pricing';
+import { ensurePaypalSchema } from './schema';
+import { paypalMode, paypalPaymentsOn, paypalChargeCents, createPaypalOrder, cancelPaypal, wirePaypal, type PayPalEnv } from './paypal';
 import * as M from './emails';
 import type { Res } from './emails';
 
-export interface BEnv {
+export interface BEnv extends PayPalEnv {
   DB?: D1Database;
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
@@ -47,6 +49,7 @@ export const durationsOf = (b: Boat) => ([6, 8] as const).filter((h) => priceOf(
 export async function db(env: BEnv) {
   if (!env.DB) throw new Error('DB binding missing');
   await ensureSchema(env.DB);
+  if (paypalMode(env) !== 'off') await ensurePaypalSchema(env.DB); // once PayPal credentials are installed (never before)
   return env.DB;
 }
 
@@ -66,6 +69,7 @@ export const sweep = (d: D1Database, now = nowIso()) => [
   d.prepare(`INSERT INTO audit_log (at, actor, action, reservation_id, details)
              SELECT ?1, 'system', 'hold_expired', id, json_object('ref', ref, 'payment', payment_method, 'deadline', hold_expires_at,
                'reason', CASE WHEN payment_method = 'wise' THEN 'No Wise deposit verified before the 24-hour deadline; date released.'
+                              WHEN payment_method = 'paypal' THEN 'PayPal payment not completed before the hold deadline; date released.'
                               ELSE 'Card payment not completed before the hold deadline; date released.' END)
              FROM reservations WHERE ${EXPIRING}`).bind(now),
   d.prepare(`UPDATE reservations SET holds_slot = 0, status = 'EXPIRED', updated_at = ?1 WHERE ${EXPIRING}`).bind(now),
@@ -115,6 +119,7 @@ export async function apiBoats(env: BEnv) {
   return json({
     ok: true,
     cardPayments: cardPaymentsOn(env), // false → the page shows 'Card payments temporarily unavailable' (Wise only)
+    paypalPayments: paypalPaymentsOn(env), // false → PayPal stays a listed option; choosing it explains checkout is not yet available
     stripeFeePct: s.stripe_fee_pct, minLeadHours: s.min_lead_hours, wiseHoldHours: s.wise_hold_hours, today: localToday(), lastMonth: addDays(localToday(), s.booking_window_days).slice(0, 7), timezone: 'America/Mazatlan',
     boats: (await boats(d)).map((b) => ({ id: b.id, number: b.number, sizeFt: b.size_ft, capacity: b.capacity, durations: durationsOf(b), bookable: !!b.active && durationsOf(b).length > 0 })),
   });
@@ -160,7 +165,9 @@ export async function apiSummary(request: Request, env: BEnv) {
   if (!boat || total == null) return json({ ok: false, error: 'Please choose a boat and a trip duration.' }, 400);
   const s = await getSettings(d);
   const card = cardChargeCents(boat.deposit_usd, s.stripe_fee_pct);
-  return json({ ok: true, total, deposit: boat.deposit_usd, balance: total - boat.deposit_usd, cardFeePct: s.stripe_fee_pct, cardFeeCents: card - boat.deposit_usd * 100, cardChargeCents: card, wiseChargeCents: boat.deposit_usd * 100 });
+  const pp = paypalChargeCents(boat.deposit_usd, s.paypal_fee_pct); // PayPal fee on the DEPOSIT only — the balance is unchanged
+  return json({ ok: true, total, deposit: boat.deposit_usd, balance: total - boat.deposit_usd, cardFeePct: s.stripe_fee_pct, cardFeeCents: card - boat.deposit_usd * 100, cardChargeCents: card, wiseChargeCents: boat.deposit_usd * 100,
+    paypalFeePct: s.paypal_fee_pct, paypalFeeCents: pp - boat.deposit_usd * 100, paypalChargeCents: pp, paypalPayments: paypalPaymentsOn(env) });
 }
 
 /** Public calendar (owner decision 2026-11-08): only "available" / "unavailable" — never why (booked, pending,
@@ -188,6 +195,7 @@ export async function apiAvailability(request: Request, env: BEnv) {
 
 /** Public wording for any date that cannot be booked online (never says why). */
 export const UNAVAILABLE_MSG = 'This date is not available online for this boat. A trip may still be possible upon request — please contact us to check availability.';
+export const PAYPAL_UNAVAILABLE_MSG = 'PayPal checkout is not yet available. Please choose Card via Stripe or Wise to pay your deposit — your booking details are kept.';
 export const BOOKED_MSG = 'This boat already has a booking on your selected date. A second trip may be possible upon request. Please contact us to check availability.';
 
 // ---------- reservation ----------
@@ -247,7 +255,9 @@ export async function apiReserve(request: Request, env: BEnv) {
   if (!/^[+()\-.\s\d]{6,40}$/.test(f.phone) || (f.phone.match(/\d/g) || []).length < 6) return err('Please enter a valid phone number.', 'phone');
   if (!isDate(f.date)) return err('Please choose a date.', 'date');
   if (f.hours !== 6 && f.hours !== 8) return err('Please choose a trip duration.', 'duration');
-  if (f.payment !== 'stripe' && f.payment !== 'wise') return err('Please choose a payment method.', 'payment');
+  if (f.payment !== 'stripe' && f.payment !== 'wise' && f.payment !== 'paypal') return err('Please choose a payment method.', 'payment');
+  // PayPal is a permanent option; until the owner's account is connected and authorised no PayPal order can be created
+  if (f.payment === 'paypal' && !paypalPaymentsOn(env)) return json({ ok: false, code: 'PAYPAL_UNAVAILABLE', field: 'payment', error: PAYPAL_UNAVAILABLE_MSG }, 503);
   // No checkbox (owner, 2026-11-08): the statement next to the pay button says completing the booking = acceptance.
   // The accepted versions and the time are recorded with the reservation (terms_version, consent_at).
   if (!(await human(request, env, String(fd.get('cf-turnstile-response') ?? '')))) return err('Verification failed. Please try again.', undefined, 403);
@@ -267,16 +277,18 @@ export async function apiReserve(request: Request, env: BEnv) {
   if (state !== 'available') return json({ ok: false, code: 'UNAVAILABLE', field: 'date', error: UNAVAILABLE_MSG }, 409);
 
   const id = newId(), ref = newRef(), token = newToken(), now = nowIso();
-  const fee = f.payment === 'stripe' ? chargeCents(boat.deposit_usd, s.stripe_fee_pct) - boat.deposit_usd * 100 : 0;
-  const holdMs = f.payment === 'stripe' ? s.stripe_hold_minutes * 60e3 : s.wise_hold_hours * 3600e3;
-  const isTest = isStagingEnv(env, u) || stripeMode(env) === 'test' ? 1 : 0;
+  const fee = f.payment === 'stripe' ? chargeCents(boat.deposit_usd, s.stripe_fee_pct) - boat.deposit_usd * 100
+    : f.payment === 'paypal' ? paypalChargeCents(boat.deposit_usd, s.paypal_fee_pct) - boat.deposit_usd * 100 : 0;
+  const holdMs = f.payment === 'stripe' ? s.stripe_hold_minutes * 60e3 : f.payment === 'paypal' ? s.paypal_hold_minutes * 60e3 : s.wise_hold_hours * 3600e3;
+  const isTest = isStagingEnv(env, u) || (f.payment === 'paypal' ? paypalMode(env) === 'sandbox' : stripeMode(env) === 'test') ? 1 : 0;
+  if (f.payment === 'paypal') await ensurePaypalSchema(d);
   try {
     await d.batch([
       ...sweep(d, now),
       d.prepare(`INSERT INTO reservations (id, ref, token, boat_id, date, hours, slot, holds_slot, hold_expires_at, status, payment_method,
         total_usd, deposit_usd, balance_usd, fee_cents, charge_cents, first_name, last_name, email, phone, people, message, consent_at, terms_version, lang,
         is_test, source, created_at, updated_at) VALUES (?,?,?,?,?,?,0,1,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'online',?,?)`)
-        .bind(id, ref, token, boat.id, f.date, f.hours, new Date(Date.now() + holdMs).toISOString(), f.payment === 'stripe' ? 'HELD' : 'AWAITING_PAYMENT_VERIFICATION', f.payment,
+        .bind(id, ref, token, boat.id, f.date, f.hours, new Date(Date.now() + holdMs).toISOString(), f.payment === 'wise' ? 'AWAITING_PAYMENT_VERIFICATION' : 'HELD', f.payment,
           total, boat.deposit_usd, total - boat.deposit_usd, fee, boat.deposit_usd * 100 + fee, f.firstName, f.lastName, f.email, f.phone, f.people, f.message, now, TERMS_VERSION, f.lang, isTest, now, now),
       audit(d, 'customer', 'reserve', id, { payment: f.payment, boat: boat.id, date: f.date, hours: f.hours, terms_accepted: TERMS_VERSION }),
     ]);
@@ -290,6 +302,17 @@ export async function apiReserve(request: Request, env: BEnv) {
     await sendOnce(env, d, r, 'customer_wise_pending', r.email, M.customerWisePending(r), env.CONTACT_TO);
     await notifyWisePending(env, d, r);
     return json({ ok: true, ref, redirect: statusUrl });
+  }
+  if (f.payment === 'paypal') {
+    const o = await createPaypalOrder(env, d, r, u.origin);
+    if (!o.ok) {
+      await d.batch([
+        d.prepare(`UPDATE reservations SET status = 'EXPIRED', holds_slot = 0, updated_at = ? WHERE id = ?`).bind(nowIso(), id),
+        audit(d, 'system', 'paypal_order_failed', id, { status: o.status }),
+      ]);
+      return err('PayPal checkout is temporarily unavailable. Please try again, or choose Card via Stripe or Wise — your booking details are kept.', 'payment', 502);
+    }
+    return json({ ok: true, ref, t: token, redirect: o.url });
   }
   const sess = await createCheckout(env, d, r, u.origin);
   if (!sess.ok) {
@@ -537,6 +560,7 @@ export async function apiCancelCheckout(request: Request, env: BEnv) {
   if (!r) return json({ ok: false }, 404);
   if (r.source !== 'online' || !['HELD', 'AWAITING_PAYMENT'].includes(r.status)) return json({ ok: true, status: r.status });
   const u = new URL(request.url);
+  if (r.payment_method === 'paypal') return cancelPaypal(env, d, r, u.origin);
   if (r.stripe_session_id) {
     const x = await stripe(env, u.origin, `/v1/checkout/sessions/${r.stripe_session_id}/expire`, {});
     // already paid/complete → leave it to the webhook
@@ -610,3 +634,6 @@ export async function cron(env: BEnv) {
   await d.prepare(`DELETE FROM rate_limits WHERE window_start < ?`).bind(Math.floor(Date.now() / 1000) - 86400).run();
   return summary;
 }
+
+// PayPal module shares the booking helpers (no duplicated confirmation logic)
+wirePaypal({ db, loadRes, audit, markException, notifyConfirmed, byRefToken, boatLabel });

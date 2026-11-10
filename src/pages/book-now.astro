@@ -34,7 +34,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
       <ul class="bk-facts">
         <li><b>One private trip per boat per day</b> — the boat is yours.</li>
         <li><b>See your price before giving any personal details.</b> A deposit secures your date; the balance is paid in cash on the fishing day.</li>
-        {BOOKING_CARD ? <li><b>Deposit by card</b> (Stripe, +6% processing fee) <b>or Wise</b> (no fee).</li> : <li><b>Deposit by Wise</b> (no fee). Card payments are temporarily unavailable.</li>}
+        {BOOKING_CARD ? <li><b>Deposit by card</b> (Stripe, +6% processing fee), <b>PayPal</b> (+6% processing fee) <b>or Wise</b> (no fee).</li> : <li><b>Deposit by Wise</b> (no fee) <b>or PayPal</b> (+6% processing fee). Card payments are temporarily unavailable.</li>}
         <li><b>Book at least 24 hours</b> before your trip. Last minute? <a href={`https://wa.me/${wa}`}>WhatsApp us</a>.</li>
       </ul>
     </div>
@@ -120,8 +120,13 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
               ? <label data-card><input type="radio" name="payment" value="stripe" required /> <span><b>Card via Stripe (+6% processing fee)</b></span></label>
               : <label class="bk-off" aria-disabled="true" data-card><input type="radio" name="payment" value="stripe" disabled /> <span><b>Card via Stripe</b> — Card payments temporarily unavailable</span></label>}
             <label><input type="radio" name="payment" value="wise" /> <span><b>Wise (no processing fee)</b> — your date is held 24 hours while we verify your transfer</span></label>
-            <label class="bk-off" aria-disabled="true"><input type="radio" name="payment" value="paypal" disabled /> <span><b>PayPal — Coming Soon</b></span></label>
+            <label data-paypal><input type="radio" name="payment" value="paypal" /> <span><b>PayPal (+6% processing fee)</b></span></label>
           </fieldset>
+          <div class="bk-wise" id="paypal-note" hidden role="note">
+            <p><b>PayPal checkout is not yet available</b></p>
+            <p>Please choose Card via Stripe or Wise to pay your deposit — your booking details are kept.</p>
+            <p class="bk-ppalt"><button type="button" class="btn no-arrow" data-paywith="stripe" id="pp-stripe">PAY BY CARD (STRIPE)</button><button type="button" class="btn no-arrow" data-paywith="wise">PAY WITH WISE</button></p>
+          </div>
           <div class="bk-wise" id="wise-note" hidden role="note" aria-labelledby="wise-note-h">
             <p id="wise-note-h"><b>Wise Bank Transfer — Important</b></p>
             <p>Wise deposits may take up to 24 hours to be received and verified. Your booking will only be confirmed once your deposit has been verified.</p>
@@ -154,7 +159,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
 <script>
   type B = { id: string; number: number; sizeFt: number; capacity: number; durations: number[]; bookable: boolean };
   type Q = { boat: string; hours: number; date: string; total: number; cardFeePct: number };
-  type S = { total: number; deposit: number; balance: number; cardFeePct: number; cardFeeCents: number; cardChargeCents: number; wiseChargeCents: number };
+  type S = { total: number; deposit: number; balance: number; cardFeePct: number; cardFeeCents: number; cardChargeCents: number; wiseChargeCents: number; paypalFeePct: number; paypalFeeCents: number; paypalChargeCents: number; paypalPayments?: boolean };
   const f = document.getElementById('bk') as HTMLFormElement;
   const $ = <T extends Element = HTMLElement>(s: string) => document.querySelector(s) as T;
   const show = (id: string, on: boolean) => { const el = document.getElementById(id); if (el) el.hidden = !on; };
@@ -239,6 +244,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     const w = f.querySelector<HTMLInputElement>('input[name=payment][value="wise"]'); if (w) w.required = true;
   }
   let cardOn = document.documentElement.dataset.card !== 'off';
+  let paypalOn = false; // PayPal is always offered; checkout only once the owner's PayPal account is connected (server decides)
   if (!cardOn) cardOff();
 
   async function init() {
@@ -247,6 +253,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
       if (!j.ok) throw 0;
       boats = j.boats; today = j.today; month = today.slice(0, 7); lastMonth = j.lastMonth || '';
       if (j.cardPayments === false) cardOff();
+      paypalOn = j.paypalPayments === true;
     } catch {
       const m = document.createElement('p'); m.className = 'bk-msg';
       m.innerHTML = 'Online booking is not available right now. Please <a href="/contact">contact us</a> or WhatsApp +52 624 122 3506.';
@@ -288,7 +295,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
         if (days[s.date] === 'available') { pickDay(s.date, false); if (s.quote) { await showPrice(); if (s.details && quote) { details(false); setVal('people', String(s.people ?? '')); if (s.pay) await toPay(false); } } }
         else if (days[s.date]) pickDay(s.date, false);
       }
-      if ((s.payment === 'stripe' && cardOn) || s.payment === 'wise') { const p = f.querySelector<HTMLInputElement>(`input[name=payment][value="${s.payment}"]`); if (p) { p.checked = true; summary(); wiseNote(); } }
+      if ((s.payment === 'stripe' && cardOn) || s.payment === 'wise' || s.payment === 'paypal') { const p = f.querySelector<HTMLInputElement>(`input[name=payment][value="${s.payment}"]`); if (p) { p.checked = true; summary(); wiseNote(); } }
       if (note) $('#pmsg').textContent = note;
       const last = ['s-pay', 's-details', 's-price', 's-date', 's-dur'].find((id) => !document.getElementById(id)!.hidden);
       if (last) { restoring = false; goTo(last, true); }
@@ -395,7 +402,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     quote = j as Q; $('#qmsg').textContent = '';
     $('#quote').innerHTML = `<p class="bk-qline">Boat #${b.number} · ${h}-hour trip · ${longDate(d)} · <span class="bk-ok">Available ✓</span></p>
       <p class="bk-total">Total charter price: <b>${money(quote.total)}</b></p>
-      <p class="bk-qnote">Private charter price for the boat. A deposit secures your date and the remaining balance is paid in cash on the fishing day. ${cardOn ? `Card payments carry a ${quote.cardFeePct}% processing fee on the deposit; Wise has no fee.` : 'The deposit is paid by Wise (no fee).'} You will see every amount before you pay.</p>
+      <p class="bk-qnote">Private charter price for the boat. A deposit secures your date and the remaining balance is paid in cash on the fishing day. ${cardOn ? `Card and PayPal payments carry a ${quote.cardFeePct}% processing fee on the deposit; Wise has no fee.` : 'The deposit is paid by Wise (no fee) or PayPal (6% processing fee on the deposit).'} You will see every amount before you pay.</p>
       <div class="bk-qbtns"><button type="button" class="btn btn-primary no-arrow" id="continue">CONTINUE TO BOOKING</button><button type="button" class="btn no-arrow" id="change">CHANGE MY SELECTION</button></div>`;
     show('quote', true); save();
     goTo('quote'); // 4. SHOW MY PRICE → the price
@@ -417,22 +424,26 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     }
     const [, j] = await POST('/api/booking/summary', { boat: quote.boat, hours: quote.hours }).catch(() => [0, {}] as const);
     if (!j.ok) { $('#dmsg').textContent = j.error || 'Please try again.'; return; }
-    sum = j as S;
+    sum = j as S; if (typeof sum.paypalPayments === 'boolean') paypalOn = sum.paypalPayments;
     if (!cardOn) { const w = f.querySelector<HTMLInputElement>('input[name=payment][value="wise"]'); if (w && !w.checked) w.checked = true; wiseNote(); } // Wise only
     summary(); show('s-pay', true); save();
     if (scroll) goTo('s-pay');
   }
   /** Wise: deposits can take up to 24 h to arrive and be verified — shown as soon as Wise is chosen (owner, 2026-11-09). */
-  function wiseNote() { show('wise-note', val('payment') === 'wise'); }
+  function wiseNote() {
+    show('wise-note', val('payment') === 'wise');
+    show('paypal-note', val('payment') === 'paypal' && !paypalOn);
+    show('pp-stripe', cardOn);
+  }
   function summary() {
     if (!quote || !sum) return;
     const b = boat()!, pay = val('payment');
-    const fee = pay === 'stripe' ? `<dt>Card processing fee (${sum.cardFeePct}% of the deposit)</dt><dd>${cents(sum.cardFeeCents)}</dd>` : pay === 'wise' ? '<dt>Processing fee</dt><dd>None (Wise)</dd>' : '';
-    const now = pay === 'stripe' ? cents(sum.cardChargeCents) : pay === 'wise' ? cents(sum.wiseChargeCents) : 'Choose a payment method';
+    const fee = pay === 'stripe' ? `<dt>Card processing fee (${sum.cardFeePct}% of the deposit)</dt><dd>${cents(sum.cardFeeCents)}</dd>` : pay === 'paypal' ? `<dt>PayPal processing fee (${sum.paypalFeePct}% of the deposit)</dt><dd>${cents(sum.paypalFeeCents)}</dd>` : pay === 'wise' ? '<dt>Processing fee</dt><dd>None (Wise)</dd>' : '';
+    const now = pay === 'stripe' ? cents(sum.cardChargeCents) : pay === 'paypal' ? cents(sum.paypalChargeCents) : pay === 'wise' ? cents(sum.wiseChargeCents) : 'Choose a payment method';
     document.getElementById('sum')!.innerHTML = `<dl><dt>Boat</dt><dd>#${b.number} (${b.sizeFt} ft)</dd><dt>Date</dt><dd>${longDate(quote.date)} <span class="bk-ok">· Available ✓</span></dd><dt>Trip duration</dt><dd>${quote.hours} hours</dd>
       <dt>Total charter price</dt><dd>${money(sum.total)}</dd><dt>Deposit</dt><dd>${money(sum.deposit)}</dd>${fee}
-      <dt>Total charged now</dt><dd class="bk-now">${now}</dd><dt>Remaining balance (cash on the fishing day)</dt><dd>${money(sum.balance)}</dd>
-      <dt>Payment method</dt><dd>${pay === 'stripe' ? 'Card via Stripe' : pay === 'wise' ? 'Wise' : '—'}</dd></dl>`;
+      <dt>${pay === 'paypal' ? 'Total payable through PayPal' : 'Total charged now'}</dt><dd class="bk-now">${now}</dd><dt>Remaining balance (cash on the fishing day)</dt><dd>${money(sum.balance)}</dd>
+      <dt>Payment method</dt><dd>${pay === 'stripe' ? 'Card via Stripe' : pay === 'wise' ? 'Wise' : pay === 'paypal' ? 'PayPal' : '—'}</dd></dl>`;
   }
 
   f.addEventListener('change', (e) => {
@@ -456,12 +467,17 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     if (t.id === 'continue') details();
     if (t.id === 'change') { resetQuote(); goTo('bk'); }
     if (t.id === 'to-pay') toPay();
+    if (t.dataset.paywith) { // PayPal not yet available → switch method, nothing else changes
+      const p = f.querySelector<HTMLInputElement>(`input[name=payment][value="${t.dataset.paywith}"]`);
+      if (p && !p.disabled) { p.checked = true; summary(); save(); wiseNote(); $('#pmsg').textContent = ''; p.focus(); }
+    }
   });
   f.addEventListener('submit', async (e) => {
     e.preventDefault();
     const msg = $('#pmsg');
     if (!quote || !sum) { msg.textContent = 'Please check your price first.'; return; }
-    if (val('payment') !== 'stripe' && val('payment') !== 'wise') { msg.textContent = 'Please choose a payment method.'; return; }
+    if (val('payment') !== 'stripe' && val('payment') !== 'wise' && val('payment') !== 'paypal') { msg.textContent = 'Please choose a payment method.'; return; }
+    if (val('payment') === 'paypal' && !paypalOn) { show('paypal-note', true); msg.textContent = 'PayPal checkout is not yet available. Please choose Card via Stripe or Wise — your booking details are kept.'; return; }
     if (!f.checkValidity()) { f.reportValidity(); msg.textContent = 'Please complete all required fields.'; return; }
     const btn = $('.bk-go') as HTMLButtonElement; btn.disabled = true; msg.textContent = 'Reserving your date…'; show('palts', false);
     try {
@@ -480,10 +496,11 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
       const j = await r.json().catch(() => ({}));
       if (j.ok && j.redirect) {
         // card: remember this checkout so a "back" from Stripe can be retried cleanly (Wise: the confirmation page takes over)
-        save({ pending: val('payment') === 'stripe' && j.ref && j.t ? { ref: j.ref, t: j.t } : null });
+        save({ pending: (val('payment') === 'stripe' || val('payment') === 'paypal') && j.ref && j.t ? { ref: j.ref, t: j.t } : null });
         msg.textContent = 'Redirecting…'; navigator.sendBeacon?.('/api/event', new Blob([JSON.stringify({ event: 'booking_started_' + val('payment'), page: location.pathname })], { type: 'application/json' }));
         location.href = j.redirect; return;
       }
+      if (j.code === 'PAYPAL_UNAVAILABLE') { paypalOn = false; wiseNote(); msg.textContent = j.error; (window as any).turnstile?.reset?.(); btn.disabled = false; return; }
       if (j.code === 'UNAVAILABLE') {
         const d = val('date'); await loadMonth(); pickDay(d, false); show('s-price', true);
         $('#quote').hidden = true; msg.textContent = '';
@@ -575,6 +592,9 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
   .bk-wise { margin: 0 0 14px; padding: 14px 16px; background: #fff7ef; border-left: 4px solid var(--orange); border-radius: var(--radius-sm); font-family: var(--font-ui); font-size: 14px; display: grid; gap: 6px; }
   .bk-wise[hidden] { display: none; }
   .bk-wise p { margin: 0; }
+  .bk-ppalt { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px !important; }
+  .bk-ppalt .btn { padding: 8px 14px; font-size: 13px; }
+  .bk-ppalt .btn[hidden] { display: none; }
   .bk-wise a { color: var(--ink); font-weight: 700; text-decoration: underline; }
   .bk-payopts label.bk-off { opacity: .55; cursor: not-allowed; }
   .bk .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }

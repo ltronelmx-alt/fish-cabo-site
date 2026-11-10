@@ -18,11 +18,19 @@ export interface Env {
   STRIPE_API_BASE?: string; // local tests only
   BOOKING_LIVE?: string; // "approved" = owner explicitly approved live card payments
   ADMIN_PASSWORD?: string;
+  // PayPal (owner 2026-11-09): permanent method; account connection postponed — see worker/booking/paypal.ts
+  PAYPAL_CLIENT_ID?: string;
+  PAYPAL_CLIENT_SECRET?: string;
+  PAYPAL_WEBHOOK_ID?: string;
+  PAYPAL_ENV?: string; // "live" | "sandbox"
+  PAYPAL_LIVE?: string; // "approved" = owner explicitly approved live PayPal payments
+  PAYPAL_API_BASE?: string; // local tests only
 }
 import REDIRECTS from '../src/data/redirects.json';
 import { publishNotify } from './notify';
 import { apiBoats, apiAvailability, apiQuote, apiSummary, apiReserve, apiStatus, apiCancelCheckout, apiPay, apiStripeWebhook, cron, isProductionEnv, isStagingEnv, adminUrl, bookingOpen } from './booking/core';
 import { adminPage, adminApi } from './booking/admin';
+import { apiPaypalReturn, apiPaypalWebhook } from './booking/paypal';
 const TEST_TURNSTILE_SECRET = '1x0000000000000000000000000000000AA';
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
 const STAGING_OPEN_UNTIL = Date.parse('2026-11-04T16:55:00Z'); // = 2026-11-04 09:55 Mazatlán (post-deploy verification window)
@@ -119,6 +127,10 @@ async function handle(request: Request, env: Env): Promise<Response> {
     // robots.txt on *.workers.dev is public (no password) so crawlers read "Disallow: /"
     if (new URL(request.url).hostname.endsWith('.workers.dev') && new URL(request.url).pathname === '/robots.txt')
       return new Response('User-agent: *\nDisallow: /\n', { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } });
+    if (new URL(request.url).pathname === '/api/paypal/webhook') { // signed by PayPal, verified with PayPal's API (paypal.ts)
+      if (!env.DB) return json({ ok: false }, 503);
+      return apiPaypalWebhook(request, env).catch((e) => { console.log('paypal webhook fatal', String(e)); return json({ ok: false }, 500); });
+    }
     if (new URL(request.url).pathname === '/api/stripe/webhook') {
       if (!env.DB) return json({ ok: false }, 503);
       return apiStripeWebhook(request, env).catch((e) => { console.log('webhook fatal', String(e)); return json({ ok: false }, 500); });
@@ -171,6 +183,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
           case '/api/booking/status': return await apiStatus(request, env);
           case '/api/booking/cancel-checkout': return await apiCancelCheckout(request, env);
           case '/api/booking/pay': return await apiPay(request, env);
+          case '/api/booking/paypal/return': return await apiPaypalReturn(request, env);
           case '/booking-admin': return await adminPage(request, env);
         }
         if (url.pathname.startsWith('/api/admin/')) return await adminApi(request, env);

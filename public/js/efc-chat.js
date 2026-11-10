@@ -70,7 +70,7 @@ const I18N = {
     bookingSteps: "1️⃣ Choisissez votre bateau (#1 à #10)\n2️⃣ 3/4 de journée (6 h) ou journée complète (8 h) — bateau #1 : 6 h uniquement\n3️⃣ Choisissez votre date\n4️⃣ Touchez SHOW MY PRICE pour voir votre prix, puis payez l'acompte en ligne (carte via Stripe +6 % ou Wise sans frais), ou écrivez-nous",
     paypalYes: "Oui.",
     paymentTitle: "💳 Paiement de l'acompte",
-    paymentDesc: "Réservation en ligne (Réserver maintenant) : acompte par carte via Stripe (+6 % de frais) ou Wise (sans frais). PayPal : bientôt disponible.",
+    paymentDesc: "Réservation en ligne (Réserver maintenant) : acompte par carte via Stripe (+6 % de frais), PayPal (+6 % de frais) ou Wise (sans frais).",
     cancelTitle: "📄 Annulation",
     cancelDesc: "Selon nos conditions générales, l'acompte n'est pas remboursé (annulation de votre part, absence, mauvaise pêche).\n🌦️ Mauvais temps ou port fermé : votre sortie est reportée ; si le report est impossible, vous recevez un bon pour votre prochaine visite.",
     reviewsTitle: "⭐ Avis clients",
@@ -138,7 +138,7 @@ const I18N = {
     bookingSteps: "1️⃣ Choose your boat (#1 to #10)\n2️⃣ 3/4 day (6 hours) or full day (8 hours) — boat #1: 6 hours only\n3️⃣ Pick your date\n4️⃣ Tap SHOW MY PRICE to see your price, then pay the deposit online (card via Stripe +6% or Wise, no fee), or message us",
     paypalYes: "Yes.",
     paymentTitle: "💳 Deposit payment",
-    paymentDesc: "Online booking (Book Now): deposit by card via Stripe (+6% processing fee) or Wise (no fee). PayPal: coming soon.",
+    paymentDesc: "Online booking (Book Now): deposit by card via Stripe (+6% processing fee), PayPal (+6% processing fee) or Wise (no fee).",
     cancelTitle: "📄 Cancellations",
     cancelDesc: "Under our Terms & Conditions, deposits are not refunded (cancellation by the guest, no-show, poor fishing).\n🌦️ Bad weather or port closure: your trip is rescheduled; if rescheduling is not possible, you receive a voucher for your next visit.",
     reviewsTitle: "⭐ Guest reviews",
@@ -206,7 +206,7 @@ const I18N = {
     bookingSteps: "1️⃣ Elige tu bote (#1 a #10)\n2️⃣ 3/4 de día (6 horas) o día completo (8 horas) — bote #1: solo 6 horas\n3️⃣ Elige tu fecha\n4️⃣ Toca SHOW MY PRICE para ver tu precio y paga el depósito en línea (tarjeta vía Stripe +6 % o Wise sin comisión), o escríbenos",
     paypalYes: "Sí.",
     paymentTitle: "💳 Pago del depósito",
-    paymentDesc: "Reserva en línea (Reservar ahora): depósito con tarjeta vía Stripe (+6 % de comisión) o Wise (sin comisión). PayPal: próximamente.",
+    paymentDesc: "Reserva en línea (Reservar ahora): depósito con tarjeta vía Stripe (+6 % de comisión), PayPal (+6 % de comisión) o Wise (sin comisión).",
     cancelTitle: "📄 Cancelaciones",
     cancelDesc: "Según nuestros términos y condiciones, el depósito no se reembolsa (cancelación del cliente, no presentarse, mala pesca).\n🌦️ Mal tiempo o puerto cerrado: tu salida se reprograma; si no es posible reprogramarla, recibes un vale para tu próxima visita.",
     reviewsTitle: "⭐ Opiniones de clientes",
@@ -232,11 +232,11 @@ if (!BOOKING_OPEN) for (const lg of Object.keys(PRE_LAUNCH)) Object.assign(I18N[
 const CARD_OFF = BOOKING_OPEN && document.documentElement.dataset.card === 'off';
 const WISE_ONLY = {
   fr: { bookingSteps: "1️⃣ Choisissez votre bateau (#1 à #10)\n2️⃣ 3/4 de journée (6 h) ou journée complète (8 h) — bateau #1 : 6 h uniquement\n3️⃣ Choisissez votre date\n4️⃣ Touchez SHOW MY PRICE pour voir votre prix, puis payez l'acompte en ligne par Wise (sans frais), ou écrivez-nous",
-        paymentDesc: "Réservation en ligne (Réserver maintenant) : acompte par Wise (sans frais). Paiement par carte temporairement indisponible. PayPal : bientôt disponible." },
+        paymentDesc: "Réservation en ligne (Réserver maintenant) : paiement par carte temporairement indisponible ; acompte par Wise (sans frais) ou PayPal (+6 % de frais)." },
   en: { bookingSteps: "1️⃣ Choose your boat (#1 to #10)\n2️⃣ 3/4 day (6 hours) or full day (8 hours) — boat #1: 6 hours only\n3️⃣ Pick your date\n4️⃣ Tap SHOW MY PRICE to see your price, then pay the deposit online by Wise (no fee), or message us",
-        paymentDesc: "Online booking (Book Now): deposit by Wise (no fee). Card payments temporarily unavailable. PayPal: coming soon." },
+        paymentDesc: "Online booking (Book Now): card payments temporarily unavailable; deposit by Wise (no fee) or PayPal (+6% processing fee)." },
   es: { bookingSteps: "1️⃣ Elige tu bote (#1 a #10)\n2️⃣ 3/4 de día (6 horas) o día completo (8 horas) — bote #1: solo 6 horas\n3️⃣ Elige tu fecha\n4️⃣ Toca SHOW MY PRICE para ver tu precio y paga el depósito en línea por Wise (sin comisión), o escríbenos",
-        paymentDesc: "Reserva en línea (Reservar ahora): depósito por Wise (sin comisión). Pago con tarjeta temporalmente no disponible. PayPal: próximamente." },
+        paymentDesc: "Reserva en línea (Reservar ahora): pago con tarjeta temporalmente no disponible; depósito por Wise (sin comisión) o PayPal (+6 % de comisión)." },
 };
 if (CARD_OFF) for (const lg of Object.keys(WISE_ONLY)) Object.assign(I18N[lg], WISE_ONLY[lg]);
 

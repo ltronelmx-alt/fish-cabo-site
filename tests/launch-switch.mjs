@@ -128,12 +128,12 @@ try {
   t('chat (switch on): book button → /book-now', ch2.hrefs.includes('/book-now'), JSON.stringify(ch2));
   // Wise-only period (CARD_PAYMENTS_ENABLED false, no Stripe key)
   const bnOn = page('book-now.html');
-  t('Wise-only: /book-now shows the card option disabled with "Card payments temporarily unavailable", PayPal "Coming Soon"', /<label class="bk-off"[^>]*data-card><input type="radio" name="payment" value="stripe" disabled\s*\/?>/.test(bnOn) && bnOn.includes('Card payments temporarily unavailable') && /value="paypal" disabled/.test(bnOn) && /Deposit by Wise<\/b> \(no fee\)/.test(bnOn));
+  t('Wise-only: /book-now shows the card option disabled with "Card payments temporarily unavailable", PayPal a normal option (+6%)', /<label class="bk-off"[^>]*data-card><input type="radio" name="payment" value="stripe" disabled\s*\/?>/.test(bnOn) && bnOn.includes('Card payments temporarily unavailable') && /value="paypal"\s*\/?>/.test(bnOn) && !/value="paypal" disabled/.test(bnOn) && /Deposit by Wise<\/b> \(no fee\)/.test(bnOn));
   t('Wise-only: booking API says card payments are off', (await fetch(BASE + '/api/booking/boats').then((r) => r.json())).cardPayments === false);
   const ws = await wisePaymentStep();
-  t('Wise-only journey (Pixel 7): price shown, card disabled, Wise pre-selected with its 24 h notice, no card fee, contact + WhatsApp present', ws.cardDisabled && ws.wiseChecked && ws.paypalDisabled && ws.wiseNote && /None \(Wise\)/.test(ws.sum) && !/Card processing fee/.test(ws.sum) && /\$800 USD/.test(ws.quoteTxt) && !/processing fee on the deposit/.test(ws.quoteTxt) && ws.help >= 2, JSON.stringify(ws));
+  t('Wise-only journey (Pixel 7): price shown, card disabled, Wise pre-selected with its 24 h notice, no card fee, PayPal still offered (+6%), contact + WhatsApp present', ws.cardDisabled && ws.wiseChecked && !ws.paypalDisabled && ws.wiseNote && /None \(Wise\)/.test(ws.sum) && !/Card processing fee/.test(ws.sum) && /\$800 USD/.test(ws.quoteTxt) && !/Card and PayPal payments carry/.test(ws.quoteTxt) && /PayPal \(6% processing fee on the deposit\)/.test(ws.quoteTxt) && ws.help >= 2, JSON.stringify(ws));
   const cw = await chatAnswer('how do I pay the deposit?');
-  t('Wise-only: chat payment answer = Wise only, card temporarily unavailable, PayPal coming soon', /deposit by Wise \(no fee\)\. Card payments temporarily unavailable\. PayPal: coming soon\./.test(cw) && !/\+6%/.test(cw), cw);
+  t('Wise-only: chat payment answer = card temporarily unavailable, Wise or PayPal (+6%)', /card payments temporarily unavailable; deposit by Wise \(no fee\) or PayPal \(\+6% processing fee\)\./.test(cw) && !/Stripe \(\+6%/.test(cw), cw);
   await stop(w);
 
   // cards enabled later by configuration only (owner adds the live key + this flag): no rebuild of the booking system
