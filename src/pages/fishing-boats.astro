@@ -29,7 +29,7 @@ const faq = s4.blocks.filter((b) => b.ga[3] - b.ga[1] > 12);
     {s0.blocks.map((b) => <div set:html={b.html} />)}
   </Hero>
 
-  <section class="section bg-white">
+  <section class:list={["section bg-white", { "intro-tight": BOOKING_OPEN }]}>
     <div class="container">{intro.map((b) => <Rich html={b.html!} class="boats-intro reveal" />)}</div>
   </section>
 
@@ -64,6 +64,11 @@ const faq = s4.blocks.filter((b) => b.ga[3] - b.ga[1] > 12);
 </Base>
 
 <style>
+  /* Price scale sits right above the first boat showcase (owner 2026-11-10: no detached gap). */
+  .ps-wrap { padding-top: 8px; }
+  .intro-tight { padding-bottom: 28px; }
+  :global(.ps-wrap + .showcase) { padding-top: 18px; }
+  .ps-wrap :global(.price-scale) { margin: 0; }
   .boat-btn .btn-primary { min-width: 220px; justify-content: center; }
   :global(.boats-intro) { max-width: none; }
   .fleet { padding-block: clamp(40px, 5vw, 72px); }
