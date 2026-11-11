@@ -499,6 +499,8 @@ function init() {
   setLang(currentLang, false);
 
   $('efc-chat-bubble').addEventListener('click', () => toggleChat());
+  // owner 2026-11-11: the WhatsApp button of the phone bar opens the chat assistant (the link stays a WhatsApp link without JS)
+  document.querySelectorAll('[data-efc-chat-open]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); toggleChat(); }));
   $('efc-chat-bubble').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleChat(); } });
   $('efc-close').addEventListener('click', () => toggleChat());
   ['en', 'es', 'fr'].forEach((l) => { const b = $('btn-' + l); if (b) b.addEventListener('click', () => setLang(l, true)); });
