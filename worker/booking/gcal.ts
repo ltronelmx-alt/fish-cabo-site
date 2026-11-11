@@ -18,7 +18,7 @@
 // Scope needed: https://www.googleapis.com/auth/calendar.events
 import catalogue from '../../src/data/boats.json';
 import { nowIso, localToday, addDays } from './util';
-import { getSettings } from './schema';
+import { getSettings, manualClient } from './schema';
 
 export type GcalEnv = {
   DB?: D1Database; SITE_ENV?: string; SITE_URL?: string;
@@ -87,6 +87,23 @@ export function eventFor(r: Row, depMin: number, siteUrl: string) {
     extendedProperties: { private: { efcRef: r.ref, efcReservationId: r.id } },
   };
 }
+/** All-day event for a manual booking (a MANUAL BOOKING blocked day): boat, client name if recorded, no other data. */
+export function manualEventFor(b: { boat_id: string; date: string; reason: string }, siteUrl: string) {
+  const m = MODEL[b.boat_id] || { number: 0, name: b.boat_id };
+  const client = manualClient(b.reason);
+  const next = new Date(Date.parse(b.date + 'T00:00:00Z') + 86400000).toISOString().slice(0, 10);
+  return {
+    id: 'efcm' + b.date.replace(/-/g, '') + String(m.number).padStart(2, '0'),
+    summary: `${m.name} — ${client || 'Manual booking'}`,
+    location: 'Puerto Los Cabos Marina, San José del Cabo',
+    description: [`Boat #${m.number} — ${m.name}`, client ? `Client: ${client}` : '', 'Manual booking taken by the owner before online booking', `Details: ${siteUrl.replace(/\/$/, '')}/booking-admin`].filter(Boolean).join('\n'),
+    start: { date: b.date },
+    end: { date: next },
+    status: 'confirmed',
+    transparency: 'opaque',
+    extendedProperties: { private: { efcManual: `${b.boat_id}|${b.date}` } },
+  };
+}
 const hashOf = async (o: unknown) => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(o))))].slice(0, 12).map((b) => b.toString(16).padStart(2, '0')).join('');
 
 async function ensureTable(d: D1Database) {
@@ -115,7 +132,10 @@ export async function reconcile(e: GcalEnv, _force = false): Promise<{ ok: boole
        FROM reservations WHERE status IN (${MIRRORED.map(() => '?').join(',')}) AND date >= ? ${prod ? 'AND is_test = 0' : ''}`).bind(...MIRRORED, from).all<Row>();
     const { results: rows } = await d.prepare(`SELECT reservation_id, event_id, hash, state FROM calendar_sync`).all<{ reservation_id: string; event_id: string; hash: string | null; state: string }>();
     const known = new Map(rows.map((x) => [x.reservation_id, x]));
-    const wanted = new Set(want.map((r) => r.id));
+    // manual bookings taken by the owner before online booking (blocked days labelled MANUAL BOOKING): all-day events
+    const { results: blocks } = await d.prepare(`SELECT boat_id, date, reason FROM blocked_dates WHERE reason LIKE 'MANUAL BOOKING%' AND date >= ?`).bind(from).all<{ boat_id: string; date: string; reason: string }>();
+    const blockKey = (b: { boat_id: string; date: string }) => `block:${b.boat_id}|${b.date}`;
+    const wanted = new Set([...want.map((r) => r.id), ...blocks.map(blockKey)]);
     let calls = 0;
     const cal = `/calendars/${encodeURIComponent(e.GCAL_CALENDAR_ID!)}/events`;
     const mark = (id: string, ev: string, state: string, hash: string | null, err: string | null) =>
@@ -143,6 +163,28 @@ export async function reconcile(e: GcalEnv, _force = false): Promise<{ ok: boole
       } catch (err) {
         out.errors++; out.ok = false;
         await mark(r.id, ev.id, 'error', null, String(err).slice(0, 300));
+      }
+    }
+    // 1b) manual bookings (owner's blocked days) as all-day events
+    for (const b of blocks) {
+      if (calls >= MAX_CALLS) break;
+      const key = blockKey(b);
+      const ev = manualEventFor(b, site);
+      const h = await hashOf(ev);
+      const k = known.get(key);
+      if (k && k.state === 'synced' && k.hash === h) continue;
+      try {
+        calls++;
+        let res = await call(e, 'PUT', `${cal}/${ev.id}`, ev);
+        let created = false;
+        if (res.status === 404) { calls++; res = await call(e, 'POST', cal, ev); created = true; }
+        if (res.status === 409) { calls++; res = await call(e, 'PUT', `${cal}/${ev.id}`, ev); created = false; }
+        if (res.status >= 300) throw new Error(`google ${res.status} ${res.body?.error?.message || ''}`.trim());
+        await mark(key, ev.id, 'synced', h, null);
+        created && !k ? out.created++ : out.updated++;
+      } catch (err) {
+        out.errors++; out.ok = false;
+        await mark(key, ev.id, 'error', null, String(err).slice(0, 300));
       }
     }
     // 2) events of bookings that are no longer confirmed (cancelled, refunded, moved to a non-confirmed state…) → delete

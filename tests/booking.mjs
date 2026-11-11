@@ -175,7 +175,7 @@ try {
   t('/book-now legend: Available / Unavailable only', /Available <i class="l-bk"><\/i>Unavailable/.test(j) && !/>Booked</.test(j));
 
   section = 'Imported manual bookings';
-  const MANUAL = [['boat-02', '2026-11-26'], ['boat-04', '2026-12-15'], ['boat-06', '2027-01-19']];
+  const MANUAL = [['boat-02', '2026-11-21'], ['boat-04', '2026-12-15'], ['boat-06', '2027-01-19']];
   for (const [b, d] of MANUAL) {
     const pub = d >= todayLocal ? await avail(b, d) : 'past';
     const [qs2, qj2] = d >= todayLocal ? await quote({ boat: b, hours: 6, date: d }) : [409, {}];

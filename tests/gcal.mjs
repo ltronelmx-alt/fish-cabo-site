@@ -36,7 +36,9 @@ const srv = http.createServer((req, res) => {
   });
 });
 await new Promise((r) => srv.listen(8790, '127.0.0.1', r));
-const live = () => [...events.values()].filter((e) => e.status !== 'cancelled');
+const isManual = (e) => String(e.id || '').startsWith('efcm'); // owner's manual bookings (all-day), tested separately
+const live = () => [...events.values()].filter((e) => e.status !== 'cancelled' && !isManual(e));
+const nBooking = () => [...events.values()].filter((e) => !isManual(e)).length;
 const evOf = (resId) => events.get('efc' + resId.replace(/-/g, ''));
 
 // ---------- admin session ----------
@@ -78,10 +80,10 @@ e = evOf(M.id);
 t('date moved in /booking-admin → the SAME event is updated (no new event)', s === 200 && e?.start?.dateTime === `${dayStr(D0 + 3)}T06:30:00` && log.filter((x) => x.startsWith('POST')).length === posts0 && live().length === 2, JSON.stringify(j));
 // 5. repeated / concurrent triggers → no duplicate
 await Promise.all(Array.from({ length: 8 }, () => admin('action', { action: 'note', id: '00000000-0000-0000-0000-000000000000', note: 'x' }))); await sleep(2500);
-t('8 simultaneous triggers → still exactly 2 events, nothing rewritten', live().length === 2 && events.size === 2);
+t('8 simultaneous triggers → still exactly 2 events, nothing rewritten', live().length === 2 && nBooking() === 2);
 // 6. lost local mapping (row deleted) → no duplicate thanks to the deterministic id
 sql(`DELETE FROM calendar_sync WHERE reservation_id = '${W.id}'`); await kick();
-t('local mapping lost → event found again by its id and updated, not duplicated', events.size === 2 && live().length === 2 && sql(`SELECT state FROM calendar_sync WHERE reservation_id='${W.id}'`)[0]?.state === 'synced');
+t('local mapping lost → event found again by its id and updated, not duplicated', nBooking() === 2 && live().length === 2 && sql(`SELECT state FROM calendar_sync WHERE reservation_id='${W.id}'`)[0]?.state === 'synced');
 // 7. cancel → event deleted
 [s, j] = await admin('action', { action: 'cancel', id: M.id, confirm: 'CANCEL', reason: 'test', notify: false }); await sleep(1500);
 t('booking cancelled → its event is removed from the calendar', s === 200 && evOf(M.id)?.status === 'cancelled' && live().length === 1, JSON.stringify(j));
@@ -107,6 +109,8 @@ t('token fixed → retried and synced; readiness "calendarAccess: ok"', evOf(T.i
 // 10. calendar never drives the booking system
 { const src = (await import('node:fs')).readFileSync('worker/booking/gcal.ts', 'utf8');
   t('mirror is one-way: gcal.ts never writes reservations, blocks or availability, never reads events back into D1', !/(UPDATE|INSERT INTO|DELETE FROM)\s+(reservations|blocked_dates|boats|prices)/i.test(src) && !log.some((x) => /^GET \S/.test(x))); }
+{ const man = [...events.values()].filter(isManual);
+  t('manual bookings (owner) → 3 all-day events with the client name, nothing else', man.length === 3 && man.every((e) => e.start?.date && !e.start?.dateTime) && ['Bubenik', 'Guard', 'Rademacher'].every((n) => man.some((e) => e.summary.endsWith(n))) && man.some((e) => e.id === 'efcm2026112102' && e.start.date === '2026-11-21'), JSON.stringify(man.map((e) => [e.id, e.summary, e.start]))); }
 console.log(`  (Google calls: ${log.length}, events: ${events.size})`);
 srv.close();
 console.log(`\n${results.filter(Boolean).length}/${results.length} passed`);

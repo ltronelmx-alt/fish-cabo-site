@@ -86,7 +86,7 @@ try {
   t('Stripe webhook still reachable and signature-checked (unsigned → 400, not 503)', (await fetch(BASE + '/api/stripe/webhook', { method: 'POST', body: '{}' })).status === 400);
   const rd = (await adminGet('readiness')).readiness || {};
   t('/booking-admin works before the launch; readiness: database initialised (tables + unique indexes)', rd.database?.tablesAndIndexesOk === true && rd.productionRules === true && rd.publicBookingOpen === false, JSON.stringify(rd.database));
-  t('readiness: the 3 manual bookings are blocked, once each', JSON.stringify(rd.database?.manualBlocks) === JSON.stringify(['Boat #2 2026-11-26', 'Boat #4 2026-12-15', 'Boat #6 2027-01-19']));
+  t('readiness: the 3 manual bookings are blocked, once each', JSON.stringify(rd.database?.manualBlocks) === JSON.stringify(['Boat #2 2026-11-21', 'Boat #4 2026-12-15', 'Boat #6 2027-01-19']));
   t('readiness: 19 prices exactly as approved, 6 % card fee, 24 h Wise hold', rd.prices?.length === 19 && rd.prices.includes('#1 6h $350 (deposit $100)') && rd.prices.includes('#10 8h $5000 (deposit $1000)') && !rd.prices.some((x) => x.startsWith('#1 8h')) && rd.settings?.stripe_fee_pct === 6 && rd.settings?.wise_hold_hours === 24);
   t('readiness never returns a secret value', !JSON.stringify(rd).includes(PASS) && rd.ADMIN_PASSWORD === 'set');
   await stop(w);

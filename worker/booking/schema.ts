@@ -97,18 +97,22 @@ export async function ensureSchema(db: D1Database): Promise<void> {
   }
   await seed(db);
   await importManualBookings(db);
+  await fixManualBookings(db);
   ready = true;
 }
 
 /** Reservations the owner took by hand BEFORE online booking (owner, 2026-11-08). No customer, price or payment is
  * invented: each one is a blocked day for that boat, labelled MANUAL BOOKING (unavailable on /book-now, visible in
  * /booking-admin). Runs once per database; skips a day that already has a booking or a block. No email, no charge. */
-export const MANUAL_BOOKINGS: { boat: string; date: string }[] = [
-  { boat: 'boat-02', date: '2026-11-26' },
-  { boat: 'boat-04', date: '2026-12-15' },
-  { boat: 'boat-06', date: '2027-01-19' },
+export const MANUAL_BOOKINGS: { boat: string; date: string; client: string }[] = [
+  { boat: 'boat-02', date: '2026-11-21', client: 'Bubenik' }, // owner 2026-11-10: the 21st, not the 26th
+  { boat: 'boat-04', date: '2026-12-15', client: 'Guard' },
+  { boat: 'boat-06', date: '2027-01-19', client: 'Rademacher' },
 ];
 export const MANUAL_REASON = 'MANUAL BOOKING — taken by the owner before online booking (imported 2026-11-08)';
+export const manualReason = (client: string) => `MANUAL BOOKING — ${client} (taken by the owner before online booking)`;
+/** Client name of a MANUAL BOOKING block, if the reason carries one. */
+export const manualClient = (reason: string) => (/^MANUAL BOOKING — ([^(]+?) \(taken by the owner/.exec(reason) || [])[1] || '';
 async function importManualBookings(db: D1Database) {
   const KEY = 'import:manual-bookings-2026-11-08';
   if (await db.prepare(`SELECT 1 FROM meta WHERE k = ?`).bind(KEY).first()) return;
@@ -119,10 +123,36 @@ async function importManualBookings(db: D1Database) {
     const res = await db.prepare(`SELECT ref FROM reservations WHERE boat_id = ? AND date = ? AND holds_slot = 1 LIMIT 1`).bind(m.boat, m.date).first<{ ref: string }>();
     const blk = await db.prepare(`SELECT reason FROM blocked_dates WHERE boat_id IN (?, '*') AND date = ? LIMIT 1`).bind(m.boat, m.date).first();
     if (res || blk) { result[`${m.boat} ${m.date}`] = res ? `skipped: booking ${res.ref} exists` : 'skipped: already blocked'; continue; }
-    stmts.push(db.prepare(`INSERT OR IGNORE INTO blocked_dates (boat_id, date, reason, created_at) VALUES (?, ?, ?, ?)`).bind(m.boat, m.date, MANUAL_REASON, now));
+    stmts.push(db.prepare(`INSERT OR IGNORE INTO blocked_dates (boat_id, date, reason, created_at) VALUES (?, ?, ?, ?)`).bind(m.boat, m.date, manualReason(m.client), now));
     result[`${m.boat} ${m.date}`] = 'imported';
   }
   stmts.push(db.prepare(`INSERT INTO audit_log (at, actor, action, reservation_id, details) VALUES (?, 'system', 'import_manual_bookings', NULL, ?)`).bind(now, JSON.stringify(result)));
+  stmts.push(db.prepare(`INSERT INTO meta (k, v) VALUES (?, ?)`).bind(KEY, now));
+  await db.batch(stmts);
+}
+
+/** Owner correction 2026-11-10 (runs once per database): boat #2 manual booking is on 21 Nov 2026, not the 26th,
+ * and the three manual bookings carry the client's name (Bubenik, Guard, Rademacher). Only MANUAL BOOKING blocks are
+ * touched; a day that already holds an online booking is never blocked over (the conflict is logged). No email, no charge. */
+async function fixManualBookings(db: D1Database) {
+  const KEY = 'fix:manual-bookings-2026-11-10';
+  if (await db.prepare(`SELECT 1 FROM meta WHERE k = ?`).bind(KEY).first()) return;
+  const now = new Date().toISOString();
+  const result: Record<string, string> = {};
+  const stmts: D1PreparedStatement[] = [];
+  // the wrong day (26 Nov) is released only if it is the imported manual block
+  const wrong = await db.prepare(`SELECT reason FROM blocked_dates WHERE boat_id = 'boat-02' AND date = '2026-11-26'`).first<{ reason: string }>();
+  if (wrong && /^MANUAL BOOKING/.test(wrong.reason)) { stmts.push(db.prepare(`DELETE FROM blocked_dates WHERE boat_id = 'boat-02' AND date = '2026-11-26' AND reason LIKE 'MANUAL BOOKING%'`)); result['boat-02 2026-11-26'] = 'released (wrong day)'; }
+  for (const m of MANUAL_BOOKINGS) {
+    const res = await db.prepare(`SELECT ref FROM reservations WHERE boat_id = ? AND date = ? AND holds_slot = 1 LIMIT 1`).bind(m.boat, m.date).first<{ ref: string }>();
+    const blk = await db.prepare(`SELECT reason FROM blocked_dates WHERE boat_id = ? AND date = ?`).bind(m.boat, m.date).first<{ reason: string }>();
+    if (blk && /^MANUAL BOOKING/.test(blk.reason)) { stmts.push(db.prepare(`UPDATE blocked_dates SET reason = ? WHERE boat_id = ? AND date = ?`).bind(manualReason(m.client), m.boat, m.date)); result[`${m.boat} ${m.date}`] = 'named'; continue; }
+    if (blk) { result[`${m.boat} ${m.date}`] = 'kept: already blocked by the owner'; continue; }
+    if (res) { result[`${m.boat} ${m.date}`] = `CONFLICT: online booking ${res.ref} exists — not blocked`; continue; }
+    stmts.push(db.prepare(`INSERT OR IGNORE INTO blocked_dates (boat_id, date, reason, created_at) VALUES (?, ?, ?, ?)`).bind(m.boat, m.date, manualReason(m.client), now));
+    result[`${m.boat} ${m.date}`] = 'blocked';
+  }
+  stmts.push(db.prepare(`INSERT INTO audit_log (at, actor, action, reservation_id, details) VALUES (?, 'system', 'fix_manual_bookings', NULL, ?)`).bind(now, JSON.stringify(result)));
   stmts.push(db.prepare(`INSERT INTO meta (k, v) VALUES (?, ?)`).bind(KEY, now));
   await db.batch(stmts);
 }
