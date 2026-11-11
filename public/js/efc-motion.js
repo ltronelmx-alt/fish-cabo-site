@@ -31,6 +31,7 @@
       els.forEach((el) => {
         if (el.tagName === 'IMG') el.classList.add('efc-r-img');
         else el.classList.add('efc-r');
+        if (/^H[1-3]$/.test(el.tagName)) el.classList.add('efc-h');
         const sib = el.parentElement ? [...el.parentElement.children].filter((c) => els.includes(c)) : [];
         el.style.setProperty('--efc-d', `${Math.min(Math.max(0, sib.indexOf(el)) % 4, 3) * 80}ms`);
       });
@@ -40,6 +41,7 @@
       }), { rootMargin: '0px 0px 8% 0px', threshold: 0 });
       els.forEach((el) => io.observe(el));
       const showAll = () => els.forEach((el) => el.classList.add('is-in'));
+      W.__efcPending = els;
       addEventListener('beforeprint', showAll);
       addEventListener('hashchange', showAll);
     }
@@ -98,6 +100,14 @@
     const frame = () => {
       ticking = false;
       const y = scrollY, vh = innerHeight;
+      if (W.__efcPending) {
+        W.__efcPending = W.__efcPending.filter((el) => {
+          if (el.classList.contains('is-in')) return false;
+          const r = el.getBoundingClientRect();
+          if (r.top < vh && r.bottom > 0) { el.classList.add('is-in'); return false; }
+          return true;
+        });
+      }
       if (hero && y < vh * 1.3 && y > 2) {
         if (heroImg) heroImg.style.translate = `0 ${Math.round(y * 0.32)}px`;
         if (heroTxt) { heroTxt.style.translate = `0 ${Math.round(y * 0.15)}px`; heroTxt.style.opacity = String(Math.max(0, 1 - y / (vh * 0.8))); }

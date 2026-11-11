@@ -49,3 +49,9 @@ html, body { overflow-x: clip; }
   .hero h1::after { animation: efcBar 1s cubic-bezier(.16,1,.3,1) 0.8s both; transform-origin: left; }
   @keyframes efcBar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 }
+
+/* headings: slide up + fade (reliable everywhere), orange rule draws in */
+.efc-motion .efc-r.efc-h { translate: 0 40px; transition: opacity 0.9s cubic-bezier(.16,1,.3,1) var(--efc-d, 0s), translate 1.1s cubic-bezier(.16,1,.3,1) var(--efc-d, 0s); }
+.efc-motion .efc-r.efc-h.is-in { translate: none; }
+.efc-motion .rich > h2.efc-h::before { white-space: nowrap; width: 0; transition: width 1s cubic-bezier(.16,1,.3,1) calc(var(--efc-d, 0s) + 0.3s); }
+.efc-motion .rich > h2.efc-h.is-in::before { width: 64px; }
