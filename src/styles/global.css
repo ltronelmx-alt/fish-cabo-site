@@ -431,3 +431,28 @@ html, body { overflow-x: clip; }
 }
 /* lead sentence of a dark block that carries .dark itself (home "What fish can you catch"): was ink on black, invisible */
 .rich.dark > p:first-of-type:not(.sub) { color: #ececec; }
+
+/* Linked headings (owner 2026-11-11): species cards on the home link to their page — whole card clickable */
+.rich h2 > a, .rich h3 > a, .card h3 > a, .card h4 > a { color: inherit; text-decoration: none; }
+.card:has(> h3 > a, > h4 > a) { cursor: pointer; }
+.card h3 > a::after, .card h4 > a::after { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+.card h3:has(> a)::after, .card h4:has(> a)::after { content: ' →'; color: var(--orange); transition: margin 0.3s var(--ease); }
+.card:hover h3:has(> a)::after { margin-left: 6px; }
+.rich > h2 > a { background: linear-gradient(var(--orange), var(--orange)) 0 100% / 0 3px no-repeat; transition: background-size 0.45s var(--ease); }
+.rich > h2 > a:hover { background-size: 100% 3px; }
+.rich > h2:has(> a)::after { content: ' →'; color: var(--orange); }
+
+/* Owner 2026-11-11: boxes that pack together (no tall empty boxes).
+   /fishing-calendar: month cards flow in 2 balanced columns (masonry); numbering still follows the months. */
+@media (min-width: 900px) {
+  main[data-page="fishing-calendar"] .cards-from-h3.cards-h4 { display: block; columns: 2; column-gap: 24px; }
+  main[data-page="fishing-calendar"] .cards-from-h3.cards-h4 > .card { break-inside: avoid; margin: 0 0 24px; width: 100%; display: flex; }
+}
+/* /fish-species: every species box ends with its guide button aligned at the bottom; a 5th box alone in its row
+   spans the full width (photo left, text right) instead of leaving an empty half */
+main[data-page="fish-species"] .o-html > ul > li > p:last-child:has(> a) { margin-top: auto; padding-top: 12px; }
+@media (min-width: 900px) {
+  main[data-page="fish-species"] .o-html > ul > li:nth-child(odd):last-child { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); column-gap: 40px; align-content: start; }
+  main[data-page="fish-species"] .o-html > ul > li:nth-child(odd):last-child > picture { grid-column: 1; grid-row: 1 / span 20; align-self: center; }
+  main[data-page="fish-species"] .o-html > ul > li:nth-child(odd):last-child > :not(picture) { grid-column: 2; }
+}

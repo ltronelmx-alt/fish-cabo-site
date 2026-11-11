@@ -38,7 +38,7 @@ const beacon = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
   </head>
   <body>
     <Header />
-    <main id="main">
+    <main id="main" data-page={Astro.url.pathname.replace(/^\/|\/$|\.html$/g, "") || "home"}>
       <slot />
     </main>
     <Footer />
