@@ -30,7 +30,6 @@
       const els = [...d.querySelectorAll(SEL)].filter((el) => !el.closest('.hero, form, [class*="bk-step"], .bk-boats') && offscreen(el));
       els.forEach((el) => {
         if (el.tagName === 'IMG') el.classList.add('efc-r-img');
-        else if (/^H[1-3]$/.test(el.tagName)) el.classList.add('efc-r-h');
         else el.classList.add('efc-r');
         const sib = el.parentElement ? [...el.parentElement.children].filter((c) => els.includes(c)) : [];
         el.style.setProperty('--efc-d', `${Math.min(Math.max(0, sib.indexOf(el)) % 4, 3) * 80}ms`);
@@ -38,7 +37,7 @@
       root.classList.add('efc-motion');
       const io = new IntersectionObserver((es) => es.forEach((e) => {
         if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
-      }), { rootMargin: '0px 0px -6% 0px', threshold: 0.04 });
+      }), { rootMargin: '0px 0px 8% 0px', threshold: 0 });
       els.forEach((el) => io.observe(el));
       const showAll = () => els.forEach((el) => el.classList.add('is-in'));
       addEventListener('beforeprint', showAll);

@@ -528,9 +528,9 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) { document.documentElement.classList.add('efc-live'); return; }
   function go() {
     document.documentElement.classList.add('efc-live');
-    var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/css/efc-motion.css'; document.head.appendChild(l);
+    var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/css/efc-motion.css?v=fba12f64'; document.head.appendChild(l);
     var a = document.createElement('script'); a.src = '/js/lenis.min.js';
-    a.onload = a.onerror = function () { var b = document.createElement('script'); b.src = '/js/efc-motion.js'; document.body.appendChild(b); };
+    a.onload = a.onerror = function () { var b = document.createElement('script'); b.src = '/js/efc-motion.js?v=fba12f64'; document.body.appendChild(b); };
     document.body.appendChild(a);
   }
   // Loaded on the visitor's first gesture: nothing competes with the first render.
