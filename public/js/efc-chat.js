@@ -549,6 +549,7 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
   var lists = [].slice.call(main.querySelectorAll(main.dataset.page === 'fishing-calendar' ? '.cards-from-h3.cards-h4' : '.o-sec .o-html > ul'))
     .filter(function (l) { return l.children.length > 2; });
   if (!lists.length) return;
+  var cal = main.dataset.page === 'fishing-calendar';
   var UNIT = 4, GAP = 24, mq = matchMedia('(min-width: 900px)'), queued = false;
   function layout() {
     queued = false;
@@ -558,7 +559,8 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
       l.classList.add('efc-masonry');
       var top = [1, 1];
       kids.forEach(function (k, i) {
-        var c = i % 2, span = Math.max(1, Math.ceil((k.getBoundingClientRect().height + GAP) / UNIT));
+        // calendar: months alternate (1 left, 2 right…); the FAQ boxes after December go to the shorter column
+        var c = (cal && i >= 12) ? (top[0] <= top[1] ? 0 : 1) : i % 2, span = Math.max(1, Math.ceil((k.getBoundingClientRect().height + GAP) / UNIT));
         k.style.gridColumn = String(c + 1);
         k.style.gridRow = top[c] + ' / span ' + span;
         top[c] += span;
