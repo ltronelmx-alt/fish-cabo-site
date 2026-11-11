@@ -19,7 +19,18 @@ import catalogue from '../data/boats.json';
 interface Props { page: Page & { videos?: string[] }; slug: string }
 const { page, slug } = Astro.props;
 // keep the ORIGINAL DOM order of blocks (not the visual grid order)
-const S = page.sections.map((s) => ({ ...s, blocks: s.blocks.slice().sort((a: any, b: any) => (a.dom ?? 0) - (b.dom ?? 0)) }));
+const S0 = page.sections.map((s) => ({ ...s, blocks: s.blocks.slice().sort((a: any, b: any) => (a.dom ?? 0) - (b.dom ?? 0)) }));
+// Owner 2026-11-11 (/fish-species): the species boxes of consecutive sections that each hold one list form ONE list,
+// so all boxes pack together in two equal columns (same text, same order).
+const isList = (x: (typeof S0)[number]) => x.blocks.length === 1 && x.blocks[0].kind === 'html' && /^\s*<ul>[\s\S]*<\/ul>\s*$/.test(x.blocks[0].html || '');
+const S = slug !== 'fish-species' ? S0 : S0.reduce((acc: typeof S0, x) => {
+  const prev = acc[acc.length - 1];
+  if (prev && isList(prev) && isList(x)) {
+    const inner = (h: string) => h.trim().replace(/^<ul>/, '').replace(/<\/ul>$/, '');
+    acc[acc.length - 1] = { ...prev, blocks: [{ ...prev.blocks[0], html: '<ul>' + inner(prev.blocks[0].html || '') + inner(x.blocks[0].html || '') + '</ul>' }] };
+  } else acc.push(x);
+  return acc;
+}, []);
 
 const THEME: Record<string, string> = {
   white: 'bg-sand', light: 'bg-white', bright: 'bg-white', '': 'bg-white',
@@ -62,17 +73,44 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
   const theme = THEME[sec.theme] ?? 'bg-white';
   // ---------- First section = hero ----------
   if (si === 0 && isHero) {
+    // Owner 2026-11-11: only the H1 stays on the dark hero; every other block of the first section (intro text,
+    // extra photos, buttons) follows in a white section right after it, in the same DOM order (no text change).
+    const heroText: string[] = []; const rest: Block[] = [];
+    for (const b of sec.blocks) {
+      if (b === heroImgBlock) continue;
+      if (b.kind === 'text' && /<h1[\s>]/.test(b.html || '') && !heroText.length) {
+        const h = b.html || ''; const end = h.indexOf('</h1>') + 5;
+        heroText.push(h.slice(0, end));
+        const tail = h.slice(end);
+        if (tail.replace(/<[^>]+>/g, '').trim() || /<img|<picture/.test(tail)) rest.push({ ...b, html: tail });
+      } else rest.push(b);
+    }
     return (
+      <>
       <section class:list={['hero dark hero-page o-hero', heroAr && 'o-hero-block', heroPortrait && 'o-hero-portrait']} style={heroAr ? `--ar:${heroAr}` : undefined}>
         {sec.bg && <OImg block={{ path: sec.bg.path, alt: sec.bg.alt }} class="o-hero-bg" sizes="100vw" priority />}
         <div class="hero-shade" aria-hidden="true"></div>
         <div class="container hero-inner">
-          {sec.blocks.map((b) => b.kind === 'img'
-            ? <OImg block={b} class={b === heroImgBlock ? 'o-hero-bg o-hero-abs' : 'o-hero-img'} sizes="100vw" priority={b === heroImgBlock} />
-            : b.kind === 'button' ? <div class="btn-row"><OBtn block={b} primary /></div>
-            : <div class="hero-text" set:html={bookLinks(pictures(b.html || ''))} />)}
+          {heroImgBlock && <OImg block={heroImgBlock} class="o-hero-bg o-hero-abs" sizes="100vw" priority />}
+          {heroText.map((h) => <div class="hero-text" set:html={bookLinks(pictures(h))} />)}
         </div>
       </section>
+      {rest.length > 0 && (
+        <section class="section o-sec bg-white o-intro">
+          <div class="container o-flow">
+            {groups(rest).map((g) => {
+              if (g.kind === 'img') return <div class:list={['o-gallery', `n${Math.min(g.items.length, 4)}`]}>{g.items.map((b) => <OImg block={b} class="reveal" sizes={g.items.length > 1 ? '(min-width: 900px) 33vw, 92vw' : '(min-width: 1240px) 1200px, 92vw'} />)}</div>;
+              if (g.kind === 'button') return <div class="btn-row o-btns">{g.items.map((b) => <OBtn block={b} primary={/book/i.test((b.href || '') + (b.text || ''))} />)}</div>;
+              const b = g.items[0];
+              const chunks = byH2(b.html || '');
+              return chunks.length > 1
+                ? <div class="o-text">{chunks.map((c) => <Rich html={pictures(c)} mode="cards" class="reveal o-chunk" />)}</div>
+                : <Rich html={pictures(b.html || '')} mode="cards" class="reveal" />;
+            })}
+          </div>
+        </section>
+      )}
+      </>
     );
   }
   return (

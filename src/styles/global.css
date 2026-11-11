@@ -442,17 +442,8 @@ html, body { overflow-x: clip; }
 .rich > h2 > a:hover { background-size: 100% 3px; }
 .rich > h2:has(> a)::after { content: ' →'; color: var(--orange); }
 
-/* Owner 2026-11-11: boxes that pack together (no tall empty boxes).
-   /fishing-calendar: month cards flow in 2 balanced columns (masonry); numbering still follows the months. */
-@media (min-width: 900px) {
-  main[data-page="fishing-calendar"] .cards-from-h3.cards-h4 { display: block; columns: 2; column-gap: 24px; }
-  main[data-page="fishing-calendar"] .cards-from-h3.cards-h4 > .card { break-inside: avoid; margin: 0 0 24px; width: 100%; display: flex; }
-}
-/* /fish-species: every species box ends with its guide button aligned at the bottom; a 5th box alone in its row
-   spans the full width (photo left, text right) instead of leaving an empty half */
+/* Owner 2026-11-11: boxes that pack together, equal widths, 1 left · 2 right · 3 left… (no tall empty boxes).
+   Two independent columns placed by /js/efc-chat.js (efcMasonry) on /fishing-calendar and /fish-species, desktop only. */
+.efc-masonry { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; grid-auto-rows: 4px; row-gap: 0 !important; column-gap: 24px !important; align-items: start !important; }
+.efc-masonry > * { margin: 0 !important; align-self: start !important; }
 main[data-page="fish-species"] .o-html > ul > li > p:last-child:has(> a) { margin-top: auto; padding-top: 12px; }
-@media (min-width: 900px) {
-  main[data-page="fish-species"] .o-html > ul > li:nth-child(odd):last-child { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); column-gap: 40px; align-content: start; }
-  main[data-page="fish-species"] .o-html > ul > li:nth-child(odd):last-child > picture { grid-column: 1; grid-row: 1 / span 20; align-self: center; }
-  main[data-page="fish-species"] .o-html > ul > li:nth-child(odd):last-child > :not(picture) { grid-column: 2; }
-}

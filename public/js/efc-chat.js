@@ -539,3 +539,35 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
   ev.forEach(function (e) { addEventListener(e, once, { capture: true, passive: true }); });
   // (no timer: visitors who never touch the page do not need the motion layer)
 })();
+
+
+/* Exotic Fish Cabo — two-column packed boxes (owner 2026-11-11): /fishing-calendar months and /fish-species boxes.
+   Box 1 left, 2 right, 3 left… each column stacks without gaps. Desktop only; phones keep one column. Layout only. */
+(function () {
+  var main = document.querySelector('main[data-page="fishing-calendar"], main[data-page="fish-species"]');
+  if (!main) return;
+  var lists = [].slice.call(main.querySelectorAll(main.dataset.page === 'fishing-calendar' ? '.cards-from-h3.cards-h4' : '.o-sec .o-html > ul'))
+    .filter(function (l) { return l.children.length > 2; });
+  if (!lists.length) return;
+  var UNIT = 4, GAP = 24, mq = matchMedia('(min-width: 900px)'), queued = false;
+  function layout() {
+    queued = false;
+    lists.forEach(function (l) {
+      var kids = [].slice.call(l.children);
+      if (!mq.matches) { l.classList.remove('efc-masonry'); kids.forEach(function (k) { k.style.gridColumn = k.style.gridRow = ''; }); return; }
+      l.classList.add('efc-masonry');
+      var top = [1, 1];
+      kids.forEach(function (k, i) {
+        var c = i % 2, span = Math.max(1, Math.ceil((k.getBoundingClientRect().height + GAP) / UNIT));
+        k.style.gridColumn = String(c + 1);
+        k.style.gridRow = top[c] + ' / span ' + span;
+        top[c] += span;
+      });
+    });
+  }
+  function queue() { if (!queued) { queued = true; requestAnimationFrame(layout); } }
+  layout();
+  if ('ResizeObserver' in window) { var ro = new ResizeObserver(queue); lists.forEach(function (l) { [].forEach.call(l.children, function (k) { ro.observe(k); }); }); }
+  addEventListener('resize', queue, { passive: true });
+  addEventListener('load', queue);
+})();
