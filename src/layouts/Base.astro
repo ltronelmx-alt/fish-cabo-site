@@ -43,24 +43,6 @@ const beacon = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
     </main>
     <Footer />
     <Chat />
-    <script is:inline>
-      // Motion layer (smooth scroll + fades) loads only after the page has fully loaded: zero impact on first paint / LCP.
-      (function () {
-        if (matchMedia('(prefers-reduced-motion: reduce)').matches) { document.documentElement.classList.add('efc-live'); return; }
-        function go() {
-          document.documentElement.classList.add('efc-live');
-          var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/css/efc-motion.css'; document.head.appendChild(l);
-          var a = document.createElement('script'); a.src = '/js/lenis.min.js';
-          a.onload = a.onerror = function () { var b = document.createElement('script'); b.src = '/js/efc-motion.js'; document.body.appendChild(b); };
-          document.body.appendChild(a);
-        }
-        // Loaded on the visitor's first gesture: nothing competes with the first render.
-        var done = false, ev = ['pointerdown', 'wheel', 'touchstart', 'keydown'];
-        function once(e) { if (done || (e && e.isTrusted === false)) return; done = true; ev.forEach(function (e) { removeEventListener(e, once, true); }); go(); }
-        ev.forEach(function (e) { addEventListener(e, once, { capture: true, passive: true }); });
-        // (no timer: visitors who never touch the page do not need the motion layer)
-      })();
-    </script>
     {bodyLd.length > 0 && <Fragment set:html={bodyLd.join('\n')} />}
     {beacon && <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon={JSON.stringify({ token: beacon })}></script>}
     <script>
