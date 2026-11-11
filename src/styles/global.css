@@ -416,3 +416,18 @@ html, body { overflow-x: clip; }
 }
 .efc-live .efc-marquee-dark .efc-mq-track > span::before { content: 'PRIVATE CHARTERS ✦ SAN JOSÉ DEL CABO ✦ 6 OR 8 HOURS ✦ SEA OF CORTEZ ✦ LOCAL CAPTAINS ✦ '; -webkit-text-stroke-color: rgb(255 255 255 / 0.55); }
 
+
+/* Mobile rhythm (owner 2026-11-10: "beaucoup d'espace entre les sections") — tighter vertical spacing on phones only */
+@media (max-width: 760px) {
+  :root { --section-pad: 44px; }
+  .section { padding-block: 44px; }
+  .section.tight { padding-block: 34px; }
+  .head { margin-bottom: 26px; }
+  .rich > h2::before { margin-bottom: 16px; padding-top: 10px; }
+  .rich h2 { margin-top: 1em; }
+  .rich > :first-child { margin-top: 0; }
+  .cards-from-h3 { margin-top: 22px; }
+  .btn-row { margin-top: 24px; }
+}
+/* lead sentence of a dark block that carries .dark itself (home "What fish can you catch"): was ink on black, invisible */
+.rich.dark > p:first-of-type:not(.sub) { color: #ececec; }
