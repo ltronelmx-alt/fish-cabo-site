@@ -65,13 +65,13 @@
       p.classList.add('efc-fill');
     });
 
-    /* 4. Photo bands drifting behind dark / orange sections (lazy, authentic site photos; desktop only) */
+    /* 4. Photo bands drifting behind dark / orange sections (lazy, authentic site photos) */
     const PHOTOS = [
       '/media/c9e1cd77-6f97-4d43-90a4-5bccc9878876/freeman-left-932.webp',
       '/media/1762995762950-518K5X7NK9ADDTOV6H61/fishing-gordo-banks-on-a-panga-for-striped-marlin-1000.webp',
     ];
     const layers = [];
-    if (W.matchMedia('(min-width: 900px)').matches) {
+    { // owner 2026-11-11: same design on phones and computers
       [...main.querySelectorAll('.section.bg-black, .band-black, .section.bg-orange')].filter((s) => !s.closest('.hero')).forEach((s, i) => {
         const l = d.createElement('div'); l.className = 'efc-px'; l.setAttribute('aria-hidden', 'true');
         s.classList.add('efc-px-host'); s.prepend(l); layers.push({ l, src: PHOTOS[i % PHOTOS.length] });

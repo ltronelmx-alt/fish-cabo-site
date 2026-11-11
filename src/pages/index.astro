@@ -102,7 +102,7 @@ const c4 = byH2(txt(s4)[0].html!); // areas · different · fish
   .band { position: relative; margin-top: var(--section-pad); padding-block: var(--section-pad); }
   /* sand band runs straight into the black band (no empty white strip between them) */
   .band-sand + .band-black { margin-top: -1px; }
-  .cta-links > p:has(> strong:first-child):not(.sub) { min-height: 8.2em; }
+  @media (min-width: 900px) { .cta-links > p:has(> strong:first-child):not(.sub) { min-height: 8.2em; } }
   .s4b { margin-top: var(--section-pad); }
   .band-sand { box-shadow: 0 0 0 100vmax var(--sand); clip-path: inset(0 -100vmax); background: var(--sand); }
   .band-black { box-shadow: 0 0 0 100vmax var(--ink); clip-path: inset(0 -100vmax); background: var(--ink); margin-bottom: calc(-1 * var(--section-pad)); }
