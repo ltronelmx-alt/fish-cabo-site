@@ -1,0 +1,51 @@
+/* =========================================================
+   v7 — motion (owner 2026-11-10, reference: destinationshockey.ca)
+   Smooth inertial scrolling (Lenis) + soft fades / mask reveals / image reveals.
+   Driven by /js/lenis.min.js + /js/efc-motion.js. Nothing is hidden without JS; off with reduced motion.
+   No text, link, metadata or structured-data change.
+   ========================================================= */
+html.lenis, html.lenis body { height: auto; }
+html.lenis { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: clip; }
+.lenis [data-lenis-prevent] { overscroll-behavior: contain; }
+html, body { overflow-x: clip; }
+
+/* reveals */
+.efc-motion .reveal { animation: none !important; }
+.efc-motion .efc-r { opacity: 0; translate: 0 48px; transition: opacity 1.1s cubic-bezier(.16,1,.3,1) var(--efc-d, 0s), translate 1.3s cubic-bezier(.16,1,.3,1) var(--efc-d, 0s); }
+.efc-motion .efc-r.is-in { opacity: 1; translate: none; }
+/* headings rise from behind a mask */
+.efc-motion .efc-r-h { opacity: 1; translate: none; clip-path: inset(0 0 100% 0); transform: translateY(0.6em); transition: clip-path 1.2s cubic-bezier(.16,1,.3,1) var(--efc-d, 0s), transform 1.2s cubic-bezier(.16,1,.3,1) var(--efc-d, 0s); }
+.efc-motion .efc-r-h.is-in { clip-path: inset(-0.2em -0.2em -0.3em -0.2em); transform: none; }
+.efc-motion .rich > h2.efc-r-h::before { transition: width 1.1s cubic-bezier(.16,1,.3,1) calc(var(--efc-d, 0s) + 0.35s); white-space: nowrap; width: 0; }
+.efc-motion .rich > h2.efc-r-h.is-in::before { width: 64px; }
+/* photos: open from a soft inset with a slow zoom-out (ends whole, never cropped) */
+.efc-motion img.efc-r-img { opacity: 1; translate: none; clip-path: inset(14% 10% 14% 10% round var(--radius)); scale: 1.14; transition: clip-path 1.6s cubic-bezier(.16,1,.3,1) var(--efc-d, 0s), scale 2s cubic-bezier(.16,1,.3,1) var(--efc-d, 0s); }
+.efc-motion img.efc-r-img.is-in { clip-path: inset(0 round var(--radius)); scale: 1; }
+/* lead sentences: words fill from grey to ink while scrolling */
+.efc-fill .efc-w { color: #c9c4bb; transition: color 0.35s ease; }
+.dark .efc-fill .efc-w, .efc-fill.dark .efc-w { color: #5f5b55; }
+.efc-fill .efc-w.on { color: inherit; }
+@media print { .efc-motion .efc-r, .efc-motion .efc-r-h, .efc-motion img.efc-r-img { opacity: 1 !important; translate: none !important; clip-path: none !important; scale: none !important; transform: none !important; } .efc-fill .efc-w { color: inherit !important; } }
+
+/* photo bands drifting behind dark / orange sections (authentic site photos) */
+.efc-px-host { position: relative; isolation: isolate; }
+.section.efc-px-host { overflow: hidden; }
+.efc-px { position: absolute; z-index: -1; top: -18%; bottom: -18%; left: 0; right: 0; background: center / cover no-repeat; opacity: 0.42; will-change: transform; transform: scale(1.12); pointer-events: none; filter: brightness(0.5) saturate(1.3) contrast(1.1); -webkit-mask-image: linear-gradient(transparent, #000 22%, #000 78%, transparent); mask-image: linear-gradient(transparent, #000 22%, #000 78%, transparent); }
+.band-black > .efc-px { left: calc(50% - 50vw); right: calc(50% - 50vw); }
+.bg-orange > .efc-px { opacity: 0.2; mix-blend-mode: multiply; filter: grayscale(1) contrast(1.2); -webkit-mask-image: none; mask-image: none; }
+.efc-px-host > :not(.efc-px) { position: relative; }
+.efc-px-host .card, .efc-px-host .cta-links > p:has(> strong:first-child):not(.sub) {
+  background: rgb(20 20 20 / 0.45) !important; -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%); border-color: rgb(255 255 255 / 0.14) !important;
+}
+.bg-orange.efc-px-host .card { background: rgb(255 255 255 / 0.14) !important; }
+
+/* hero: title rises from a mask, scroll cue */
+.efc-cue { position: absolute; left: 50%; bottom: 22px; z-index: 2; width: 28px; height: 46px; margin-left: -14px; border: 2px solid rgb(255 255 255 / 0.75); border-radius: 16px; pointer-events: none; }
+.efc-cue::after { content: ''; position: absolute; left: 50%; top: 9px; width: 4px; height: 9px; margin-left: -2px; border-radius: 2px; background: var(--orange); animation: efcCue 1.8s var(--ease) infinite; }
+@keyframes efcCue { 0% { opacity: 0; transform: translateY(-4px); } 30% { opacity: 1; } 80% { opacity: 0; transform: translateY(14px); } 100% { opacity: 0; } }
+@media (max-width: 760px) { .efc-cue { display: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  .hero h1::after { animation: efcBar 1s cubic-bezier(.16,1,.3,1) 0.8s both; transform-origin: left; }
+  @keyframes efcBar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+}

@@ -336,3 +336,83 @@ h1.as-h2 { font-size: var(--fs-h2); line-height: 1.02; letter-spacing: -0.03em; 
 .rich li.li-wrap { list-style: none !important; counter-increment: none !important; padding: 0 !important; background: none !important; border: 0 !important; box-shadow: none !important; }
 .rich li.li-wrap::before { display: none !important; }
 .rich li.li-wrap > ul, .rich li.li-wrap > ol { margin: 0; }
+
+/* =========================================================
+   v6 — visual polish (owner 2026-11-10: "plus attractif et professionnel")
+   Design only: same palette (orange / yellow / ink / sand), same fonts.
+   No text, URL, metadata or structured-data change.
+   ========================================================= */
+::selection { background: var(--orange); color: var(--white); }
+
+/* Photo frames hug the photo (no sand/white side bands); photo still whole, never cropped */
+main .media:not(.o-hero-bg):not(.banner-img):not(.o-small-logo) { box-shadow: none; background: transparent; overflow: visible; border-radius: 0; }
+main .media:not(.o-hero-bg):not(.banner-img):not(.o-small-logo) img { border-radius: var(--radius); box-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 40px 80px -40px rgb(0 0 0 / 0.5); }
+main .media:not(.o-hero-bg):not(.banner-img):not(.o-small-logo):hover img { transform: scale(1.015); }
+
+/* Cards: crisper edge, warm lift on hover */
+.card { transition: transform 0.45s var(--ease), box-shadow 0.45s var(--ease), border-color 0.45s; }
+.card:hover { transform: translateY(-4px); box-shadow: 0 2px 4px rgb(0 0 0 / 0.04), 0 28px 50px -28px rgb(251 119 4 / 0.35); }
+.cards-from-h3 > .card { box-shadow: 0 1px 0 rgb(0 0 0 / 0.03); }
+.cards-from-h3 > .card::before { transition: color 0.45s var(--ease); }
+.cards-from-h3 > .card:hover::before { color: var(--orange); }
+.dark .card:hover { box-shadow: 0 28px 60px -30px rgb(251 119 4 / 0.45); border-color: rgb(251 119 4 / 0.35); }
+
+/* Dark sections: soft warm glow instead of flat black */
+.bg-black { background: radial-gradient(1100px 520px at 88% -10%, rgb(251 119 4 / 0.16), transparent 70%), radial-gradient(900px 480px at -10% 110%, rgb(255 205 56 / 0.06), transparent 70%), var(--ink); }
+
+/* Orange band: subtle depth (same orange) */
+.bg-orange { background: linear-gradient(120deg, #fb7704 0%, #ff8a00 55%, #f46f00 100%); }
+
+/* Primary buttons: warm glow on hover */
+.btn-primary { box-shadow: 0 10px 24px -14px rgb(255 205 56 / 0.9); }
+.btn-primary:hover, .dark .btn-primary:hover, .hero .btn-primary:hover { box-shadow: 0 16px 30px -14px rgb(255 205 56 / 0.95); }
+.btn:not(.btn-primary):not(.btn-pay):hover { transform: translateY(-2px); }
+
+/* Hero: deeper, more cinematic legibility + a thin orange accent under the title */
+.hero h1::after { content: ''; display: block; width: 72px; height: 4px; border-radius: 2px; background: var(--orange); margin-top: 0.32em; }
+.hero.hero-home::after, .hero.hero-page::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 140px; pointer-events: none; background: linear-gradient(transparent, rgb(0 0 0 / 0.35)); z-index: -1; }
+
+/* List "pills": orange left rule, softer surface */
+.rich ul li { border-left: 3px solid var(--orange) !important; border-radius: 4px var(--radius-sm) var(--radius-sm) 4px; transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease); }
+.rich ul li:hover { transform: translateX(3px); box-shadow: 0 12px 26px -20px rgb(0 0 0 / 0.35); }
+.rich li.li-wrap:hover { transform: none; box-shadow: none; }
+
+/* FAQ accordion: orange state when open */
+.faq summary { transition: color 0.3s; }
+.faq summary:hover, .faq details[open] summary { color: var(--orange); }
+.faq details[open] summary::after { background: var(--orange); border-color: var(--orange); color: var(--white); }
+
+/* Fishing-report cards: equal heights, image zoom on hover */
+.o-html:not(.article):has(> article > h2.as-h1) { align-items: stretch !important; }
+.o-html:not(.article) > article:has(> h2.as-h1) { transition: transform 0.45s var(--ease), box-shadow 0.45s var(--ease); }
+.o-html:not(.article) > article:has(> h2.as-h1):hover { transform: translateY(-4px); box-shadow: 0 28px 50px -28px rgb(0 0 0 / 0.35); }
+.o-html:not(.article) > article:has(> h2.as-h1) > a:first-child { overflow: hidden; }
+.o-html:not(.article) > article:has(> h2.as-h1) > a:first-child img { transition: transform 1.2s var(--ease); }
+.o-html:not(.article) > article:has(> h2.as-h1):hover > a:first-child img { transform: scale(1.04); }
+
+/* Forms: orange focus ring */
+input:not([type=radio]):not([type=checkbox]):focus, select:focus, textarea:focus { outline: none; border-color: var(--orange) !important; box-shadow: 0 0 0 4px rgb(251 119 4 / 0.15) !important; }
+/* 5-card grids: 3 + 2 centred (no orphan gap on the right) */
+@media (min-width: 1000px) {
+  .cards-from-h3:has(> .card:nth-child(5):last-child) { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .cards-from-h3:has(> .card:nth-child(5):last-child) > .card { grid-column: span 2; }
+  .cards-from-h3:has(> .card:nth-child(5):last-child) > .card:nth-child(4) { grid-column: 2 / span 2; }
+}
+
+/* v7 — ticker (in the HTML from first paint; motion styles live in /css/efc-motion.css, loaded after the page) */
+html, body { overflow-x: clip; }
+/* ticker: species words sliding across (CSS-drawn, aria-hidden) */
+.efc-marquee { --mq-fs: clamp(44px, 7.5vw, 132px); --mq-pad: clamp(18px, 2.4vw, 40px); height: calc(var(--mq-fs) + 2 * var(--mq-pad) + 2px); box-sizing: border-box; overflow: hidden; padding-block: var(--mq-pad); background: var(--white); border-block: 1px solid var(--line); user-select: none; pointer-events: none; }
+.efc-marquee-dark { background: var(--ink); border-color: rgb(255 255 255 / 0.08); }
+.efc-mq-track { display: flex; width: max-content; }
+.efc-live .efc-mq-track { animation: efcMq 38s linear infinite; }
+@keyframes efcMq { to { transform: translate3d(-50%, 0, 0); } }
+@media (prefers-reduced-motion: reduce) { .efc-mq-track { animation: none; } }
+.efc-mq-track > span::before { content: none; }
+.efc-live .efc-mq-track > span::before {
+  content: 'MARLIN ✦ YELLOWFIN TUNA ✦ DORADO ✦ WAHOO ✦ ROOSTERFISH ✦ PUERTO LOS CABOS ✦ GORDO BANKS ✦ ';
+  white-space: pre; font-family: var(--font-head); font-weight: 700; text-transform: uppercase; letter-spacing: -0.02em; line-height: 1;
+  font-size: var(--mq-fs); color: transparent; -webkit-text-stroke: 1.5px var(--orange); padding-right: 0.3em;
+}
+.efc-live .efc-marquee-dark .efc-mq-track > span::before { content: 'PRIVATE CHARTERS ✦ SAN JOSÉ DEL CABO ✦ 6 OR 8 HOURS ✦ SEA OF CORTEZ ✦ LOCAL CAPTAINS ✦ '; -webkit-text-stroke-color: rgb(255 255 255 / 0.55); }
+
