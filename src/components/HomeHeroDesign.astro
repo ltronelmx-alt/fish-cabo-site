@@ -22,8 +22,12 @@ const FISH = FISH0.map((f) => { const p = f.pts.split(' ').map((q) => q.split(',
          brush strokes are a separate transparent layer that is fully transparent over the marlin. -->
     <div class="efd-stage">
       <div class="efd-stage-in">
-        <img class="efd-photo" src="/media/efd/hero-marlin-original.webp" width="1491" height="1055" fetchpriority="high"
-             alt="Exotic Fish Cabo angler fighting a jumping blue marlin off San José del Cabo">
+        <picture>
+          <!-- phones (≤560px): the owner's lighter copy of the same photo (1200×849, same framing), served byte for byte -->
+          <source media="(max-width: 560px)" srcset="/media/efd/hero-marlin-mobile.webp" width="1200" height="849">
+          <img class="efd-photo" src="/media/efd/hero-marlin-original.webp" width="1491" height="1055" fetchpriority="high"
+               alt="Exotic Fish Cabo angler fighting a jumping blue marlin off San José del Cabo">
+        </picture>
         <img class="efd-decor" src="/media/efd/hero-decor-2400.webp" srcset="/media/efd/hero-decor-1200.webp 1200w, /media/efd/hero-decor-2400.webp 2400w" sizes="100vw" width="2398" height="1390" alt="">
         <img class="efd-hero-logo" src="/media/efd/logo-exotic.webp" width="1280" height="1016" loading="lazy" alt="">
       </div>

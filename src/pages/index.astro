@@ -21,7 +21,8 @@ const c4 = byH2(txt(s4)[0].html!); // areas · different · fish
 ---
 <Base original={P}>
   <Fragment slot="head">
-    <link rel="preload" href="/media/efd/hero-marlin-original.webp" as="image" type="image/webp" fetchpriority="high" />
+    <link rel="preload" href="/media/efd/hero-marlin-original.webp" as="image" type="image/webp" fetchpriority="high" media="(min-width: 561px)" />
+    <link rel="preload" href="/media/efd/hero-marlin-mobile.webp" as="image" type="image/webp" fetchpriority="high" media="(max-width: 560px)" />
     <link rel="preload" href="/fonts/efd/montserrat-latin-900-italic.woff2" as="font" type="font/woff2" crossorigin />
   </Fragment>
 
