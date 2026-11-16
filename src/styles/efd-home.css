@@ -1,4 +1,5 @@
-/* Homepage top design (owner 2026-11-15). Self-contained: every class is prefixed efd-, nothing here touches other pages.
+/* Exotic Fish Cabo design (owner 2026-11-15): homepage top + the site header, mobile menu and phone bar on every page.
+   Every class is prefixed efd-.
    Visual source of truth: the approved prototype (claude.ai artifact E5sJAoZBC3sLrFdTNze4of, v15). */
 
 @font-face { font-family: "Barlow Condensed"; src: url("/fonts/efd/barlow-condensed-latin-600-italic.woff2") format("woff2"); font-weight: 600; font-style: italic; font-display: swap; }
@@ -10,19 +11,19 @@
 @font-face { font-family: "Poppins"; src: url("/fonts/efd/poppins-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
 @font-face { font-family: "Poppins"; src: url("/fonts/efd/poppins-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
 
-.efd, .efd-mbar {
+.efd, .efd-mbar, .efd-hdr, .efd-mmenu {
   --efd-ink: #05070b; --efd-orange: #fb7704; --efd-orange-hot: #ff8a00; --efd-yellow: #ffcd38;
   --efd-cond: "Barlow Condensed", "Arial Narrow", sans-serif;
   --efd-display: "Montserrat", "Arial Black", sans-serif;
   --efd-body: "Poppins", system-ui, sans-serif;
 }
-:where(.efd) *, :where(.efd-mbar) * { box-sizing: border-box; }
+:where(.efd) *, :where(.efd-mbar) *, :where(.efd-hdr) *, :where(.efd-mmenu) * { box-sizing: border-box; }
 .efd, .efd-mbar, .efd, .efd-mbar { margin: 0; background: var(--efd-ink); color: #fff; }
 .efd, .efd-mbar { font-family: var(--efd-body); -webkit-font-smoothing: antialiased; }
 :where(.efd) img, :where(.efd-mbar) img { display: block; max-width: 100%; height: auto; }
-:where(.efd) a, :where(.efd-mbar) a { color: inherit; text-decoration: none; }
+:where(.efd) a, :where(.efd-mbar) a, :where(.efd-hdr) a, :where(.efd-mmenu) a { color: inherit; text-decoration: none; }
 .efd-sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-:where(.efd) :focus-visible { outline: 3px solid var(--efd-yellow); outline-offset: 3px; }
+:where(.efd, .efd-hdr, .efd-mmenu, .efd-mbar) :focus-visible { outline: 3px solid var(--efd-yellow); outline-offset: 3px; }
 
 
 .efd { container-type: inline-size; position: relative; overflow: hidden; }

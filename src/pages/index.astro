@@ -25,7 +25,6 @@ const c4 = byH2(txt(s4)[0].html!); // areas · different · fish
           imagesrcset="/media/efd/hero-1400.webp 1400w, /media/efd/hero-2400.webp 2400w" imagesizes="100vw" media="(min-width: 861px)" />
     <link rel="preload" href="/media/efd/hero-m-1200.webp" as="image" type="image/webp" fetchpriority="high" media="(max-width: 860px)" />
     <link rel="preload" href="/fonts/efd/montserrat-latin-900-italic.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/fonts/efd/barlow-condensed-latin-700-italic.woff2" as="font" type="font/woff2" crossorigin />
   </Fragment>
 
   <!-- Top of the page: owner-approved design (2026-11-15). Replaces the former photo hero; H1 text unchanged. -->
@@ -82,14 +81,6 @@ const c4 = byH2(txt(s4)[0].html!); // areas · different · fish
 </Base>
 
 <style is:global>
-  /* Home only: the design carries its own menu and phone bar. The site header appears once that menu has scrolled away. */
-  html:has(.efd):not(.efd-past) .hdr { opacity: 0; visibility: hidden; pointer-events: none; }
-  html:has(.efd) .hdr { transition: background 0.35s ease, height 0.35s ease, box-shadow 0.35s ease, opacity 0.3s ease, visibility 0.3s; }
-  html:has(.efd) .mbar { display: none !important; }
-  @media (max-width: 860px) {
-    html:has(.efd) #efc-chat-bubble { display: none !important; }
-    html:has(.efd) body { padding-bottom: 76px; }
-  }
   .hero-text h1 { margin-bottom: 0.4em; }
   .hero-text p { max-width: 900px; font-size: var(--fs-lead); line-height: 1.6; }
   .hero-text p strong { font-weight: 400; color: #f0f0f0; }

@@ -16,47 +16,7 @@ import '../styles/efd-home.css';
 
     <a class="efd-logo-hit" href="/"><span class="efd-sr">Exotic Fish Cabo — Home</span></a>
 
-    <nav class="efd-nav" aria-label="Main">
-      <ul>
-        <li class="efd-dd" id="efd-dd">
-          <button class="efd-dd-btn" type="button" aria-expanded="false" aria-controls="efd-dd-panel">Explore Fishing
-            <svg class="efd-caret" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 3.2 5 6.8l3.5-3.6" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
-          <ul class="efd-dd-panel" id="efd-dd-panel">
-            <li><a href="/fishing-calendar">Fishing Calendar</a></li>
-            <li><a href="/fishing-reports">Fishing Reports</a></li>
-            <li><a href="/family-fishing-charters-san-jose-del-cabo">Family Charters</a></li>
-            <li><a href="/what-to-bring-fishing-cabo">What to Bring</a></li>
-            <li><a href="/fish-species">Fish Species</a></li>
-            <li><a href="/cabo-fishing-tournaments">Tournaments</a></li>
-            <li><a href="/fishing-guide-for-newbies">Free guide</a></li>
-            <li><a href="/cabo-fishing-videos">Videos</a></li>
-            <li><a href="/cabo-fishing-faq">FAQ's</a></li>
-          </ul>
-        </li>
-        <li><a class="efd-nav-link" href="/" aria-current="page">Cabo Fishing</a></li>
-        <li><a class="efd-nav-link" href="/fishing-charters">Fishing Charters</a></li>
-        <li><a class="efd-nav-link" href="/fishing-boats">Fishing Boats</a></li>
-        <li><a class="efd-nav-link" href="/contact">Contact</a></li>
-      </ul>
-      <a class="efd-btn efd-btn-ghost" href={SITE.gpsUrl} target="_blank" rel="noopener" data-track="marina_gps"><span>Marina GPS</span></a>
-      <a class="efd-btn efd-btn-orange" href={SITE.bookUrl} data-track="book_now_header"><span style="display:inline-flex;align-items:center;gap:.45em"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 2h2v2h6V2h2v2h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3V2zm12 8H5v9h14v-9zM5 6v2h14V6H5zm2 6h3v3H7v-3z"/></svg>Book Now</span></a>
-    </nav>
 
-    <button class="efd-burger" type="button" aria-expanded="false" aria-controls="efd-mmenu" aria-label="Open menu"><span></span></button>
-    <div class="efd-mmenu" id="efd-mmenu" hidden data-lenis-prevent>
-      <details><summary>Explore Fishing ▾</summary>
-        <a href="/fishing-calendar">Fishing Calendar</a><a href="/fishing-reports">Fishing Reports</a>
-        <a href="/family-fishing-charters-san-jose-del-cabo">Family Charters</a><a href="/what-to-bring-fishing-cabo">What to Bring</a>
-        <a href="/fish-species">Fish Species</a><a href="/cabo-fishing-tournaments">Tournaments</a>
-        <a href="/fishing-guide-for-newbies">Free guide</a><a href="/cabo-fishing-videos">Videos</a><a href="/cabo-fishing-faq">FAQ's</a>
-      </details>
-      <a href="/" aria-current="page">Cabo Fishing</a>
-      <a href="/fishing-charters">Fishing Charters</a>
-      <a href="/fishing-boats">Fishing Boats</a>
-      <a href="/contact">Contact</a>
-      <a class="efd-btn efd-btn-ghost" href={SITE.gpsUrl} target="_blank" rel="noopener" data-track="marina_gps"><span>Marina GPS</span></a>
-      <a class="efd-btn efd-btn-orange" href={SITE.bookUrl} data-track="book_now_header"><span>Book Now</span></a>
-    </div>
 
     <p class="efd-kicker">San José del Cabo <span class="efd-dot">•</span> Mexico</p>
     <p class="efd-sr efd-brand-sr">Exotic Fish Cabo</p>
@@ -142,50 +102,4 @@ import '../styles/efd-home.css';
 </main>
 </div>
 
-<nav class="efd-mbar" aria-label="Quick actions">
-  <a class="efd-gps" href={SITE.gpsUrl} target="_blank" rel="noopener" data-track="marina_gps_mobile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg><span>Marina GPS</span></a>
-  <a class="efd-wa" href={`https://wa.me/${SITE.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener" data-efc-chat-open data-track="whatsapp_bar_mobile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .2A11.8 11.8 0 0 0 1.9 18L.2 24l6.2-1.6A11.8 11.8 0 1 0 12 .2zm0 21.6c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 1 1 12 21.8z"/></svg><span>WhatsApp</span></a>
-  <a class="efd-book" href={SITE.bookUrl} data-track="book_now_mobile">Book Now</a>
-</nav>
 
-<script>
-(() => {
-  const $ = (s: string, r: ParentNode = document): any => r.querySelector(s);
-  const dd = $('#efd-dd'), ddBtn = $('.efd-dd-btn'), panel = $('#efd-dd-panel');
-  if (dd && ddBtn && panel) {
-    const setDD = (on: boolean) => { dd.classList.toggle('open', on); ddBtn.setAttribute('aria-expanded', String(on)); };
-    let hoverT;
-    dd.addEventListener('pointerenter', (e: any) => { if (e.pointerType === 'mouse') { clearTimeout(hoverT); setDD(true); } });
-    dd.addEventListener('pointerleave', (e: any) => { if (e.pointerType === 'mouse') hoverT = setTimeout(() => setDD(false), 180); });
-    let lastPointer = '';
-    ddBtn.addEventListener('pointerdown', (e: any) => { lastPointer = e.pointerType; });
-    // mouse: hovering already opened it, so a click keeps it open; touch/keyboard: click toggles
-    ddBtn.addEventListener('click', () => { setDD(lastPointer === 'mouse' ? true : !dd.classList.contains('open')); lastPointer = ''; });
-    dd.addEventListener('keydown', (e: any) => {
-      const items = [...panel.querySelectorAll('a')], i = items.indexOf(document.activeElement);
-      if (e.key === 'Escape') { setDD(false); ddBtn.focus(); }
-      if (e.key === 'ArrowDown') { e.preventDefault(); setDD(true); items[Math.min(i + 1, items.length - 1)].focus(); }
-      if (e.key === 'ArrowUp') { e.preventDefault(); if (i <= 0) ddBtn.focus(); else items[i - 1].focus(); }
-    });
-    dd.addEventListener('focusout', (e: any) => { if (!dd.contains(e.relatedTarget)) setDD(false); });
-    document.addEventListener('click', (e: any) => { if (!dd.contains(e.target)) setDD(false); });
-  }
-  const burger = $('.efd-burger'), mm = $('#efd-mmenu');
-  if (burger && mm) {
-    const setMM = (on: boolean) => { mm.hidden = !on; burger.setAttribute('aria-expanded', String(on)); burger.setAttribute('aria-label', on ? 'Close menu' : 'Open menu'); document.documentElement.style.overflow = on ? 'hidden' : ''; document.body.style.overflow = on ? 'hidden' : ''; };
-    burger.addEventListener('click', () => setMM(mm.hidden));
-    mm.addEventListener('click', (e: any) => { if (e.target.closest('a')) setMM(false); });
-    document.addEventListener('keydown', (e: any) => { if (e.key === 'Escape' && !mm.hidden) setMM(false); });
-  }
-  // The site's fixed header stays hidden while the design's own menu is on screen, and comes back once it has scrolled away.
-  const root = document.documentElement, marks = [$('.efd-nav'), $('.efd-burger')].filter(Boolean);
-  if ('IntersectionObserver' in window && marks.length) {
-    const seen = new Set<Element>();
-    const io = new IntersectionObserver((es) => {
-      es.forEach((e: any) => { if (e.isIntersecting && getComputedStyle(e.target).display !== 'none') seen.add(e.target); else seen.delete(e.target); });
-      root.classList.toggle('efd-past', seen.size === 0);
-    });
-    marks.forEach((m) => io.observe(m));
-  } else root.classList.add('efd-past');
-})();
-</script>
