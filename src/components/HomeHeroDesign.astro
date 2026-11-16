@@ -1,0 +1,188 @@
+---
+// Homepage top section: design approved by the owner on 2026-11-15 (prototype artifact v15).
+// H1 text is the original one (src/data/original/home.json). Links/labels = live site (NAV, SITE).
+import { SITE } from '../data/site';
+import '../styles/efd-home.css';
+---
+<div class="efd">
+<main>
+  <!-- ============ HERO ============ -->
+  <section class="efd-sec efd-hero" aria-labelledby="efd-h1">
+    <picture class="efd-bg">
+      <source media="(max-width: 860px)" srcset="/media/efd/hero-m-1200.webp" width="1200" height="583">
+      <img src="/media/efd/hero-2400.webp" srcset="/media/efd/hero-1400.webp 1400w, /media/efd/hero-2400.webp 2400w" sizes="100vw" width="2400" height="1391" fetchpriority="high"
+           alt="Exotic Fish Cabo angler fighting a jumping blue marlin off San José del Cabo">
+    </picture>
+
+    <a class="efd-logo-hit" href="/"><span class="efd-sr">Exotic Fish Cabo — Home</span></a>
+
+    <nav class="efd-nav" aria-label="Main">
+      <ul>
+        <li class="efd-dd" id="efd-dd">
+          <button class="efd-dd-btn" type="button" aria-expanded="false" aria-controls="efd-dd-panel">Explore Fishing
+            <svg class="efd-caret" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 3.2 5 6.8l3.5-3.6" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
+          <ul class="efd-dd-panel" id="efd-dd-panel">
+            <li><a href="/fishing-calendar">Fishing Calendar</a></li>
+            <li><a href="/fishing-reports">Fishing Reports</a></li>
+            <li><a href="/family-fishing-charters-san-jose-del-cabo">Family Charters</a></li>
+            <li><a href="/what-to-bring-fishing-cabo">What to Bring</a></li>
+            <li><a href="/fish-species">Fish Species</a></li>
+            <li><a href="/cabo-fishing-tournaments">Tournaments</a></li>
+            <li><a href="/fishing-guide-for-newbies">Free guide</a></li>
+            <li><a href="/cabo-fishing-videos">Videos</a></li>
+            <li><a href="/cabo-fishing-faq">FAQ's</a></li>
+          </ul>
+        </li>
+        <li><a class="efd-nav-link" href="/" aria-current="page">Cabo Fishing</a></li>
+        <li><a class="efd-nav-link" href="/fishing-charters">Fishing Charters</a></li>
+        <li><a class="efd-nav-link" href="/fishing-boats">Fishing Boats</a></li>
+        <li><a class="efd-nav-link" href="/contact">Contact</a></li>
+      </ul>
+      <a class="efd-btn efd-btn-ghost" href={SITE.gpsUrl} target="_blank" rel="noopener" data-track="marina_gps"><span>Marina GPS</span></a>
+      <a class="efd-btn efd-btn-orange" href={SITE.bookUrl} data-track="book_now_header"><span style="display:inline-flex;align-items:center;gap:.45em"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 2h2v2h6V2h2v2h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3V2zm12 8H5v9h14v-9zM5 6v2h14V6H5zm2 6h3v3H7v-3z"/></svg>Book Now</span></a>
+    </nav>
+
+    <button class="efd-burger" type="button" aria-expanded="false" aria-controls="efd-mmenu" aria-label="Open menu"><span></span></button>
+    <div class="efd-mmenu" id="efd-mmenu" hidden data-lenis-prevent>
+      <details><summary>Explore Fishing ▾</summary>
+        <a href="/fishing-calendar">Fishing Calendar</a><a href="/fishing-reports">Fishing Reports</a>
+        <a href="/family-fishing-charters-san-jose-del-cabo">Family Charters</a><a href="/what-to-bring-fishing-cabo">What to Bring</a>
+        <a href="/fish-species">Fish Species</a><a href="/cabo-fishing-tournaments">Tournaments</a>
+        <a href="/fishing-guide-for-newbies">Free guide</a><a href="/cabo-fishing-videos">Videos</a><a href="/cabo-fishing-faq">FAQ's</a>
+      </details>
+      <a href="/" aria-current="page">Cabo Fishing</a>
+      <a href="/fishing-charters">Fishing Charters</a>
+      <a href="/fishing-boats">Fishing Boats</a>
+      <a href="/contact">Contact</a>
+      <a class="efd-btn efd-btn-ghost" href={SITE.gpsUrl} target="_blank" rel="noopener" data-track="marina_gps"><span>Marina GPS</span></a>
+      <a class="efd-btn efd-btn-orange" href={SITE.bookUrl} data-track="book_now_header"><span>Book Now</span></a>
+    </div>
+
+    <p class="efd-kicker">San José del Cabo <span class="efd-dot">•</span> Mexico</p>
+    <p class="efd-sr efd-brand-sr">Exotic Fish Cabo</p>
+    <h1 id="efd-h1">Cabo Fishing Charters <span class="efd-l2">– Departing from San José del Cabo</span></h1>
+    <img class="efd-swoosh" src="/media/efd/swoosh.png" width="580" height="102" alt="">
+
+    <ul class="efd-badges">
+      <li><img src="/media/efd/i-boat.png" width="150" height="54" alt="">10 Selected Boats<br>(23′ – 44′)</li>
+      <li><img src="/media/efd/i-fish.png" width="140" height="49" alt="">World-Class<br>Fishing</li>
+      <li><img src="/media/efd/i-hat.png" width="110" height="66" alt="">Experienced<br>Captains</li>
+      <li class="efd-laurel"><img src="/media/efd/i-laurel.png" width="170" height="122" alt="12+ years in Cabo"></li>
+    </ul>
+
+    <a class="efd-btn efd-btn-orange efd-btn-big" href={SITE.bookUrl} data-track="book_now_hero"><span style="display:inline-flex;align-items:center;gap:.45em"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 2h2v2h6V2h2v2h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3V2zm12 8H5v9h14v-9zM5 6v2h14V6H5zm2 6h3v3H7v-3z"/></svg>Book Now<span class="efd-arr" aria-hidden="true">»</span></span></a>
+  </section>
+
+  <!-- ============ SPECIES STRIP ============ -->
+  <section class="efd-sec efd-species" aria-label="Fish species">
+    <div class="efd-strip-wrap">
+      <svg class="efd-strip" viewBox="0 0 4796 840" role="list" aria-label="Fish species in Cabo">
+        <defs>
+          <linearGradient id="efd-sh" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".28"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+          <linearGradient id="efd-fade" x1="0" y1="20" x2="0" y2="740" gradientUnits="userSpaceOnUse"><stop offset=".55" stop-color="#05070b" stop-opacity="0"/><stop offset=".95" stop-color="#05070b" stop-opacity=".75"/></linearGradient>
+          <clipPath id="efd-c1"><polygon points="364,20 1255,20 991,740 100,740"/></clipPath>
+          <clipPath id="efd-c2"><polygon points="1255,20 2164,20 1891,740 991,740"/></clipPath>
+          <clipPath id="efd-c3"><polygon points="2164,20 2990,20 2718,740 1891,740"/></clipPath>
+          <clipPath id="efd-c4"><polygon points="2990,20 3891,20 3627,740 2718,740"/></clipPath>
+          <clipPath id="efd-c5"><polygon points="3891,20 4812,20 4676,740 3627,740"/></clipPath>
+        </defs>
+        <image href="/media/efd/strip-2400.webp" width="4796" height="840" preserveAspectRatio="none"/>
+        <g clip-path="url(#efd-c1)">
+          <image href="/media/efd/marlin-photo.webp" x="-150" y="-58" width="1695" height="961" preserveAspectRatio="xMidYMid meet"/>
+          <polygon points="364,20 1255,20 991,740 100,740" fill="url(#efd-fade)"/>
+        </g>
+        <image href="/media/efd/marlin-label.png" x="420" y="580" width="440" height="150" preserveAspectRatio="none"/>
+        <g clip-path="url(#efd-c2)">
+          <image href="/media/efd/tuna-photo.webp" x="958" y="-152" width="1308" height="894" preserveAspectRatio="xMidYMid meet"/>
+          <polygon points="1255,20 2164,20 1891,740 991,740" fill="url(#efd-fade)"/>
+        </g>
+        <image href="/media/efd/tuna-label.png" x="1340" y="580" width="320" height="150" preserveAspectRatio="none"/>
+        <g clip-path="url(#efd-c3)">
+          <image href="/media/efd/dorado-photo.webp" x="1860" y="5" width="1170" height="780" preserveAspectRatio="xMidYMid meet"/>
+          <polygon points="2164,20 2990,20 2718,740 1891,740" fill="url(#efd-fade)"/>
+        </g>
+        <image href="/media/efd/dorado-label.png" x="2150" y="580" width="440" height="150" preserveAspectRatio="none"/>
+        <g clip-path="url(#efd-c4)">
+          <image href="/media/efd/wahoo-photo.webp" x="2712" y="10" width="1183" height="780" preserveAspectRatio="xMidYMid meet"/>
+          <polygon points="2990,20 3891,20 3627,740 2718,740" fill="url(#efd-fade)"/>
+        </g>
+        <image href="/media/efd/wahoo-label.png" x="3060" y="580" width="380" height="150" preserveAspectRatio="none"/>
+        <g clip-path="url(#efd-c5)">
+          <image href="/media/efd/rooster-photo.webp" x="3523" y="-126" width="1330" height="912" preserveAspectRatio="xMidYMid meet"/>
+          <polygon points="3891,20 4812,20 4676,740 3627,740" fill="url(#efd-fade)"/>
+        </g>
+        <image href="/media/efd/rooster-label.png" x="3870" y="580" width="650" height="150" preserveAspectRatio="none"/>
+        <g stroke="#05070b" stroke-width="26" stroke-linecap="square" aria-hidden="true"><line x1="1255" y1="14" x2="991" y2="746"/><line x1="2164" y1="14" x2="1891" y2="746"/><line x1="2990" y1="14" x2="2718" y2="746"/><line x1="3891" y1="14" x2="3627" y2="746"/></g>
+        <g fill="none" stroke="#fb7704" stroke-width="20" pointer-events="none" aria-hidden="true"><polygon clip-path="url(#efd-c1)" points="364,20 1255,20 991,740 100,740"/><polygon clip-path="url(#efd-c2)" points="1255,20 2164,20 1891,740 991,740"/><polygon clip-path="url(#efd-c3)" points="2164,20 2990,20 2718,740 1891,740"/><polygon clip-path="url(#efd-c4)" points="2990,20 3891,20 3627,740 2718,740"/><polygon clip-path="url(#efd-c5)" points="3891,20 4812,20 4676,740 3627,740"/></g>
+        <image href="/media/efd/strip-strokes.png" width="4796" height="840" preserveAspectRatio="none" pointer-events="none" aria-hidden="true"/>
+        <a class="efd-fish" href="/marlin-fishing-cabo" role="listitem" aria-label="Marlin fishing"><g clip-path="url(#efd-c1)"><polygon class="efd-shade" points="364,20 1255,20 991,740 100,740"/><rect class="efd-sheen" x="500" y="0" width="420" height="840" fill="url(#efd-sh)"/></g><polygon class="efd-edge" points="364,20 1255,20 991,740 100,740"/></a>
+        <a class="efd-fish" href="/tuna-fishing-cabo" role="listitem" aria-label="Tuna fishing"><g clip-path="url(#efd-c2)"><polygon class="efd-shade" points="1255,20 2164,20 1891,740 991,740"/><rect class="efd-sheen" x="1400" y="0" width="420" height="840" fill="url(#efd-sh)"/></g><polygon class="efd-edge" points="1255,20 2164,20 1891,740 991,740"/></a>
+        <a class="efd-fish" href="/dorado-fishing-cabo" role="listitem" aria-label="Dorado fishing"><g clip-path="url(#efd-c3)"><polygon class="efd-shade" points="2164,20 2990,20 2718,740 1891,740"/><rect class="efd-sheen" x="2230" y="0" width="420" height="840" fill="url(#efd-sh)"/></g><polygon class="efd-edge" points="2164,20 2990,20 2718,740 1891,740"/></a>
+        <a class="efd-fish" href="/wahoo-fishing-cabo" role="listitem" aria-label="Wahoo fishing"><g clip-path="url(#efd-c4)"><polygon class="efd-shade" points="2990,20 3891,20 3627,740 2718,740"/><rect class="efd-sheen" x="3100" y="0" width="420" height="840" fill="url(#efd-sh)"/></g><polygon class="efd-edge" points="2990,20 3891,20 3627,740 2718,740"/></a>
+        <a class="efd-fish" href="/roosterfish-fishing-cabo" role="listitem" aria-label="Roosterfish fishing"><g clip-path="url(#efd-c5)"><polygon class="efd-shade" points="3891,20 4812,20 4676,740 3627,740"/><rect class="efd-sheen" x="4000" y="0" width="420" height="840" fill="url(#efd-sh)"/></g><polygon class="efd-edge" points="3891,20 4812,20 4676,740 3627,740"/></a>
+      </svg>
+    </div>
+    <p class="efd-swipe" aria-hidden="true"><b>‹</b> Swipe <b>›</b></p>
+  </section>
+
+  <!-- ============ FLEET ============ -->
+  <section class="efd-sec efd-fleet" aria-labelledby="efd-fleet-h">
+    <picture class="efd-bg">
+      <source media="(max-width: 860px)" srcset="/media/efd/fleet-1200.webp">
+      <img src="/media/efd/fleet-2400.webp" srcset="/media/efd/fleet-1200.webp 1200w, /media/efd/fleet-2400.webp 2400w" sizes="100vw" width="2400" height="815" loading="lazy" alt="Sportfishing boat running at sunset off Los Cabos">
+    </picture>
+    <div class="efd-fl-copy">
+      <p class="efd-eyebrow">Puerto Los Cabos Marina</p>
+      <p class="efd-h2" id="efd-fleet-h"><span class="efd-chrome">Fishing Boats for</span><span class="efd-chrome">Couples, Families,</span><span class="efd-hot">and Groups</span></p>
+      <img class="efd-fl-swoosh" src="/media/efd/swoosh.png" width="580" height="102" alt="">
+      <p class="efd-fl-p">Choosing the right fishing boat can make a significant difference to your experience. Exotic Fish Cabo offers several boat styles to accommodate different group sizes, fishing preferences, and budgets.</p>
+      <a class="efd-btn efd-btn-line" href="/fishing-boats"><span>Explore Our Fishing Boats</span><span class="efd-arr" aria-hidden="true">»</span></a>
+    </div>
+  </section>
+</main>
+</div>
+
+<nav class="efd-mbar" aria-label="Quick actions">
+  <a class="efd-gps" href={SITE.gpsUrl} target="_blank" rel="noopener" data-track="marina_gps_mobile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg><span>Marina GPS</span></a>
+  <a class="efd-wa" href={`https://wa.me/${SITE.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener" data-efc-chat-open data-track="whatsapp_bar_mobile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .2A11.8 11.8 0 0 0 1.9 18L.2 24l6.2-1.6A11.8 11.8 0 1 0 12 .2zm0 21.6c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 1 1 12 21.8z"/></svg><span>WhatsApp</span></a>
+  <a class="efd-book" href={SITE.bookUrl} data-track="book_now_mobile">Book Now</a>
+</nav>
+
+<script is:inline>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const dd = $('#efd-dd'), ddBtn = $('.efd-dd-btn'), panel = $('#efd-dd-panel');
+  if (dd && ddBtn && panel) {
+    const setDD = (on) => { dd.classList.toggle('open', on); ddBtn.setAttribute('aria-expanded', String(on)); };
+    let hoverT;
+    dd.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') { clearTimeout(hoverT); setDD(true); } });
+    dd.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') hoverT = setTimeout(() => setDD(false), 180); });
+    ddBtn.addEventListener('click', () => setDD(!dd.classList.contains('open')));
+    dd.addEventListener('keydown', (e) => {
+      const items = [...panel.querySelectorAll('a')], i = items.indexOf(document.activeElement);
+      if (e.key === 'Escape') { setDD(false); ddBtn.focus(); }
+      if (e.key === 'ArrowDown') { e.preventDefault(); setDD(true); items[Math.min(i + 1, items.length - 1)].focus(); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); if (i <= 0) ddBtn.focus(); else items[i - 1].focus(); }
+    });
+    dd.addEventListener('focusout', (e) => { if (!dd.contains(e.relatedTarget)) setDD(false); });
+    document.addEventListener('click', (e) => { if (!dd.contains(e.target)) setDD(false); });
+  }
+  const burger = $('.efd-burger'), mm = $('#efd-mmenu');
+  if (burger && mm) {
+    const setMM = (on) => { mm.hidden = !on; burger.setAttribute('aria-expanded', String(on)); burger.setAttribute('aria-label', on ? 'Close menu' : 'Open menu'); document.documentElement.style.overflow = on ? 'hidden' : ''; document.body.style.overflow = on ? 'hidden' : ''; };
+    burger.addEventListener('click', () => setMM(mm.hidden));
+    mm.addEventListener('click', (e) => { if (e.target.closest('a')) setMM(false); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !mm.hidden) setMM(false); });
+  }
+  // The site's fixed header stays hidden while the design's own menu is on screen, and comes back once it has scrolled away.
+  const root = document.documentElement, marks = [$('.efd-nav'), $('.efd-burger')].filter(Boolean);
+  if ('IntersectionObserver' in window && marks.length) {
+    const seen = new Set();
+    const io = new IntersectionObserver((es) => {
+      es.forEach((e) => { if (e.isIntersecting && getComputedStyle(e.target).display !== 'none') seen.add(e.target); else seen.delete(e.target); });
+      root.classList.toggle('efd-past', seen.size === 0);
+    });
+    marks.forEach((m) => io.observe(m));
+  } else root.classList.add('efd-past');
+})();
+</script>

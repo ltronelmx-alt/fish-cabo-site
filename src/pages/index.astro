@@ -2,7 +2,7 @@
 // HOME — content, headings, links, alt texts, meta and JSON-LD are the ORIGINAL ones (verbatim,
 // from src/data/original/home.json). This file only decides the layout/design.
 import Base from '../layouts/Base.astro';
-import Hero from '../components/Hero.astro';
+import HomeHeroDesign from '../components/HomeHeroDesign.astro';
 import Rich from '../components/Rich.astro';
 import OImg from '../components/OImg.astro';
 import OBtn from '../components/OBtn.astro';
@@ -20,9 +20,16 @@ const c1 = byH2(txt(s1)[0].html!); // intro · why choose · about · book
 const c4 = byH2(txt(s4)[0].html!); // areas · different · fish
 ---
 <Base original={P}>
-  <Hero variant="home" position="60% 30%" image={{ src: s0.bg!.path, alt: s0.bg!.alt }}>
-    {txt(s0).map((b) => <div class="hero-text" set:html={b.html} />)}
-  </Hero>
+  <Fragment slot="head">
+    <link rel="preload" href="/media/efd/hero-2400.webp" as="image" type="image/webp" fetchpriority="high"
+          imagesrcset="/media/efd/hero-1400.webp 1400w, /media/efd/hero-2400.webp 2400w" imagesizes="100vw" media="(min-width: 861px)" />
+    <link rel="preload" href="/media/efd/hero-m-1200.webp" as="image" type="image/webp" fetchpriority="high" media="(max-width: 860px)" />
+    <link rel="preload" href="/fonts/efd/montserrat-latin-900-italic.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/efd/barlow-condensed-latin-700-italic.woff2" as="font" type="font/woff2" crossorigin />
+  </Fragment>
+
+  <!-- Top of the page: owner-approved design (2026-11-15). Replaces the former photo hero; H1 text unchanged. -->
+  <HomeHeroDesign />
 
   <!-- Section 1 (one original text block, shown as 4 bands) -->
   <section class="section bg-white"><div class="container"><Rich html={c1[0]} class="reveal intro" /></div></section>
@@ -75,6 +82,14 @@ const c4 = byH2(txt(s4)[0].html!); // areas · different · fish
 </Base>
 
 <style is:global>
+  /* Home only: the design carries its own menu and phone bar. The site header appears once that menu has scrolled away. */
+  html:has(.efd):not(.efd-past) .hdr { opacity: 0; visibility: hidden; pointer-events: none; }
+  html:has(.efd) .hdr { transition: background 0.35s ease, height 0.35s ease, box-shadow 0.35s ease, opacity 0.3s ease, visibility 0.3s; }
+  html:has(.efd) .mbar { display: none !important; }
+  @media (max-width: 860px) {
+    html:has(.efd) #efc-chat-bubble { display: none !important; }
+    html:has(.efd) body { padding-bottom: 76px; }
+  }
   .hero-text h1 { margin-bottom: 0.4em; }
   .hero-text p { max-width: 900px; font-size: var(--fs-lead); line-height: 1.6; }
   .hero-text p strong { font-weight: 400; color: #f0f0f0; }
