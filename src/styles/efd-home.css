@@ -251,9 +251,9 @@
   .efd .efd-strip-wrap, .efd .efd-swipe { display: none; }
   .efd .efd-car { display: block; padding: 6px 0 4px; }
   .efd .efd-car-track { list-style: none; margin: 0; display: flex; gap: 10px; overflow-x: auto; overscroll-behavior-x: contain;
-    scroll-snap-type: x mandatory; scroll-padding-inline: 13%; padding: 4px 13%; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    scroll-snap-type: x mandatory; --efd-cw: 54.8vw; padding: 4px calc((100% - var(--efd-cw)) / 2); scrollbar-width: none; -webkit-overflow-scrolling: touch; }
   .efd .efd-car-track::-webkit-scrollbar { display: none; }
-  .efd .efd-card { flex: 0 0 74%; max-width: 380px; scroll-snap-align: center; }
+  .efd .efd-card { flex: 0 0 var(--efd-cw); scroll-snap-align: center; scroll-snap-stop: always; }
   .efd .efd-card a { display: block; border-radius: 4px; transition: transform .25s, filter .25s; -webkit-tap-highlight-color: transparent; }
   .efd .efd-card svg { display: block; width: 100%; height: auto; overflow: visible; }
   .efd .efd-card-edge { fill: none; stroke: #fb7704; stroke-width: 20; transition: stroke .2s; }
@@ -271,12 +271,35 @@
   .efd .efd-cue { left: 50%; top: calc(100vw * 10.5 / 16 - 52px); transform: scale(.8); transform-origin: 50% 0; }
 }
 @media (min-width: 561px) and (max-width: 860px) {
-  .efd .efd-card { flex-basis: 56%; }
-  .efd .efd-car-track { padding-inline: 22%; scroll-padding-inline: 22%; }
+  .efd .efd-car-track { --efd-cw: 31.4vw; }
   .efd .efd-since-t { font-size: 14.5px; }
 }
 @media (max-width: 860px) and (orientation: landscape) and (max-height: 500px) {
   .efd .efd-cue { top: calc(62vh - 52px); }
-  .efd .efd-card { flex-basis: 42%; }
-  .efd .efd-car-track { padding-inline: 29%; scroll-padding-inline: 29%; }
+  .efd .efd-car-track { --efd-cw: 17.6vw; }
+}
+
+/* ---- hero photo = the owner's original file (2026-11-16). No CSS filter on it; only position and size. ----
+   Desktop: same 4796-unit grid as the rest of the hero. The photo starts at x=560 and is 3.125× its pixel width,
+   so the whole marlin is visible and clear of the title and the menu; the decor layer is transparent over it. */
+.efd .efd-stage { position: absolute; inset: 0; overflow: hidden; z-index: 0; background: var(--efd-ink); }
+.efd .efd-stage-in { position: absolute; left: 0; top: 0; width: calc(4796 * var(--efd-u)); height: calc(2780 * var(--efd-u)); }
+.efd .efd-photo { position: absolute; left: calc(560 * var(--efd-u)); top: 0; width: calc(4659.375 * var(--efd-u)); max-width: none; height: auto; }
+.efd .efd-decor { position: absolute; inset: 0; width: 100%; max-width: none; height: 100% !important; }
+.efd .efd-hero-logo { position: absolute; left: calc(343 * var(--efd-u)); top: calc(19.35 * var(--efd-u)); width: calc(911.4 * var(--efd-u)); max-width: none; height: auto; }
+.efd .efd-hero > :not(.efd-stage) { z-index: 3; }
+.efd .efd-hero > .efd-logo-hit { z-index: 5; }
+@media (max-width: 860px) {
+  /* phones/tablets: show the right part of the same stage (x 1170 → 4820): title + whole marlin; the header shows the logo */
+  .efd .efd-stage { position: relative; inset: auto; height: calc(100vw * 10.5 / 16); }
+  .efd .efd-stage-in { --efd-su: calc(100vw / 3650); left: calc(-1170 * var(--efd-su)); width: calc(4796 * var(--efd-su)); height: calc(2780 * var(--efd-su)); }
+  .efd .efd-photo { left: calc(560 * var(--efd-su)); width: calc(4659.375 * var(--efd-su)); }
+  .efd .efd-hero-logo { display: none; }
+  /* fade into the black below: only the band under the marlin (below its tail) */
+  .efd .efd-stage::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 17%; background: linear-gradient(transparent, var(--efd-ink)); pointer-events: none; }
+}
+@media (max-width: 860px) and (orientation: landscape) and (max-height: 500px) {
+  /* sideways: the same picture, scaled to 62% of the screen height and centred, so the whole marlin stays visible */
+  .efd .efd-stage { height: 62vh; width: calc(62vh * 16 / 10.5); margin: 0 auto; }
+  .efd .efd-stage-in { --efd-su: calc(62vh * 16 / 10.5 / 3650); }
 }

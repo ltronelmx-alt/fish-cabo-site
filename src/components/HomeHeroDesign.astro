@@ -18,11 +18,16 @@ const FISH = FISH0.map((f) => { const p = f.pts.split(' ').map((q) => q.split(',
 <main>
   <!-- ============ HERO ============ -->
   <section class="efd-sec efd-hero" aria-labelledby="efd-h1">
-    <picture class="efd-bg">
-      <source media="(max-width: 860px)" srcset="/media/efd/hero-m-800.webp 800w, /media/efd/hero-m-1200.webp 1200w" sizes="100vw" width="1200" height="583">
-      <img src="/media/efd/hero-2400.webp" srcset="/media/efd/hero-1400.webp 1400w, /media/efd/hero-2400.webp 2400w" sizes="100vw" width="2400" height="1391" fetchpriority="high"
-           alt="Exotic Fish Cabo angler fighting a jumping blue marlin off San José del Cabo">
-    </picture>
+    <!-- Hero photo: the owner's original file, served byte for byte (no resize, no re-encode). Title, darkening and
+         brush strokes are a separate transparent layer that is fully transparent over the marlin. -->
+    <div class="efd-stage">
+      <div class="efd-stage-in">
+        <img class="efd-photo" src="/media/efd/hero-marlin-original.webp" width="1491" height="1055" fetchpriority="high"
+             alt="Exotic Fish Cabo angler fighting a jumping blue marlin off San José del Cabo">
+        <img class="efd-decor" src="/media/efd/hero-decor-2400.webp" srcset="/media/efd/hero-decor-1200.webp 1200w, /media/efd/hero-decor-2400.webp 2400w" sizes="100vw" width="2398" height="1390" alt="">
+        <img class="efd-hero-logo" src="/media/efd/logo-exotic.webp" width="1280" height="1016" loading="lazy" alt="">
+      </div>
+    </div>
 
     <a class="efd-logo-hit" href="/"><span class="efd-sr">Exotic Fish Cabo — Home</span></a>
 
@@ -148,23 +153,47 @@ const FISH = FISH0.map((f) => { const p = f.pts.split(' ').map((q) => q.split(',
 </div>
 
 <script>
-  // Species carousel (≤860px): manual only, position indicator, prev/next buttons.
+  // Species carousel (≤860px): manual only, endless in both directions (Marlin → … → Roosterfish → Marlin),
+  // position indicator, prev/next buttons. The loop uses a copy of the five cards on each side that are made here in the
+  // browser (not in the HTML): hidden from screen readers and from the keyboard, and never seen by search engines.
   const track = document.getElementById('efd-car-track');
   const idx = document.querySelector('.efd-car-i');
   if (track && idx) {
-    const cards = Array.from(track.children) as HTMLElement[];
+    const real = Array.from(track.children) as HTMLElement[];
+    const N = real.length;
+    const mk = (el: HTMLElement) => { const c = el.cloneNode(true) as HTMLElement; c.setAttribute('aria-hidden', 'true'); c.dataset.clone = '1'; c.querySelectorAll('a').forEach((a) => a.setAttribute('tabindex', '-1')); return c; };
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const current = () => {
-      const mid = track.scrollLeft + track.clientWidth / 2;
-      let best = 0, d = Infinity;
-      cards.forEach((c, i) => { const m = c.offsetLeft + c.offsetWidth / 2; if (Math.abs(m - mid) < d) { d = Math.abs(m - mid); best = i; } });
-      return best;
+    let all = real.slice(), K = 0;                                  // copies are added after load (keeps the first paint light)
+    const centre = (c: HTMLElement) => c.offsetLeft + c.offsetWidth / 2 - track.clientWidth / 2;
+    const nearest = () => { const mid = track.scrollLeft + track.clientWidth / 2; let best = 0, d = Infinity; all.forEach((c, i) => { const m = c.offsetLeft + c.offsetWidth / 2; if (Math.abs(m - mid) < d) { d = Math.abs(m - mid); best = i; } }); return best; };
+    const realOf = (i: number) => ((i - K) % N + N) % N;
+    const jump = (i: number) => { const prev = track.style.scrollSnapType; track.style.scrollSnapType = 'none'; track.scrollLeft = centre(all[i]); track.style.scrollSnapType = prev; };
+    const loop = () => {
+      if (K) return;
+      const keep = realOf(nearest()), max = track.scrollWidth - track.clientWidth, before = track.scrollLeft - Math.max(0, Math.min(max, centre(all[nearest()])));
+      real.forEach((el) => track.insertBefore(mk(el), real[0]));   // a copy of the five cards on each side
+      real.forEach((el) => track.appendChild(mk(el)));
+      K = N; all = Array.from(track.children) as HTMLElement[];
+      const prev = track.style.scrollSnapType; track.style.scrollSnapType = 'none'; track.scrollLeft = centre(all[K + keep]) + before; track.style.scrollSnapType = prev;
     };
-    const go = (i: number) => { const c = cards[Math.max(0, Math.min(cards.length - 1, i))]; track.scrollTo({ left: c.offsetLeft + c.offsetWidth / 2 - track.clientWidth / 2, behavior: reduce ? 'auto' : 'smooth' }); };
-    let raf = 0;
-    track.addEventListener('scroll', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { idx.textContent = String(current() + 1); }); }, { passive: true });
-    document.querySelectorAll<HTMLButtonElement>('.efd-car-btn').forEach((b) => b.addEventListener('click', () => go(current() + Number(b.dataset.dir))));
-    cards.forEach((c, i) => c.querySelector('a')?.addEventListener('focus', () => go(i)));
+    // made shortly after the page has loaded (never during a finger movement), or at once if the visitor uses the buttons / keyboard first
+    const idle = () => ('requestIdleCallback' in window ? (window as any).requestIdleCallback(loop, { timeout: 1500 }) : setTimeout(loop, 600));
+    if (document.readyState === 'complete') idle(); else addEventListener('load', idle, { once: true });
+    const settle = () => { const i = nearest(); if (all[i].dataset.clone) jump(K + realOf(i)); idx.textContent = String(realOf(nearest()) + 1); };
+    const go = (i: number) => track.scrollTo({ left: centre(all[i]), behavior: reduce ? 'auto' : 'smooth' });
+    let t = 0, raf = 0;
+    track.addEventListener('scroll', () => {
+      cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { idx.textContent = String(realOf(nearest()) + 1); });
+      clearTimeout(t); t = window.setTimeout(settle, 140);   // fallback where 'scrollend' is not supported
+    }, { passive: true });
+    track.addEventListener('scrollend', () => { clearTimeout(t); settle(); });
+    let rw = 0; addEventListener('resize', () => { cancelAnimationFrame(rw); rw = requestAnimationFrame(() => jump(K + realOf(nearest()))); });
+    document.querySelectorAll<HTMLButtonElement>('.efd-car-btn').forEach((b) => b.addEventListener('click', () => {
+      loop();
+      let i = nearest(); if (all[i].dataset.clone) { jump(K + realOf(i)); i = K + realOf(i); }
+      go(i + Number(b.dataset.dir));
+    }));
+    real.forEach((c, i) => c.querySelector('a')?.addEventListener('focus', () => { loop(); go(K + i); }));
   }
 </script>
 
