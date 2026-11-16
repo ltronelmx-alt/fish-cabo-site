@@ -148,38 +148,41 @@ import '../styles/efd-home.css';
   <a class="efd-book" href={SITE.bookUrl} data-track="book_now_mobile">Book Now</a>
 </nav>
 
-<script is:inline>
+<script>
 (() => {
-  const $ = (s, r = document) => r.querySelector(s);
+  const $ = (s: string, r: ParentNode = document): any => r.querySelector(s);
   const dd = $('#efd-dd'), ddBtn = $('.efd-dd-btn'), panel = $('#efd-dd-panel');
   if (dd && ddBtn && panel) {
-    const setDD = (on) => { dd.classList.toggle('open', on); ddBtn.setAttribute('aria-expanded', String(on)); };
+    const setDD = (on: boolean) => { dd.classList.toggle('open', on); ddBtn.setAttribute('aria-expanded', String(on)); };
     let hoverT;
-    dd.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') { clearTimeout(hoverT); setDD(true); } });
-    dd.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') hoverT = setTimeout(() => setDD(false), 180); });
-    ddBtn.addEventListener('click', () => setDD(!dd.classList.contains('open')));
-    dd.addEventListener('keydown', (e) => {
+    dd.addEventListener('pointerenter', (e: any) => { if (e.pointerType === 'mouse') { clearTimeout(hoverT); setDD(true); } });
+    dd.addEventListener('pointerleave', (e: any) => { if (e.pointerType === 'mouse') hoverT = setTimeout(() => setDD(false), 180); });
+    let lastPointer = '';
+    ddBtn.addEventListener('pointerdown', (e: any) => { lastPointer = e.pointerType; });
+    // mouse: hovering already opened it, so a click keeps it open; touch/keyboard: click toggles
+    ddBtn.addEventListener('click', () => { setDD(lastPointer === 'mouse' ? true : !dd.classList.contains('open')); lastPointer = ''; });
+    dd.addEventListener('keydown', (e: any) => {
       const items = [...panel.querySelectorAll('a')], i = items.indexOf(document.activeElement);
       if (e.key === 'Escape') { setDD(false); ddBtn.focus(); }
       if (e.key === 'ArrowDown') { e.preventDefault(); setDD(true); items[Math.min(i + 1, items.length - 1)].focus(); }
       if (e.key === 'ArrowUp') { e.preventDefault(); if (i <= 0) ddBtn.focus(); else items[i - 1].focus(); }
     });
-    dd.addEventListener('focusout', (e) => { if (!dd.contains(e.relatedTarget)) setDD(false); });
-    document.addEventListener('click', (e) => { if (!dd.contains(e.target)) setDD(false); });
+    dd.addEventListener('focusout', (e: any) => { if (!dd.contains(e.relatedTarget)) setDD(false); });
+    document.addEventListener('click', (e: any) => { if (!dd.contains(e.target)) setDD(false); });
   }
   const burger = $('.efd-burger'), mm = $('#efd-mmenu');
   if (burger && mm) {
-    const setMM = (on) => { mm.hidden = !on; burger.setAttribute('aria-expanded', String(on)); burger.setAttribute('aria-label', on ? 'Close menu' : 'Open menu'); document.documentElement.style.overflow = on ? 'hidden' : ''; document.body.style.overflow = on ? 'hidden' : ''; };
+    const setMM = (on: boolean) => { mm.hidden = !on; burger.setAttribute('aria-expanded', String(on)); burger.setAttribute('aria-label', on ? 'Close menu' : 'Open menu'); document.documentElement.style.overflow = on ? 'hidden' : ''; document.body.style.overflow = on ? 'hidden' : ''; };
     burger.addEventListener('click', () => setMM(mm.hidden));
-    mm.addEventListener('click', (e) => { if (e.target.closest('a')) setMM(false); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !mm.hidden) setMM(false); });
+    mm.addEventListener('click', (e: any) => { if (e.target.closest('a')) setMM(false); });
+    document.addEventListener('keydown', (e: any) => { if (e.key === 'Escape' && !mm.hidden) setMM(false); });
   }
   // The site's fixed header stays hidden while the design's own menu is on screen, and comes back once it has scrolled away.
   const root = document.documentElement, marks = [$('.efd-nav'), $('.efd-burger')].filter(Boolean);
   if ('IntersectionObserver' in window && marks.length) {
-    const seen = new Set();
+    const seen = new Set<Element>();
     const io = new IntersectionObserver((es) => {
-      es.forEach((e) => { if (e.isIntersecting && getComputedStyle(e.target).display !== 'none') seen.add(e.target); else seen.delete(e.target); });
+      es.forEach((e: any) => { if (e.isIntersecting && getComputedStyle(e.target).display !== 'none') seen.add(e.target); else seen.delete(e.target); });
       root.classList.toggle('efd-past', seen.size === 0);
     });
     marks.forEach((m) => io.observe(m));
