@@ -64,30 +64,31 @@ for (const [vw, label] of [[375, 'mobile'], [768, 'tablet'], [1440, 'desktop']])
   }
   rec('Layout', `no horizontal scrolling on ${routes.length} pages (${label} ${vw}px)`, overflow.length === 0, overflow.join(', '));
   await p.goto(BASE + '/', { waitUntil: 'networkidle' });
-  if (vw >= 801) {
-    await p.hover('.dd-toggle'); await p.waitForTimeout(200);
-    rec('Navigation', `dropdown opens on hover (${label})`, await p.isVisible('.dd-panel'));
-    await p.mouse.move(5, 600); await p.click('.dd-toggle'); await p.waitForTimeout(150);
-    rec('Navigation', `dropdown opens on click (${label})`, await p.isVisible('.dd-panel'));
+  if (vw >= 861) {
+    await p.hover('.efd-dd-btn'); await p.waitForTimeout(200);
+    rec('Navigation', `dropdown opens on hover (${label})`, await p.isVisible('#efd-dd-panel'));
+    await p.mouse.move(5, 600); await p.click('.efd-dd-btn'); await p.waitForTimeout(150);
+    rec('Navigation', `dropdown opens on click (${label})`, await p.isVisible('#efd-dd-panel'));
     await p.keyboard.press('Escape'); await p.waitForTimeout(150);
     await p.mouse.move(5, 600); await p.waitForTimeout(150);
-    rec('Accessibility', `Escape closes dropdown (${label})`, !(await p.evaluate(() => document.querySelector('.dd')?.classList.contains('open'))));
-    const bookHref = await p.getAttribute('.hdr-cta .cta-book', 'href'); rec('Booking', 'header BOOK NOW → /book-now', bookHref === '/book-now', bookHref);
-    const gps = await p.getAttribute('.hdr-cta .cta-gps', 'href'); rec('Directions', 'MARINA GPS → 23.060275,-109.670677', /23\.060275%2C-109\.670677/.test(gps), gps);
+    rec('Accessibility', `Escape closes dropdown (${label})`, !(await p.evaluate(() => document.querySelector('#efd-dd')?.classList.contains('open'))));
+    const bookHref = await p.getAttribute('.efd-hdr .efd-btn-orange', 'href'); rec('Booking', 'header BOOK NOW → /book-now', bookHref === '/book-now', bookHref);
+    const gps = await p.getAttribute('.efd-hdr .efd-btn-ghost', 'href'); rec('Directions', 'MARINA GPS → 23.060275,-109.670677', /23\.060275%2C-109\.670677/.test(gps), gps);
   } else {
-    await p.click('.burger'); await p.waitForTimeout(200);
-    rec('Navigation', `mobile menu opens (${label})`, await p.isVisible('#mobile-menu'));
-    await p.click('.mmenu summary'); await p.waitForTimeout(150);
-    rec('Navigation', `mobile "Explore Fishing" submenu expands (${label})`, await p.isVisible('.mmenu-sub a'));
-    await p.click('.burger'); await p.waitForTimeout(150);
-    rec('Navigation', `mobile menu closes (${label})`, !(await p.isVisible('#mobile-menu')));
-    rec('Booking', `mobile bottom bar BOOK NOW visible (${label})`, await p.isVisible('.mbar .cta-book'));
+    await p.click('.efd-burger'); await p.waitForTimeout(200);
+    rec('Navigation', `mobile menu opens (${label})`, await p.isVisible('#efd-mmenu'));
+    await p.click('#efd-mmenu summary'); await p.waitForTimeout(150);
+    rec('Navigation', `mobile "Explore Fishing" submenu expands (${label})`, await p.isVisible('#efd-mmenu details a'));
+    await p.click('.efd-burger'); await p.waitForTimeout(150);
+    rec('Navigation', `mobile menu closes (${label})`, !(await p.isVisible('#efd-mmenu')));
+    rec('Booking', `mobile bottom bar BOOK NOW visible (${label})`, await p.isVisible('.efd-mbar .efd-book'));
   }
   // Chatbot: 3 languages
   if (label !== 'tablet') for (const [lang, q, expect] of [['en', 'How much does it cost?', /\$|USD|price/i], ['es', '¿Cuánto cuesta?', /\$|USD|precio/i], ['fr', 'Quel est le prix ?', /\$|USD|prix/i]]) {
     await p.goto(BASE + '/contact', { waitUntil: 'networkidle' });
     await p.evaluate(() => localStorage.clear());
-    await p.click('#efc-chat-bubble'); await p.waitForTimeout(300);
+    // phones: no floating bubble (owner 2026-11-11), the bottom bar's WhatsApp button opens the assistant
+    await p.click(vw >= 861 ? '#efc-chat-bubble' : '.efd-mbar [data-efc-chat-open]'); await p.waitForTimeout(300);
     await p.click(`#btn-${lang}`); await p.waitForTimeout(200);
     await p.fill('#efc-input', q); await p.keyboard.press('Enter'); await p.waitForTimeout(1800);
     const last = await p.evaluate(() => [...document.querySelectorAll('#efc-messages .efc-bot')].pop()?.textContent || '');

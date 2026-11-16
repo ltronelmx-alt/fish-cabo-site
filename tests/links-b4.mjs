@@ -5,7 +5,8 @@ const results = []; const t = (n, ok, i = '') => { results.push(ok); console.log
 const page = (f) => readFileSync(`dist/${f}`, 'utf8');
 for (const f of ['index.html', 'cabo-fishing.html']) {
   const h = page(f);
-  const faq = [...h.matchAll(/<a [^>]*href="([^"]+)"[^>]*>Book Now<\/a>/g)].map((m) => m[1]);
+  // the site-wide phone bar's own Book Now (class efd-book) is not an FAQ button
+  const faq = [...h.matchAll(/<a (?![^>]*class="efd-book")[^>]*href="([^"]+)"[^>]*>Book Now<\/a>/g)].map((m) => m[1]);
   t(`${f}: FAQ "Book Now" → /book-now`, faq.length === 1 && faq[0] === '/book-now', JSON.stringify(faq));
   t(`${f}: no "Book Now" button left on /fishing-boats`, !/href="\/fishing-boats"[^>]*>Book Now</.test(h));
   t(`${f}: entry prices untouched (From $350 ×5, From $600 ×1, $600USD ×1)`, (h.match(/From \$350/g) || []).length === 5 && (h.match(/From \$600/g) || []).length === 1 && (h.match(/\$600USD/g) || []).length === 1);

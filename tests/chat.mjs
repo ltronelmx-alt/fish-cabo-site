@@ -160,7 +160,8 @@ for (const dev of ['iPhone 13', 'Pixel 7']) {
   const ctx = await b.newContext({ ...devices[dev], locale: 'en-US' }); const p = await ctx.newPage();
   p.on('pageerror', (e) => errors.push(e.message));
   await p.goto(BASE + '/fishing-boats/23ft-panga');
-  await p.tap('#efc-chat-bubble'); await p.waitForSelector('#efc-messages .efc-bot');
+  // phones: the floating bubble is hidden (owner 2026-11-11); the bottom bar's WhatsApp button opens the assistant
+  await p.tap('.efd-mbar [data-efc-chat-open]'); await p.waitForSelector('#efc-messages .efc-bot');
   const box = await p.locator('#efc-chat-window').boundingBox(); const vw = p.viewportSize().width;
   await p.fill('#efc-input', 'price'); await p.tap('#efc-send'); await p.waitForFunction(() => document.querySelectorAll('#efc-messages .efc-bot').length > 1);
   rec('Mobile', `${dev}: opens, fits screen, send by tap`, box && box.x >= 0 && box.x + box.width <= vw + 1 && /350 USD/.test(await lastBot(p)), JSON.stringify(box));

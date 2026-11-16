@@ -228,3 +228,55 @@
   .efd .efd-hero > picture.efd-bg img { aspect-ratio: auto; height: 62vh !important; object-fit: cover; object-position: 50% 30%; }
   .efd .efd-fleet > picture.efd-bg img { aspect-ratio: auto; height: 70vh !important; object-fit: cover; }
 }
+
+/* ---- laurels: white branches, "SINCE 2014" (owner 2026-11-16), all screens ---- */
+.efd .efd-since { position: relative; display: inline-grid; place-items: center; }
+.efd .efd-since > img { grid-area: 1 / 1; }
+.efd .efd-since-t { grid-area: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-bottom: 4%;
+  font: italic 800 calc(56 * var(--efd-u))/1 var(--efd-cond); letter-spacing: .04em; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.7); }
+.efd .efd-since-a { font-size: 1em; letter-spacing: .14em; }
+.efd .efd-since-b { font-size: 1.85em; letter-spacing: .02em; margin-top: .08em; }
+
+/* ---- scroll cue: the site's original mouse (.efc-cue, efc-motion.css), placed under the title on desktop ---- */
+/* same rules as .efc-cue in public/css/efc-motion.css (that file loads late, after the page), positioned for this hero */
+.efd .efd-cue { position: absolute; width: 28px; height: 46px; margin-left: -14px; border: 2px solid rgb(255 255 255 / 0.75); border-radius: 16px; pointer-events: none;
+  left: calc(2175 * var(--efd-u)); top: calc(2110 * var(--efd-u)); bottom: auto; z-index: 4; display: block; }
+.efd .efd-cue::after { content: ''; position: absolute; left: 50%; top: 9px; width: 4px; height: 9px; margin-left: -2px; border-radius: 2px; background: var(--efd-orange); animation: efcCue 1.8s cubic-bezier(0.2, 0.7, 0.2, 1) infinite; }
+@keyframes efcCue { 0% { opacity: 0; transform: translateY(-4px); } 30% { opacity: 1; } 80% { opacity: 0; transform: translateY(14px); } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .efd .efd-cue::after { animation: none; opacity: 1; } }
+
+/* ---- species carousel: phones & tablets only; desktop keeps the strip ---- */
+.efd .efd-car { display: none; }
+@media (max-width: 860px) {
+  .efd .efd-strip-wrap, .efd .efd-swipe { display: none; }
+  .efd .efd-car { display: block; padding: 6px 0 4px; }
+  .efd .efd-car-track { list-style: none; margin: 0; display: flex; gap: 10px; overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory; scroll-padding-inline: 13%; padding: 4px 13%; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .efd .efd-car-track::-webkit-scrollbar { display: none; }
+  .efd .efd-card { flex: 0 0 74%; max-width: 380px; scroll-snap-align: center; }
+  .efd .efd-card a { display: block; border-radius: 4px; transition: transform .25s, filter .25s; -webkit-tap-highlight-color: transparent; }
+  .efd .efd-card svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .efd .efd-card-edge { fill: none; stroke: #fb7704; stroke-width: 20; transition: stroke .2s; }
+  .efd .efd-card a:active { transform: scale(.985); }
+  .efd .efd-card a:focus-visible { outline: 3px solid var(--efd-yellow); outline-offset: 2px; }
+  .efd .efd-card a:focus-visible .efd-card-edge, .efd .efd-card a:hover .efd-card-edge { stroke: var(--efd-yellow); }
+  .efd .efd-car-nav { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 6px 0 2px; }
+  .efd .efd-car-pos { margin: 0; min-width: 52px; text-align: center; font: italic 700 15px/1 var(--efd-cond); letter-spacing: .12em; color: #aab0bb; }
+  .efd .efd-car-i { color: var(--efd-orange-hot); }
+  .efd .efd-car-btn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.04); color: #fff;
+    font: italic 700 19px/1 var(--efd-cond); letter-spacing: .02em; cursor: pointer; display: grid; place-items: center; padding: 0 0 2px; }
+  .efd .efd-car-btn:active { background: rgba(251,119,4,.25); }
+  .efd .efd-since-t { font-size: 12.5px; }
+  /* mouse cue: small, on the fade at the bottom of the photo */
+  .efd .efd-cue { left: 50%; top: calc(100vw * 10.5 / 16 - 52px); transform: scale(.8); transform-origin: 50% 0; }
+}
+@media (min-width: 561px) and (max-width: 860px) {
+  .efd .efd-card { flex-basis: 56%; }
+  .efd .efd-car-track { padding-inline: 22%; scroll-padding-inline: 22%; }
+  .efd .efd-since-t { font-size: 14.5px; }
+}
+@media (max-width: 860px) and (orientation: landscape) and (max-height: 500px) {
+  .efd .efd-cue { top: calc(62vh - 52px); }
+  .efd .efd-card { flex-basis: 42%; }
+  .efd .efd-car-track { padding-inline: 29%; scroll-padding-inline: 29%; }
+}

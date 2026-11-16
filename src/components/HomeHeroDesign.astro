@@ -3,6 +3,16 @@
 // H1 text is the original one (src/data/original/home.json). Links/labels = live site (NAV, SITE).
 import { SITE } from '../data/site';
 import '../styles/efd-home.css';
+// Carousel cards (≤860px) reuse each desktop panel exactly: same photo position, label, strokes and frame.
+const FISH0 = [
+  { name: 'Marlin', href: '/marlin-fishing-cabo', photo: '/media/efd/marlin-photo.webp', px: -150, py: -58, pw: 1695, ph: 961, label: '/media/efd/marlin-label.png', lx: 420, lw: 440, pts: '364,20 1255,20 991,740 100,740', vb: 90, vw: 1175 },
+  { name: 'Tuna', href: '/tuna-fishing-cabo', photo: '/media/efd/tuna-photo.webp', px: 958, py: -152, pw: 1308, ph: 894, label: '/media/efd/tuna-label.png', lx: 1340, lw: 320, pts: '1255,20 2164,20 1891,740 991,740', vb: 981, vw: 1193 },
+  { name: 'Dorado', href: '/dorado-fishing-cabo', photo: '/media/efd/dorado-photo.webp', px: 1860, py: 5, pw: 1170, ph: 780, label: '/media/efd/dorado-label.png', lx: 2150, lw: 440, pts: '2164,20 2990,20 2718,740 1891,740', vb: 1881, vw: 1119 },
+  { name: 'Wahoo', href: '/wahoo-fishing-cabo', photo: '/media/efd/wahoo-photo.webp', px: 2712, py: 10, pw: 1183, ph: 780, label: '/media/efd/wahoo-label.png', lx: 3060, lw: 380, pts: '2990,20 3891,20 3627,740 2718,740', vb: 2708, vw: 1193 },
+  { name: 'Roosterfish', href: '/roosterfish-fishing-cabo', photo: '/media/efd/rooster-photo.webp', px: 3523, py: -126, pw: 1330, ph: 912, label: '/media/efd/rooster-label.png', lx: 3870, lw: 650, pts: '3891,20 4812,20 4676,740 3627,740', vb: 3617, vw: 1179 },
+];
+// band under each card for its orange stroke: continues the panel's slant 60 units below the frame
+const FISH = FISH0.map((f) => { const p = f.pts.split(' ').map((q) => q.split(',').map(Number)); const k = (p[0][0] - p[3][0]) / 720; const [bl, br] = [p[3][0], p[2][0]]; return { ...f, band: `${bl},728 ${br},728 ${br - k * 72},800 ${bl - k * 72},800` }; });
 ---
 <div class="efd">
 <main>
@@ -27,8 +37,10 @@ import '../styles/efd-home.css';
       <li><img src="/media/efd/i-boat.png" width="150" height="54" alt="">10 Selected Boats<br>(23′ – 44′)</li>
       <li><img src="/media/efd/i-fish.png" width="140" height="49" alt="">World-Class<br>Fishing</li>
       <li><img src="/media/efd/i-hat.png" width="110" height="66" alt="">Experienced<br>Captains</li>
-      <li class="efd-laurel"><img src="/media/efd/i-laurel.png" width="170" height="122" alt="12+ years in Cabo"></li>
+      <li class="efd-laurel"><span class="efd-since"><img src="/media/efd/i-laurel-white.png" width="405" height="289" alt=""><span class="efd-since-t"><span class="efd-since-a">SINCE</span> <span class="efd-since-b">2014</span></span></span></li>
     </ul>
+
+    <div class="efc-cue efd-cue" aria-hidden="true"></div>
 
     <a class="efd-btn efd-btn-orange efd-btn-big" href={SITE.bookUrl} data-track="book_now_hero"><span style="display:inline-flex;align-items:center;gap:.45em"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 2h2v2h6V2h2v2h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3V2zm12 8H5v9h14v-9zM5 6v2h14V6H5zm2 6h3v3H7v-3z"/></svg>Book Now<span class="efd-arr" aria-hidden="true">»</span></span></a>
   </section>
@@ -83,6 +95,39 @@ import '../styles/efd-home.css';
       </svg>
     </div>
     <p class="efd-swipe" aria-hidden="true"><b>‹</b> Swipe <b>›</b></p>
+
+    <!-- phones & tablets (≤860px): the same five panels, one at a time -->
+    <div class="efd-car" data-lenis-prevent-horizontal>
+      <ul class="efd-car-track" id="efd-car-track" aria-label="Fish species in Cabo">
+        {FISH.map((f, i) => (
+          <li class="efd-card">
+            <a href={f.href} aria-label={`${f.name} fishing`}>
+              <svg viewBox={`${f.vb} 0 ${f.vw} 800`} role="img" aria-hidden="true" focusable="false">
+                <defs>
+                  <clipPath id={`efd-k${i}`}><polygon points={f.pts} /></clipPath>
+                  <clipPath id={`efd-kb${i}`}><polygon points={f.band} /></clipPath>
+                  <linearGradient id={`efd-kf${i}`} x1="0" y1="20" x2="0" y2="740" gradientUnits="userSpaceOnUse"><stop offset=".45" stop-color="#05070b" stop-opacity="0" /><stop offset=".97" stop-color="#05070b" stop-opacity=".85" /></linearGradient>
+                </defs>
+                <g clip-path={`url(#efd-k${i})`}>
+                  <image href="/media/efd/strip-2400.webp" width="4796" height="840" preserveAspectRatio="none" />
+                  <image href={f.photo} x={f.px} y={f.py} width={f.pw} height={f.ph} preserveAspectRatio="xMidYMid meet" />
+                  <polygon points={f.pts} fill={`url(#efd-kf${i})`} />
+                  <image href="/media/efd/strip-strokes.png" width="4796" height="840" preserveAspectRatio="none" />
+                </g>
+                <g clip-path={`url(#efd-kb${i})`}><image href="/media/efd/strip-2400.webp" width="4796" height="840" preserveAspectRatio="none" /><image href="/media/efd/strip-strokes.png" width="4796" height="840" preserveAspectRatio="none" /></g>
+                <image href={f.label} x={f.lx} y="580" width={f.lw} height="150" preserveAspectRatio="none" />
+                <polygon class="efd-card-edge" points={f.pts} clip-path={`url(#efd-k${i})`} />
+              </svg>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <div class="efd-car-nav">
+        <button type="button" class="efd-car-btn" data-dir="-1" aria-controls="efd-car-track" aria-label="Previous fish">‹</button>
+        <p class="efd-car-pos" aria-live="polite"><span class="efd-car-i">1</span> / 5</p>
+        <button type="button" class="efd-car-btn" data-dir="1" aria-controls="efd-car-track" aria-label="Next fish">›</button>
+      </div>
+    </div>
   </section>
 
   <!-- ============ FLEET ============ -->
@@ -101,5 +146,26 @@ import '../styles/efd-home.css';
   </section>
 </main>
 </div>
+
+<script>
+  // Species carousel (≤860px): manual only, position indicator, prev/next buttons.
+  const track = document.getElementById('efd-car-track');
+  const idx = document.querySelector('.efd-car-i');
+  if (track && idx) {
+    const cards = Array.from(track.children) as HTMLElement[];
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const current = () => {
+      const mid = track.scrollLeft + track.clientWidth / 2;
+      let best = 0, d = Infinity;
+      cards.forEach((c, i) => { const m = c.offsetLeft + c.offsetWidth / 2; if (Math.abs(m - mid) < d) { d = Math.abs(m - mid); best = i; } });
+      return best;
+    };
+    const go = (i: number) => { const c = cards[Math.max(0, Math.min(cards.length - 1, i))]; track.scrollTo({ left: c.offsetLeft + c.offsetWidth / 2 - track.clientWidth / 2, behavior: reduce ? 'auto' : 'smooth' }); };
+    let raf = 0;
+    track.addEventListener('scroll', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { idx.textContent = String(current() + 1); }); }, { passive: true });
+    document.querySelectorAll<HTMLButtonElement>('.efd-car-btn').forEach((b) => b.addEventListener('click', () => go(current() + Number(b.dataset.dir))));
+    cards.forEach((c, i) => c.querySelector('a')?.addEventListener('focus', () => go(i)));
+  }
+</script>
 
 
