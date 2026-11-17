@@ -9,7 +9,7 @@ const FISH0 = [
   { name: 'Tuna', href: '/tuna-fishing-cabo', photo: '/media/efd/tuna-photo.webp', px: 958, py: -152, pw: 1308, ph: 894, label: '/media/efd/tuna-label.png', lx: 1340, lw: 320, pts: '1255,20 2164,20 1891,740 991,740', vb: 981, vw: 1193 },
   { name: 'Dorado', href: '/dorado-fishing-cabo', photo: '/media/efd/dorado-photo.webp', px: 1860, py: 5, pw: 1170, ph: 780, label: '/media/efd/dorado-label.png', lx: 2150, lw: 440, pts: '2164,20 2990,20 2718,740 1891,740', vb: 1881, vw: 1119 },
   { name: 'Wahoo', href: '/wahoo-fishing-cabo', photo: '/media/efd/wahoo-photo.webp', px: 2712, py: 10, pw: 1183, ph: 780, label: '/media/efd/wahoo-label.png', lx: 3060, lw: 380, pts: '2990,20 3891,20 3627,740 2718,740', vb: 2708, vw: 1193 },
-  { name: 'Roosterfish', href: '/roosterfish-fishing-cabo', photo: '/media/efd/rooster-photo.webp', px: 3523, py: -126, pw: 1330, ph: 912, label: '/media/efd/rooster-label.png', lx: 3870, lw: 650, pts: '3891,20 4812,20 4676,740 3627,740', vb: 3617, vw: 1179 },
+  { name: 'Roosterfish', href: '/roosterfish-fishing-cabo', photo: '/media/efd/rooster-photo.webp', px: 3523, py: -126, pw: 1330, ph: 912, label: '/media/efd/rooster-label.png', lx: 3870, lw: 650, pts: '3891,20 4790,20 4526,740 3627,740', vb: 3617, vw: 1179 },
 ];
 // band under each card for its orange stroke: continues the panel's slant 60 units below the frame
 const FISH = FISH0.map((f) => { const p = f.pts.split(' ').map((q) => q.split(',').map(Number)); const k = (p[0][0] - p[3][0]) / 720; const [bl, br] = [p[3][0], p[2][0]]; return { ...f, band: `${bl},728 ${br},728 ${br - k * 72},800 ${bl - k * 72},800` }; });
