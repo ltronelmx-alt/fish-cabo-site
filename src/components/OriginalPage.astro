@@ -123,7 +123,11 @@ const isPayLabel = (b: Block) => b.kind === 'text' && /^<p( class="sub")?><stron
           if (g.kind === 'img' && g.items.length === 1 && stripeRow(prev)) return null;
           if (g.kind === 'img') return (
             <div class:list={['o-gallery', `n${Math.min(g.items.length, 4)}`]}>
-              {g.items.map((b) => <OImg block={b} class:list={['reveal', /Cabo Casita Keeper/i.test(b.alt || '') && 'o-small-logo']} sizes={g.items.length > 1 ? '(min-width: 900px) 33vw, 92vw' : '(min-width: 1240px) 1200px, 92vw'} />)}
+              {g.items.map((b) => slug === 'contact' && /Cabo Casita Keeper/i.test(b.alt || '') ? (
+                <div class="media reveal o-small-logo">
+                  <img src="/media/cck/cck-contact-glossy-logo.webp" width="640" height="640" loading="lazy" decoding="async" alt="Cabo Casita Keeper — glossy green CCK house and palm emblem on charcoal with a gold border" style="max-width:100%;height:auto" />
+                </div>
+              ) : <OImg block={b} class:list={['reveal', /Cabo Casita Keeper/i.test(b.alt || '') && 'o-small-logo']} sizes={g.items.length > 1 ? '(min-width: 900px) 33vw, 92vw' : '(min-width: 1240px) 1200px, 92vw'} />)}
             </div>
           );
           if (g.kind === 'button' && hidePay && g.items.every(isPayBtn)) return null;
