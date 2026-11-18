@@ -104,14 +104,29 @@ const cckUrl = 'https://cabocasitakeeper.com/vacation-rentals-los-cabos';
       // Priority: successful real contact form submission (never on errors or staging test sends).
       document.addEventListener('efc:contact-success', () => window.setTimeout(show, 1100));
 
-      // Desktop: exit intent when pointer leaves the TOP of the viewport.
+      // Desktop: proactively detect the cursor moving UP towards the browser controls.
+      // Waiting until the pointer actually leaves the viewport misses many tab closes.
       if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
-        document.addEventListener('mouseout', (event) => {
-          const e = event as MouseEvent;
-          if (e.relatedTarget || e.clientY > 8 || Date.now() - firstSeenAt < 12000) return;
-          // Do not interrupt a user currently editing a form.
+        let prevY = window.innerHeight;
+        let hasBrowsedPage = false;
+        const desktopExit = () => {
+          if (Date.now() - firstSeenAt < 7000 || !hasBrowsedPage) return;
           if (document.activeElement?.matches('input, textarea, select, [contenteditable="true"]')) return;
           show();
+        };
+        document.addEventListener('pointermove', (e) => {
+          if (e.pointerType !== 'mouse') return;
+          // Do not trigger merely because the cursor started near the top.
+          if (e.clientY > 125) hasBrowsedPage = true;
+          const headingUp = e.clientY < prevY;
+          const crossedTopZone = prevY >= 45 && e.clientY <= 45;
+          prevY = e.clientY;
+          if (headingUp && crossedTopZone) desktopExit();
+        }, { passive: true });
+        document.addEventListener('mouseout', (event) => {
+          const e = event as MouseEvent;
+          if (e.relatedTarget || e.clientY > 12) return;
+          desktopExit();
         });
       } else {
         // Touch: browsers cannot guarantee an exit event. Offer after meaningful browsing.
