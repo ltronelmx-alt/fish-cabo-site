@@ -1,0 +1,130 @@
+---
+/**
+ * CCK cross-promotion — owner-approved vertical creative, 18 Nov 2026.
+ * IMPORTANT: Claude/other deployments must retain this component and its image.
+ * Never show while a reservation / payment flow is in progress.
+ */
+const cckUrl = 'https://cabocasitakeeper.com/vacation-rentals-los-cabos';
+---
+<dialog id="efc-cck-dialog" class="efc-cck-popup" aria-label="Cabo Casita Keeper vacation rental suggestion" aria-modal="true">
+  <img
+    class="efc-cck-art"
+    src="/media/cck/cck-popup-approved.webp"
+    width="500"
+    height="625"
+    alt="Cabo Casita Keeper — Vacation rentals in Los Cabos. Hey! Haven't booked your stay yet? Make your fishing trip complete with the perfect place to stay in Los Cabos. Vacation Rentals, Concierge Services, Property Management. Explore Vacation Rentals."
+    decoding="async"
+  />
+  <button class="efc-cck-close" type="button" aria-label="Close vacation rental offer" title="Close"><span class="efc-cck-visually-hidden">Close</span></button>
+  <a class="efc-cck-link" href={cckUrl} target="_blank" rel="noopener noreferrer" aria-label="Explore Cabo Casita Keeper vacation rentals in Los Cabos (opens in new tab)" data-track="cck_popup_vacation_rentals"><span class="efc-cck-visually-hidden">Explore vacation rentals at Cabo Casita Keeper</span></a>
+</dialog>
+
+<style>
+  .efc-cck-popup {
+    box-sizing: border-box;
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    width: min(500px, 94vw, 70.4dvh);
+    max-width: 94vw;
+    max-height: 88dvh;
+    overflow: visible;
+    isolation: isolate;
+    border-radius: 7%;
+    box-shadow: 0 22px 84px rgb(0 0 0 / .75);
+  }
+  .efc-cck-popup::backdrop { background: rgb(1 5 10 / .77); backdrop-filter: blur(5px); }
+  .efc-cck-art { display: block; width: 100%; height: auto; border-radius: inherit; }
+  .efc-cck-close, .efc-cck-link { position: absolute; padding: 0; border: 0; background: transparent; cursor: pointer; }
+  /* Transparent hit areas over the approved graphic's visible CLOSE and CTA. */
+  .efc-cck-close { z-index: 2; top: 2.3%; right: 3.2%; width: 11%; height: 9.1%; border-radius: 50%; }
+  .efc-cck-link { z-index: 1; left: 8.2%; bottom: 4.8%; width: 83.6%; height: 11.5%; border-radius: 16px; }
+  .efc-cck-close:focus-visible, .efc-cck-link:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px #fba72e;
+  }
+  .efc-cck-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  @media (max-width: 480px) {
+    .efc-cck-popup { width: min(96vw, 70.4dvh); }
+  }
+</style>
+
+<script>
+  // Deliberately isolated from booking, payment, header and contact submission code.
+  const popup = document.getElementById('efc-cck-dialog') as HTMLDialogElement | null;
+  if (popup && typeof popup.showModal === 'function') {
+    const path = window.location.pathname.toLowerCase();
+    const blocked = /^\/(?:book-now|api)(?:\/|$)/.test(path)
+      || /\/(?:checkout|payment|confirmation|canceled|cancelled)(?:\/|$)/.test(path)
+      || new URLSearchParams(location.search).has('checkout');
+    const seenKey = 'efc_cck_popup_seen_v1';
+    const clickedKey = 'efc_cck_popup_clicked_v1';
+    const safeGet = (store: Storage, key: string) => { try { return store.getItem(key); } catch { return null; } };
+    const safeSet = (store: Storage, key: string, value: string) => { try { store.setItem(key, value); } catch { /* privacy mode */ } };
+    const firstSeenAt = Date.now();
+    let shownHere = false;
+    let lastActive: Element | null = null;
+    let scrolledEnough = false;
+
+    const allowed = () =>
+      !blocked && !shownHere && !popup.open &&
+      !safeGet(sessionStorage, seenKey) &&
+      // A previous visit to CCK should not immediately trigger another ad.
+      (!safeGet(localStorage, clickedKey) || Date.now() - Number(safeGet(localStorage, clickedKey)) > 7 * 86400000);
+
+    const show = () => {
+      if (!allowed()) return;
+      shownHere = true;
+      safeSet(sessionStorage, seenKey, '1');
+      lastActive = document.activeElement;
+      popup.showModal();
+      (popup.querySelector('.efc-cck-close') as HTMLButtonElement | null)?.focus({ preventScroll: true });
+    };
+
+    if (!blocked) {
+      const close = popup.querySelector('.efc-cck-close') as HTMLButtonElement | null;
+      const link = popup.querySelector('.efc-cck-link') as HTMLAnchorElement | null;
+      close?.addEventListener('click', () => popup.close());
+      link?.addEventListener('click', () => {
+        safeSet(localStorage, clickedKey, String(Date.now()));
+        popup.close();
+      });
+      popup.addEventListener('click', (event) => {
+        if (event.target === popup) popup.close();
+      });
+      popup.addEventListener('close', () => {
+        if (lastActive instanceof HTMLElement && lastActive.isConnected) lastActive.focus({ preventScroll: true });
+      });
+
+      // Priority: successful real contact form submission (never on errors or staging test sends).
+      document.addEventListener('efc:contact-success', () => window.setTimeout(show, 1100));
+
+      // Desktop: exit intent when pointer leaves the TOP of the viewport.
+      if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+        document.addEventListener('mouseout', (event) => {
+          const e = event as MouseEvent;
+          if (e.relatedTarget || e.clientY > 8 || Date.now() - firstSeenAt < 12000) return;
+          // Do not interrupt a user currently editing a form.
+          if (document.activeElement?.matches('input, textarea, select, [contenteditable="true"]')) return;
+          show();
+        });
+      } else {
+        // Touch: browsers cannot guarantee an exit event. Offer after meaningful browsing.
+        const onScroll = () => {
+          const height = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
+          if (height <= 0) return;
+          if ((window.scrollY + window.innerHeight) / height >= .65) scrolledEnough = true;
+          if (scrolledEnough && Date.now() - firstSeenAt >= 20000) show();
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        // If scrolling reached the threshold early, wait for engaged browsing time.
+        window.setInterval(() => { if (scrolledEnough && Date.now() - firstSeenAt >= 20000) show(); }, 4000);
+      }
+    }
+  }
+</script>

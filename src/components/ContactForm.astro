@@ -72,6 +72,8 @@ const id = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^
         f.reset(); (window as any).turnstile?.reset?.();
         if (msg) msg.textContent = data.test ? 'Thank you! (staging test mode — no email was sent)' : 'Thank you!';
         navigator.sendBeacon?.('/api/event', new Blob([JSON.stringify({ event: 'contact_sent', page: location.pathname })], { type: 'application/json' }));
+        // CCK popup only after confirmed real delivery; preserve existing submit/Turnstile behavior.
+        if (!data.test) document.dispatchEvent(new CustomEvent('efc:contact-success'));
       } else if (msg) msg.textContent = (data.error || 'Sorry, the message could not be sent. Please try again or contact us on WhatsApp.') + (data.codes ? ` [${data.codes.join(', ') || 'no code'} · token ${data.tokenLength}]` : '');
     } catch { if (msg) msg.textContent = 'Network error. Please try again or contact us on WhatsApp.'; }
     btn.disabled = false;
