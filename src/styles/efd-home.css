@@ -287,8 +287,8 @@
 .efd .efd-photo { position: absolute; left: calc(560 * var(--efd-u)); top: 0; width: calc(4659.375 * var(--efd-u)); max-width: none; height: auto;
   /* Soft, independent fades at the left and bottom edges of the photo.
      The original Marlin WebP file and fish pixels remain untouched. */
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 14%, #000 100%), linear-gradient(to bottom, #000 0%, #000 77%, transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0%, #000 14%, #000 100%), linear-gradient(to bottom, #000 0%, #000 77%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 14%, #000 100%), linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, #000 14%, #000 100%), linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%);
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
 }
@@ -308,7 +308,7 @@
   .efd .efd-glossy-wordmark { left: calc(1320 * var(--efd-su)); top: calc(450 * var(--efd-su)); width: calc(2050 * var(--efd-su)); }
   .efd .efd-hero-logo { display: none; }
   /* fade into the black below: only the band under the marlin (below its tail) */
-  .efd .efd-stage::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 17%; background: linear-gradient(transparent, var(--efd-ink)); pointer-events: none; }
+  .efd .efd-stage::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 23%; background: linear-gradient(transparent, var(--efd-ink)); pointer-events: none; }
 }
 @media (max-width: 860px) and (orientation: landscape) and (max-height: 500px) {
   /* sideways: the same picture, scaled to 62% of the screen height and centred, so the whole marlin stays visible */
