@@ -284,7 +284,14 @@
    so the whole marlin is visible and clear of the title and the menu; the decor layer is transparent over it. */
 .efd .efd-stage { position: absolute; inset: 0; overflow: hidden; z-index: 0; background: var(--efd-ink); }
 .efd .efd-stage-in { position: absolute; left: 0; top: 0; width: calc(4796 * var(--efd-u)); height: calc(2780 * var(--efd-u)); }
-.efd .efd-photo { position: absolute; left: calc(560 * var(--efd-u)); top: 0; width: calc(4659.375 * var(--efd-u)); max-width: none; height: auto; }
+.efd .efd-photo { position: absolute; left: calc(560 * var(--efd-u)); top: 0; width: calc(4659.375 * var(--efd-u)); max-width: none; height: auto;
+  /* Soft, independent fades at the left and bottom edges of the photo.
+     The original Marlin WebP file and fish pixels remain untouched. */
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 14%, #000 100%), linear-gradient(to bottom, #000 0%, #000 77%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, #000 14%, #000 100%), linear-gradient(to bottom, #000 0%, #000 77%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
 /* The original decoration image and its heavy black frame are intentionally not rendered. */
 .efd .efd-glossy-wordmark { position: absolute; left: calc(1500 * var(--efd-u)); top: calc(530 * var(--efd-u));
   width: calc(1400 * var(--efd-u)); max-width: none; height: auto; pointer-events: none;
