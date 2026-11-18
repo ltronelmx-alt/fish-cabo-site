@@ -285,10 +285,7 @@
 .efd .efd-stage { position: absolute; inset: 0; overflow: hidden; z-index: 0; background: var(--efd-ink); }
 .efd .efd-stage-in { position: absolute; left: 0; top: 0; width: calc(4796 * var(--efd-u)); height: calc(2780 * var(--efd-u)); }
 .efd .efd-photo { position: absolute; left: calc(560 * var(--efd-u)); top: 0; width: calc(4659.375 * var(--efd-u)); max-width: none; height: auto; }
-.efd .efd-decor { position: absolute; inset: 0; width: 100%; max-width: none; height: 100% !important;
-  -webkit-mask-image: url("/media/efd/hero-lettering-cutout.svg"); mask-image: url("/media/efd/hero-lettering-cutout.svg");
-  -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
-}
+/* The original decoration image and its heavy black frame are intentionally not rendered. */
 .efd .efd-glossy-wordmark { position: absolute; left: calc(1500 * var(--efd-u)); top: calc(530 * var(--efd-u));
   width: calc(1400 * var(--efd-u)); max-width: none; height: auto; pointer-events: none;
   /* No dark rectangular panel: only a subtle soft-edged lift around the transparent original logo. */
