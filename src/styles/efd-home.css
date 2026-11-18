@@ -302,7 +302,6 @@
   width: calc(1400 * var(--efd-u)); max-width: none; height: auto; pointer-events: none;
   /* No dark rectangular panel: only a subtle soft-edged lift around the transparent original logo. */
   filter: drop-shadow(0 7px 16px rgba(2,4,8,.72)) drop-shadow(0 0 22px rgba(255,124,0,.16)); }
-.efd .efd-hero-logo { position: absolute; left: calc(343 * var(--efd-u)); top: calc(19.35 * var(--efd-u)); width: calc(911.4 * var(--efd-u)); max-width: none; height: auto; }
 .efd .efd-hero > :not(.efd-stage) { z-index: 3; }
 .efd .efd-hero > .efd-logo-hit { z-index: 5; }
 @media (max-width: 860px) {
@@ -311,7 +310,6 @@
   .efd .efd-stage-in { --efd-su: calc(100vw / 3650); left: calc(-1170 * var(--efd-su)); width: calc(4796 * var(--efd-su)); height: calc(2780 * var(--efd-su)); }
   .efd .efd-photo { left: calc(560 * var(--efd-su)); width: calc(4659.375 * var(--efd-su)); }
   .efd .efd-glossy-wordmark { left: calc(1320 * var(--efd-su)); top: calc(450 * var(--efd-su)); width: calc(2050 * var(--efd-su)); }
-  .efd .efd-hero-logo { display: none; }
   /* fade into the black below: only the band under the marlin (below its tail) */
   .efd .efd-stage::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 23%; background: linear-gradient(transparent, var(--efd-ink)); pointer-events: none; }
 }
