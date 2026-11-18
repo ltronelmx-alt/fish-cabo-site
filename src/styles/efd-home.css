@@ -283,6 +283,11 @@
    Desktop: same 4796-unit grid as the rest of the hero. The photo starts at x=560 and is 3.125× its pixel width,
    so the whole marlin is visible and clear of the title and the menu; the decor layer is transparent over it. */
 .efd .efd-stage { position: absolute; inset: 0; overflow: hidden; z-index: 0; background: var(--efd-ink); }
+ /* The bottom badge row, including SINCE 2014, sits above this fade.
+    Add black only to the lower photo: leave top kicker, fish image bytes and logos untouched. */
+ .efd .efd-stage::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0;
+   height: calc(800 * var(--efd-u)); pointer-events: none; z-index: 1;
+   background: linear-gradient(to bottom, transparent 0%, rgba(5,7,11,.96) 48%, #05070b 76%); }
 .efd .efd-stage-in { position: absolute; left: 0; top: 0; width: calc(4796 * var(--efd-u)); height: calc(2780 * var(--efd-u)); }
 .efd .efd-photo { position: absolute; left: calc(560 * var(--efd-u)); top: 0; width: calc(4659.375 * var(--efd-u)); max-width: none; height: auto;
   /* Soft, independent fades at the left and bottom edges of the photo.
