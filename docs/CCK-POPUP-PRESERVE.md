@@ -3,7 +3,7 @@ Owner-approved: 2026-11-18. Applies to the public Exotic Fish Cabo website.
 
 ## What it does
 - Shows the approved vertical CCK vacation-rental creative and a clickable button to https://cabocasitakeeper.com/vacation-rentals-los-cabos.
-- On desktop: user moves pointer outside top edge after 12 seconds (an estimate of exit intent; not a guaranteed browser-exit event).
+- On desktop: after at least 7 seconds and meaningful mouse browsing, show when the cursor travels upward into the top 45 px (or exits at the top). This anticipates a tab close; the browser cannot guarantee a popup for all ways of leaving, e.g. Ctrl+W.
 - On touch/mobile: after >=20 seconds and >=65% page reading progress.
 - After a contact form actually succeeds, the popup may appear 1.1 seconds after the success confirmation; not on errors or staging test-only responses.
 - At most once per browsing session; may show on a new visit. If the visitor clicked through to CCK, suppress repeat suggestions for seven days.
@@ -19,7 +19,7 @@ Owner-approved: 2026-11-18. Applies to the public Exotic Fish Cabo website.
 Always pull the current origin/main and inspect the diff before editing, rebasing or deploying. Preserve the four integration points above. Do not overwrite newer work with an old local snapshot. On conflict, pause and compare changes; never silently discard the popup. Confirm successful Cloudflare production build AND verify desktop/mobile rendering before declaring deployment complete.
 
 ## Test checklist
-1. No popup immediately on landing; desktop exit-intent after 12s should show once.
+1. No popup immediately on landing; after 7s move the mouse into the page (y>125px), then move upward across y=45px to trigger once. Directly closing via Ctrl+W cannot be intercepted.
 2. Close (X), Escape, and open CCK CTA all work. CTA opens the CCK vacation rental page in a separate tab.
 3. A second show in the same session is blocked; a fresh browser session can show again.
 4. On mobile, >=65% navigation + >=20 seconds can show once.
