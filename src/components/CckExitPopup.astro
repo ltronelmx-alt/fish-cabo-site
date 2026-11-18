@@ -62,26 +62,40 @@ const cckUrl = 'https://cabocasitakeeper.com/vacation-rentals-los-cabos';
     const blocked = /^\/(?:book-now|api)(?:\/|$)/.test(path)
       || /\/(?:checkout|payment|confirmation|canceled|cancelled)(?:\/|$)/.test(path)
       || new URLSearchParams(location.search).has('checkout');
-    const seenKey = 'efc_cck_popup_seen_v1';
-    const clickedKey = 'efc_cck_popup_clicked_v1';
+    const seenKey = 'efc_cck_popup_seen_v2';
+    const visitKey = 'efc_cck_visit_last_active_v2';
     const safeGet = (store: Storage, key: string) => { try { return store.getItem(key); } catch { return null; } };
     const safeSet = (store: Storage, key: string, value: string) => { try { store.setItem(key, value); } catch { /* privacy mode */ } };
+    // Treat each arrival from outside EFC as a new visit, even in the same tab.
+    // Internal page changes and reloads remain part of the current visit.
+    const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+    const referrerOutside = !document.referrer || new URL(document.referrer).origin !== location.origin;
+    const previousActivity = Number(safeGet(sessionStorage, visitKey) || 0);
+    const newVisit = (navigation?.type === 'navigate' && referrerOutside)
+      || !previousActivity || Date.now() - previousActivity > 30 * 60 * 1000;
+    if (newVisit) {
+      try { sessionStorage.removeItem(seenKey); } catch { /* privacy mode */ }
+    }
+    const markVisitActivity = () => safeSet(sessionStorage, visitKey, String(Date.now()));
+    markVisitActivity();
+    // Refresh the visit activity stamp only on real user interaction.
+    document.addEventListener('pointerdown', markVisitActivity, { passive: true });
+    document.addEventListener('keydown', markVisitActivity, { passive: true });
     const firstSeenAt = Date.now();
     let shownHere = false;
     let lastActive: Element | null = null;
 
     const allowed = () =>
       !blocked && !shownHere && !popup.open &&
-      !safeGet(sessionStorage, seenKey) &&
-      // A previous visit to CCK should not immediately trigger another ad.
-      (!safeGet(localStorage, clickedKey) || Date.now() - Number(safeGet(localStorage, clickedKey)) > 7 * 86400000);
+      !safeGet(sessionStorage, seenKey);
 
     const show = () => {
       if (!allowed()) return;
       shownHere = true;
-      safeSet(sessionStorage, seenKey, '1');
       lastActive = document.activeElement;
-      popup.showModal();
+      try { popup.showModal(); } catch { return; }
+      shownHere = true;
+      safeSet(sessionStorage, seenKey, '1');
       (popup.querySelector('.efc-cck-close') as HTMLButtonElement | null)?.focus({ preventScroll: true });
     };
 
@@ -90,7 +104,6 @@ const cckUrl = 'https://cabocasitakeeper.com/vacation-rentals-los-cabos';
       const link = popup.querySelector('.efc-cck-link') as HTMLAnchorElement | null;
       close?.addEventListener('click', () => popup.close());
       link?.addEventListener('click', () => {
-        safeSet(localStorage, clickedKey, String(Date.now()));
         popup.close();
       });
       popup.addEventListener('click', (event) => {
@@ -144,17 +157,19 @@ const cckUrl = 'https://cabocasitakeeper.com/vacation-rentals-los-cabos';
           if (e.relatedTarget || e.clientY > 12) return;
           desktopExit();
         });
-      } else {
-        // Mobile: display CCK on the FIRST deliberate tap of the existing header logo.
-        // Never interrupt a scroll or reveal automatically after time / reading progress.
-        const mobileLogo = document.querySelector<HTMLAnchorElement>('.efd-hdr-logo');
-        mobileLogo?.addEventListener('click', (event) => {
-          if (!window.matchMedia('(max-width: 860px) and (pointer: coarse)').matches) return;
-          if (!allowed()) return; // after the first popup, the logo navigates home as usual
-          event.preventDefault();
-          show();
-        });
       }
+
+      // Mobile: FIRST tap on the visible header logo per VISIT, not per browser session.
+      // Delegate in capture phase: works with iPhone/Android and hybrid touch devices,
+      // independently of desktop hover/pointer media feature detection.
+      document.addEventListener('click', (event) => {
+        if (window.innerWidth > 860) return;
+        const target = event.target;
+        if (!(target instanceof Element) || !target.closest('.efd-hdr-logo')) return;
+        if (!allowed()) return; // after first display, logo navigates home normally
+        event.preventDefault();
+        show();
+      }, { capture: true });
     }
   }
 </script>
