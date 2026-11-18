@@ -3,7 +3,7 @@ Owner-approved: 2026-11-18. Applies to the public Exotic Fish Cabo website.
 
 ## What it does
 - Shows the approved vertical CCK vacation-rental creative and a clickable button to https://cabocasitakeeper.com/vacation-rentals-los-cabos.
-- On desktop: after at least 7 seconds and meaningful mouse browsing, show when the cursor travels upward into the top 45 px (or exits at the top). This anticipates a tab close; the browser cannot guarantee a popup for all ways of leaving, e.g. Ctrl+W.
+- On desktop: after at least 7 seconds and meaningful mouse browsing, show on upward/rightward movement into the invisible top-right viewport region (right 26%, top 65px), OR on upward movement across the top 45px / top-edge exit. No 35-second (or other timer-only) desktop popup. Browser UI itself cannot be inspected and closing via Ctrl+W / X is not guaranteed.
 - On touch/mobile: after >=20 seconds and >=65% page reading progress.
 - After a contact form actually succeeds, the popup may appear 1.1 seconds after the success confirmation; not on errors or staging test-only responses.
 - At most once per browsing session; may show on a new visit. If the visitor clicked through to CCK, suppress repeat suggestions for seven days.
@@ -19,7 +19,7 @@ Owner-approved: 2026-11-18. Applies to the public Exotic Fish Cabo website.
 Always pull the current origin/main and inspect the diff before editing, rebasing or deploying. Preserve the four integration points above. Do not overwrite newer work with an old local snapshot. On conflict, pause and compare changes; never silently discard the popup. Confirm successful Cloudflare production build AND verify desktop/mobile rendering before declaring deployment complete.
 
 ## Test checklist
-1. No popup immediately on landing; after 7s move the mouse into the page (y>125px), then move upward across y=45px to trigger once. Directly closing via Ctrl+W cannot be intercepted.
+1. PC: no time-only popup. After 7s move the mouse into content (y>140px), then diagonally toward the upper-right corner inside the page (right 26%, top 65px), or upward over top 45px. Must show once. Directly closing via Ctrl+W cannot be intercepted.
 2. Close (X), Escape, and open CCK CTA all work. CTA opens the CCK vacation rental page in a separate tab.
 3. A second show in the same session is blocked; a fresh browser session can show again.
 4. On mobile, >=65% navigation + >=20 seconds can show once.
