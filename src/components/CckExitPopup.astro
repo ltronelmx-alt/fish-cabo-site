@@ -69,7 +69,6 @@ const cckUrl = 'https://cabocasitakeeper.com/vacation-rentals-los-cabos';
     const firstSeenAt = Date.now();
     let shownHere = false;
     let lastActive: Element | null = null;
-    let scrolledEnough = false;
 
     const allowed = () =>
       !blocked && !shownHere && !popup.open &&
@@ -146,16 +145,15 @@ const cckUrl = 'https://cabocasitakeeper.com/vacation-rentals-los-cabos';
           desktopExit();
         });
       } else {
-        // Touch: browsers cannot guarantee an exit event. Offer after meaningful browsing.
-        const onScroll = () => {
-          const height = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
-          if (height <= 0) return;
-          if ((window.scrollY + window.innerHeight) / height >= .65) scrolledEnough = true;
-          if (scrolledEnough && Date.now() - firstSeenAt >= 20000) show();
-        };
-        window.addEventListener('scroll', onScroll, { passive: true });
-        // If scrolling reached the threshold early, wait for engaged browsing time.
-        window.setInterval(() => { if (scrolledEnough && Date.now() - firstSeenAt >= 20000) show(); }, 4000);
+        // Mobile: display CCK on the FIRST deliberate tap of the existing header logo.
+        // Never interrupt a scroll or reveal automatically after time / reading progress.
+        const mobileLogo = document.querySelector<HTMLAnchorElement>('.efd-hdr-logo');
+        mobileLogo?.addEventListener('click', (event) => {
+          if (!window.matchMedia('(max-width: 860px) and (pointer: coarse)').matches) return;
+          if (!allowed()) return; // after the first popup, the logo navigates home as usual
+          event.preventDefault();
+          show();
+        });
       }
     }
   }
