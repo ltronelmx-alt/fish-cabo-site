@@ -89,14 +89,14 @@ const cckUrl = 'https://cabocasitakeeper.com/vacation-rentals-los-cabos';
       !blocked && !shownHere && !popup.open &&
       !safeGet(sessionStorage, seenKey);
 
-    const show = () => {
-      if (!allowed()) return;
-      shownHere = true;
+    const show = (): boolean => {
+      if (!allowed()) return false;
       lastActive = document.activeElement;
-      try { popup.showModal(); } catch { return; }
+      try { popup.showModal(); } catch { return false; }
       shownHere = true;
       safeSet(sessionStorage, seenKey, '1');
       (popup.querySelector('.efc-cck-close') as HTMLButtonElement | null)?.focus({ preventScroll: true });
+      return true;
     };
 
     if (!blocked) {
@@ -159,16 +159,19 @@ const cckUrl = 'https://cabocasitakeeper.com/vacation-rentals-los-cabos';
         });
       }
 
-      // Mobile: FIRST tap on the visible header logo per VISIT, not per browser session.
-      // Delegate in capture phase: works with iPhone/Android and hybrid touch devices,
-      // independently of desktop hover/pointer media feature detection.
+      // Mobile: the user may mean the header logo OR the three-line Menu button.
+      // Intercept the first deliberate TAP of either control on a new visit.
+      // On subsequent taps, both controls work exactly as they did originally.
       document.addEventListener('click', (event) => {
-        if (window.innerWidth > 860) return;
+        if (window.innerWidth > 860 || event.defaultPrevented || !event.isTrusted) return;
         const target = event.target;
-        if (!(target instanceof Element) || !target.closest('.efd-hdr-logo')) return;
-        if (!allowed()) return; // after first display, logo navigates home normally
+        if (!(target instanceof Element)) return;
+        if (!target.closest('.efd-hdr-logo, .efd-burger')) return;
+        if (!allowed()) return;
+        // Only cancel original navigation/menu action if the modal really opened.
+        if (!show()) return;
         event.preventDefault();
-        show();
+        event.stopImmediatePropagation();
       }, { capture: true });
     }
   }
