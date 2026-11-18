@@ -107,21 +107,38 @@ const cckUrl = 'https://cabocasitakeeper.com/vacation-rentals-los-cabos';
       // Desktop: proactively detect the cursor moving UP towards the browser controls.
       // Waiting until the pointer actually leaves the viewport misses many tab closes.
       if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
-        let prevY = window.innerHeight;
+        let prevX = -1;
+        let prevY = -1;
         let hasBrowsedPage = false;
+        let headingTowardClose = false;
         const desktopExit = () => {
+          // Only actual exit-style movement, never an automatic time-based popup.
           if (Date.now() - firstSeenAt < 7000 || !hasBrowsedPage) return;
           if (document.activeElement?.matches('input, textarea, select, [contenteditable="true"]')) return;
           show();
         };
         document.addEventListener('pointermove', (e) => {
           if (e.pointerType !== 'mouse') return;
-          // Do not trigger merely because the cursor started near the top.
-          if (e.clientY > 125) hasBrowsedPage = true;
-          const headingUp = e.clientY < prevY;
-          const crossedTopZone = prevY >= 45 && e.clientY <= 45;
-          prevY = e.clientY;
-          if (headingUp && crossedTopZone) desktopExit();
+          const x = e.clientX;
+          const y = e.clientY;
+          // The visitor must first have moved the mouse within the content.
+          if (y > 140) hasBrowsedPage = true;
+          if (prevY >= 0) {
+            const movingUp = y < prevY;
+            const movingRight = x > prevX;
+            // Detect a deliberate upward/rightward approach to the browser's X.
+            if (movingUp && movingRight && y > 90) headingTowardClose = true;
+            // Cancel stale approach when the user reverses direction.
+            if (y > prevY + 12 || x < prevX - 35) headingTowardClose = false;
+            const insideUpperRight = x >= window.innerWidth * .74 && y <= 65;
+            const enteredUpperRight = prevX < window.innerWidth * .74 || prevY > 65;
+            if (insideUpperRight && enteredUpperRight && movingUp && headingTowardClose) desktopExit();
+            // Retain original top-edge exit detection elsewhere on desktop.
+            const crossedTopEdge = prevY >= 45 && y <= 45;
+            if (movingUp && crossedTopEdge) desktopExit();
+          }
+          prevX = x;
+          prevY = y;
         }, { passive: true });
         document.addEventListener('mouseout', (event) => {
           const e = event as MouseEvent;
