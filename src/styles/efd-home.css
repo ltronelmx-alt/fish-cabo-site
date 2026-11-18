@@ -290,7 +290,9 @@
   -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
 }
 .efd .efd-glossy-wordmark { position: absolute; left: calc(1500 * var(--efd-u)); top: calc(530 * var(--efd-u));
-  width: calc(1400 * var(--efd-u)); max-width: none; height: auto; pointer-events: none; }
+  width: calc(1400 * var(--efd-u)); max-width: none; height: auto; pointer-events: none;
+  /* No dark rectangular panel: only a subtle soft-edged lift around the transparent original logo. */
+  filter: drop-shadow(0 7px 16px rgba(2,4,8,.72)) drop-shadow(0 0 22px rgba(255,124,0,.16)); }
 .efd .efd-hero-logo { position: absolute; left: calc(343 * var(--efd-u)); top: calc(19.35 * var(--efd-u)); width: calc(911.4 * var(--efd-u)); max-width: none; height: auto; }
 .efd .efd-hero > :not(.efd-stage) { z-index: 3; }
 .efd .efd-hero > .efd-logo-hit { z-index: 5; }

@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 695" preserveAspectRatio="none">
-  <!-- Keep the original decor everywhere except the embedded EXOTIC FISH CABO lettering. -->
-  <path fill="#fff" fill-rule="evenodd" d="M0 0H1200V695H0Z M303 128H803V338H303Z"/>
+  <!-- Transparent opening removes the entire obsolete dark rectangular wordmark panel.
+       Retain only surrounding original decorative details (including bottom orange strokes). -->
+  <path fill="#fff" fill-rule="evenodd" d="M0 0H1200V695H0Z M202 49H1200V551H202Z"/>
 </svg>
