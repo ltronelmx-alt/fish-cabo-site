@@ -4,9 +4,9 @@ Owner-approved: 2026-11-18. Applies to the public Exotic Fish Cabo website.
 ## What it does
 - Shows the approved vertical CCK vacation-rental creative and a clickable button to https://cabocasitakeeper.com/vacation-rentals-los-cabos.
 - On desktop: after at least 7 seconds and meaningful mouse browsing, show on upward/rightward movement into the invisible top-right viewport region (right 26%, top 65px), OR on upward movement across the top 45px / top-edge exit. No 35-second (or other timer-only) desktop popup. Browser UI itself cannot be inspected and closing via Ctrl+W / X is not guaranteed.
-- On touch/mobile: only on the first deliberate tap of the existing EFC header logo (at <=860px and coarse pointer). The popup intercepts that first tap only; subsequent taps navigate to the homepage normally. No automatic scroll, time, or inactivity popup.
+- On touch/mobile: only on the first deliberate tap of the existing EFC header logo at <=860px (including iPhone, Android, and hybrid touch). Uses document click capture instead of coarse-pointer media detection. The popup intercepts the first tap; subsequent taps navigate home. No automatic scroll, time, or inactivity popup.
 - After a contact form actually succeeds, the popup may appear 1.1 seconds after the success confirmation; not on errors or staging test-only responses.
-- At most once per browsing session; may show on a new visit. If the visitor clicked through to CCK, suppress repeat suggestions for seven days.
+- At most once per site visit; reset on a fresh navigation arriving from outside fish-cabo.com (including opening the site directly in a tab), and after 30 minutes of inactivity. Internal navigation/reload retains the once-per-visit cap. Clicking through to CCK does NOT impose a 7-day ban: a future visit may show the popup again.
 - Does NOT run on /book-now/*, checkout/payment/confirmation routes, or during API requests. No booking/payment code or prices changed.
 
 ## Files to preserve (Claude / other developer / GitHub)
@@ -21,8 +21,8 @@ Always pull the current origin/main and inspect the diff before editing, rebasin
 ## Test checklist
 1. PC: no time-only popup. After 7s move the mouse into content (y>140px), then diagonally toward the upper-right corner inside the page (right 26%, top 65px), or upward over top 45px. Must show once. Directly closing via Ctrl+W cannot be intercepted.
 2. Close (X), Escape, and open CCK CTA all work. CTA opens the CCK vacation rental page in a separate tab.
-3. A second show in the same session is blocked; a fresh browser session can show again.
-4. On mobile, no popup after scroll or waiting. Tap the EFC logo once: show CCK popup. Close it, tap logo again: normal home navigation. Touch scrolling does not open the popup.
+3. A second show during the same visit is blocked; internal page navigation preserves that. Returning to fish-cabo.com on a later separate visit (even in the same browser tab) allows another display.
+4. On mobile, no popup after scroll or waiting. First logo tap on a new visit: show CCK popup. Close it, tap logo again: normal home navigation. Navigate away from the site, then enter it again: first logo tap opens CCK once more.
 5. Contact sends: never on failed send; only after the server returns ok AND not test mode.
 6. No popup during /book-now and payment routes; bookings, Stripe, Wise, other site UI remain unchanged.
 7. Mobile height and narrow screens should keep all art, CTA and close button inside viewport.
