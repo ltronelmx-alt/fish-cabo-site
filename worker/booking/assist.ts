@@ -96,12 +96,12 @@ export function parse(text: string, today: string): Parsed {
 export const diag: { ai?: string } = {};
 async function aiParse(env: AiEnv, d: D1Database, text: string, today: string): Promise<Parsed | null> {
   if (!env.AI || env.ASSIST_AI === 'off') { diag.ai = 'no binding'; return null; }
-  const max = Number(env.ASSIST_AI_DAILY_MAX || 150);
+  const max = Number(env.ASSIST_AI_DAILY_MAX || 120);
   if (!(await rateLimit(d, `assist:ai:${today}`, max, 86400))) { diag.ai = 'daily cap'; return null; } // daily cap: back to rules, never a bill
   const instructions = `Extract a fishing-charter booking request. Today is ${today} (Los Cabos). Reply with ONE minified JSON object only, keys:
 date (YYYY-MM-DD or null), date_choices (array of 2 candidate dates when ambiguous, else null), hours (6, 8 or null — trip DURATION, "full day"=8, "3/4 day"/"half day"=6, never a clock time), people (integer or null), boat (1-10 or null), price (true if they ask a price), handoff ("tournament","custom","human","today" or null).`;
   try {
-    const out = (await env.AI.run(AI_MODEL, { instructions, input: text.slice(0, 500), max_output_tokens: 400 })) as Record<string, unknown>;
+    const out = (await env.AI.run(AI_MODEL, { instructions, input: text.slice(0, 500), reasoning: { effort: 'low' }, max_output_tokens: 1200 })) as Record<string, unknown>;
     const raw = String((out as { response?: string }).response ?? (out as { output_text?: string }).output_text
       ?? ((out as { output?: { type?: string; content?: { text?: string }[] }[] }).output || []).filter((x) => x.type === 'message').flatMap((x) => x.content || []).map((c) => c.text || '').join('')
       ?? '');
