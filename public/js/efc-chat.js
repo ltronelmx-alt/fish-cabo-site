@@ -311,6 +311,31 @@ function extractFacts(text) {
   const d = text.match(new RegExp(`\\b(\\d{1,2}(?:er)?\\s*(?:de\\s+)?(?:${months})|(?:${months})\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?|\\d{1,2}[/.-]\\d{1,2}(?:[/.-]\\d{2,4})?|\\d{4}-\\d{2}-\\d{2})\\b`, 'i'));
   if (d) facts.date = d[1];
 }
+/* Booking link with what the visitor already said (2026-11-27): duration, group size and an UNAMBIGUOUS date only.
+ * "14 December", "Dec 14", "2026-12-14" → date; "12/03" (day/month or month/day?) → no date, the calendar asks.
+ * Year = next occurrence in Los Cabos time. /book-now re-checks everything (capacity, 24 h, availability); no booking is made. */
+const MONTH_N = { jan: 1, janv: 1, janvier: 1, ene: 1, enero: 1, feb: 2, fev: 2, 'fév': 2, 'février': 2, fevrier: 2, febrero: 2, mar: 3, mars: 3, marzo: 3, apr: 4, avr: 4, avril: 4, abr: 4, abril: 4, may: 5, mai: 5, mayo: 5,
+  jun: 6, juin: 6, junio: 6, jul: 7, juil: 7, juillet: 7, julio: 7, aug: 8, 'août': 8, aout: 8, ago: 8, agosto: 8, sep: 9, sept: 9, septembre: 9, septiembre: 9, oct: 10, octobre: 10, octubre: 10,
+  nov: 11, novembre: 11, noviembre: 11, dec: 12, 'déc': 12, 'décembre': 12, decembre: 12, dic: 12, diciembre: 12 };
+function isoDate(raw) {
+  if (!raw) return '';
+  const s = String(raw).toLowerCase().replace(/(st|nd|rd|th|er)\b/g, '').replace(/\bde\b/g, ' ').replace(/\./g, ' ').trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  let m = s.match(/^(\d{1,2})\s+([a-zéû]+)$/), day, mon;
+  if (m) { day = +m[1]; mon = m[2]; } else if ((m = s.match(/^([a-zéû]+)\s+(\d{1,2})$/))) { mon = m[1]; day = +m[2]; } else return '';
+  const n = MONTH_N[mon] || MONTH_N[mon.slice(0, 3)] || MONTH_N[mon.slice(0, 4)]; if (!n || day < 1 || day > 31) return '';
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mazatlan' });
+  let y = +today.slice(0, 4); const pad = (x) => String(x).padStart(2, '0');
+  let iso = `${y}-${pad(n)}-${pad(day)}`; if (iso < today) iso = `${++y}-${pad(n)}-${pad(day)}`;
+  return new Date(iso + 'T00:00:00Z').toISOString().slice(0, 10) === iso ? iso : '';
+}
+function bookUrl() {
+  const p = new URLSearchParams();
+  const d = isoDate(facts.date); if (d) p.set('date', d);
+  if (facts.charter) p.set('hours', facts.charter === 'h8' ? '8' : '6');
+  if (facts.guests && +facts.guests <= 10) p.set('people', facts.guests);
+  return '/book-now' + (p.toString() ? '?' + p : '');
+}
 function waLink() {
   const t = I18N[currentLang], w = t.wa;
   const lines = [w.intro];
@@ -326,7 +351,7 @@ function waLink() {
 // RESPONSES (kind → text + actions, rendered in the current language)
 // ============================================
 const A = {
-  book: (t) => ({ type: 'book', label: t.bookLabel, url: BOOKING_OPEN ? '/book-now' : '/contact' }),
+  book: (t) => ({ type: 'book', label: t.bookLabel, url: BOOKING_OPEN ? bookUrl() : '/contact' }),
   wa: (t) => ({ type: 'whatsapp', label: t.whatsappLabel }),
   link: (label, url) => ({ type: 'link', label, url }),
 };

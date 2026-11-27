@@ -109,15 +109,17 @@ async function journey(label, ctxOpts) {
   await admin('block', { boat: 'boat-03', date, block: true, reason: 'test: taken during checkout' });
   await p.locator('.bk-go').click(); await p.waitForSelector('#qalts:not([hidden])');
   const msg = await p.locator('#qmsg').innerText();
-  const alts = await p.locator('#qalts [data-alt]').evaluateAll((els) => els.map((e) => e.getAttribute('data-alt')));
-  t('date taken during checkout → neutral message (no reason), details kept, alternative dates offered', /not available online for this boat/.test(msg) && !/booked|blocked|reservation/i.test(msg) && alts.length > 0 && alts.every((d) => d !== date) && (await p.inputValue('input[name=fname]')) === 'Ana', `${msg} ${alts}`);
-  await p.locator('#qalts [data-alt]').first().click(); await p.waitForSelector('#s-pay:not([hidden])'); await p.waitForTimeout(400);
-  const sum = await p.locator('#sum').innerText(); const newDate = alts[0];
-  t('picking an alternative re-checks it and goes straight back to the payment step with the same details', sum.includes(new Date(newDate + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })) && (await p.inputValue('input[name=email]')) === `ana-${RUN}@example.test`, sum);
+  // 2026-11-27: other boats on the same date, duration and group size come first (dates only when no boat fits)
+  const alts = await p.locator('#qalts [data-ob]').evaluateAll((els) => els.map((e) => e.getAttribute('data-ob')));
+  t('date taken during checkout → neutral message (no reason), details kept, other boats for the same date offered first', /not available online for this boat/.test(msg) && !/booked|blocked|reservation/i.test(msg) && alts.length > 0 && !alts.includes('boat-03') && (await p.inputValue('input[name=fname]')) === 'Ana', JSON.stringify({ msg, alts }));
+  const newBoat = alts[0];
+  await p.locator(`#qalts [data-ob="${newBoat}"]`).click(); await p.waitForSelector('#s-pay:not([hidden])'); await p.waitForTimeout(400);
+  const sum = await p.locator('#sum').innerText(); const newDate = date;
+  t('picking another boat re-checks it and goes straight back to the payment step with the same date and details', sum.includes(`#${Number(newBoat.slice(5))} `) && sum.includes(new Date(date + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })) && (await p.inputValue('input[name=fname]')) === 'Ana' && (await p.inputValue('select[name=people]')) === '3', sum);
   await p.locator('input[name=payment][value=wise]').check();
   await p.locator('.bk-go').click(); await p.waitForURL(/\/book-now\/confirmation/);
-  const r = sql(`SELECT date, status, people, message FROM reservations WHERE email='ana-${RUN}@example.test'`);
-  t('…and the booking is created on the new date only (one reservation)', r.length === 1 && r[0].date === newDate && r[0].status === 'AWAITING_PAYMENT_VERIFICATION' && r[0].people === 3 && r[0].message === 'Two kids aboard', JSON.stringify(r));
+  const r = sql(`SELECT date, boat_id, status, people, message FROM reservations WHERE email='ana-${RUN}@example.test'`);
+  t('…and the booking is created on the other boat, same date (one reservation)', r.length === 1 && r[0].date === newDate && r[0].boat_id === newBoat && r[0].status === 'AWAITING_PAYMENT_VERIFICATION' && r[0].people === 3 && r[0].message === 'Two kids aboard', JSON.stringify(r));
   await admin('block', { boat: 'boat-03', date, block: false });
   await ctx.close();
 }

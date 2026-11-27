@@ -193,6 +193,69 @@ export async function apiAvailability(request: Request, env: BEnv) {
   return json({ ok: true, boat: boatId, month, today, days });
 }
 
+/* ---------- booking options (2026-11-27): one engine for /book-now, the site assistant and the team link tool ----------
+ * Same rules as apiQuote/apiReserve: boat active, duration offered (Boat #1 = 6 h), people ≤ min(capacity, 10),
+ * day 'available' in dayStates (confirmed + live holds + manual blocks + 24 h lead + window). Never a price, never a reason. */
+export type Sel = { date: string; hours: number; people: number | null; boat: string | null };
+export type SelError = { code: 'DATE' | 'DURATION' | 'PEOPLE' | 'BOAT'; field: string; error: string };
+/** Normalise a selection; returns the valid part plus one error per invalid field (other fields are kept). */
+export function parseSel(p: { date?: unknown; hours?: unknown; people?: unknown; boat?: unknown }): { sel: Partial<Sel>; errors: SelError[] } {
+  const sel: Partial<Sel> = {}, errors: SelError[] = [];
+  const rawBoat = String(p.boat ?? '').trim();
+  if (rawBoat) { const b = /^\d{1,2}$/.test(rawBoat) ? `boat-${rawBoat.padStart(2, '0')}` : rawBoat; if (/^boat-\d{2}$/.test(b)) sel.boat = b; else errors.push({ code: 'BOAT', field: 'boat', error: 'Unknown boat.' }); }
+  const rawDate = String(p.date ?? '').trim();
+  if (rawDate) { if (isDate(rawDate)) sel.date = rawDate; else errors.push({ code: 'DATE', field: 'date', error: 'This date is not valid.' }); }
+  const rawH = String(p.hours ?? '').trim();
+  if (rawH) { const h = Number(rawH); if (h === 6 || h === 8) sel.hours = h; else errors.push({ code: 'DURATION', field: 'hours', error: 'Trips last 6 or 8 hours.' }); }
+  const rawP = String(p.people ?? '').trim();
+  if (rawP) { const n = Number(rawP); if (Number.isInteger(n) && n >= 1 && n <= 10) sel.people = n; else errors.push({ code: 'PEOPLE', field: 'people', error: 'Our boats take 1 to 10 people.' }); }
+  return { sel, errors };
+}
+const fitsGroup = (b: Boat, people: number | null) => people == null || people <= Math.min(b.capacity, 10);
+export type OptionBoat = { id: string; number: number; sizeFt: number; capacity: number };
+export async function findOptions(d: D1Database, sel: { date: string; hours: number; people: number | null; boat: string | null }, maxDates = 4) {
+  const list = (await boats(d)).filter((b) => b.active);
+  const s = await getSettings(d);
+  const today = localToday(), last = addDays(today, s.booking_window_days);
+  const out = { date: sel.date, hours: sel.hours, people: sel.people, preferred: null as null | { id: string; number: number; available: boolean; fits: boolean; offersDuration: boolean },
+    boats: [] as OptionBoat[], nextDates: [] as string[], nextDatesFor: null as string | null, dateState: 'ok' as 'ok' | 'past' | 'closed' };
+  if (sel.date < today) out.dateState = 'past'; else if (sel.date > last) out.dateState = 'closed';
+  const match = (b: Boat) => durationsOf(b).includes(sel.hours as 6 | 8) && fitsGroup(b, sel.people);
+  const pref = sel.boat ? list.find((b) => b.id === sel.boat) : undefined;
+  if (out.dateState === 'ok') {
+    for (const b of list.filter(match)) if ((await dayStates(d, b.id, sel.date, sel.date))[sel.date] === 'available') out.boats.push({ id: b.id, number: b.number, sizeFt: b.size_ft, capacity: b.capacity });
+  }
+  if (pref) out.preferred = { id: pref.id, number: pref.number, available: out.boats.some((x) => x.id === pref.id), fits: fitsGroup(pref, sel.people), offersDuration: durationsOf(pref).includes(sel.hours as 6 | 8) };
+  // nothing on that date: the next bookable dates — for the chosen boat when it suits the request, otherwise for any matching boat
+  const others = out.boats.filter((x) => x.id !== pref?.id);
+  if (!others.length && !(out.preferred?.available)) {
+    const from = sel.date < today ? today : sel.date, to = addDays(from, 90) > last ? last : addDays(from, 90);
+    const pool = pref && match(pref) ? [pref] : list.filter(match);
+    out.nextDatesFor = pref && match(pref) ? pref.id : null;
+    const found = new Set<string>();
+    for (const b of pool) {
+      const st = await dayStates(d, b.id, from, to);
+      for (const [day, v] of Object.entries(st)) if (v === 'available' && day !== sel.date) found.add(day);
+    }
+    out.nextDates = [...found].sort().slice(0, maxDates);
+  }
+  return out;
+}
+/** GET /api/booking/options?date=YYYY-MM-DD&hours=6|8&people=N[&boat=boat-NN] — public, no price. */
+export async function apiOptions(request: Request, env: BEnv) {
+  const u = new URL(request.url);
+  const { sel, errors } = parseSel({ date: u.searchParams.get('date'), hours: u.searchParams.get('hours'), people: u.searchParams.get('people'), boat: u.searchParams.get('boat') });
+  if (!sel.date && !errors.some((e) => e.field === 'date')) errors.push({ code: 'DATE', field: 'date', error: 'Please choose a date.' });
+  if (!sel.hours && !errors.some((e) => e.field === 'hours')) errors.push({ code: 'DURATION', field: 'hours', error: 'Please choose 6 or 8 hours.' });
+  if (errors.length) return json({ ok: false, errors }, 400);
+  const d = await db(env);
+  const ip = request.headers.get('cf-connecting-ip') || 'local';
+  if (!(await rateLimit(d, `avail:${ip}`, 90, 3600))) return json({ ok: false, error: 'Too many requests. Please try again later or contact us on WhatsApp.' }, 429);
+  if (sel.boat && !(await d.prepare(`SELECT 1 FROM boats WHERE id = ? AND active = 1`).bind(sel.boat).first())) return json({ ok: false, errors: [{ code: 'BOAT', field: 'boat', error: 'Unknown boat.' }] }, 400);
+  const o = await findOptions(d, { date: sel.date!, hours: sel.hours!, people: sel.people ?? null, boat: sel.boat ?? null });
+  return json({ ok: true, today: localToday(), ...o });
+}
+
 /** Public wording for any date that cannot be booked online (never says why). */
 export const UNAVAILABLE_MSG = 'This date is not available online for this boat. A trip may still be possible upon request — please contact us to check availability.';
 export const PAYPAL_UNAVAILABLE_MSG = 'PayPal checkout is not yet available. Please choose Card via Stripe or Wise to pay your deposit — your booking details are kept.';

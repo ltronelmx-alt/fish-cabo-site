@@ -7,7 +7,7 @@ import { gcalStatus } from './gcal';
 import { get2fa, enabled as twoFaOn, epochOf, setup2fa, enable2fa, verifyLogin, disable2fa, status2fa } from './totp';
 import { paypalEnabled } from './envmode';
 import { json, nowIso, newId, newRef, newToken, hmacHex, sha256Hex, safeEqual, rateLimit, isDate, localToday, addDays } from './util';
-import { db, boats, audit, loadRes, runSweep, cron, isProductionEnv, isStagingEnv, adminUrl, bookingOpen, cardPaymentsOn, cardEnabled, stripeMode as stripeModeOf, notifyConfirmed, sendLogged, sendOnce, chargeCents, dayStates, priceOf, durationsOf, BOOKED_MSG, TERMS_VERSION, type BEnv, type Boat } from './core';
+import { db, boats, audit, loadRes, runSweep, cron, isProductionEnv, isStagingEnv, adminUrl, bookingOpen, cardPaymentsOn, cardEnabled, stripeMode as stripeModeOf, notifyConfirmed, sendLogged, sendOnce, findOptions, parseSel, chargeCents, dayStates, priceOf, durationsOf, BOOKED_MSG, TERMS_VERSION, type BEnv, type Boat } from './core';
 import * as M from './emails';
 import type { Res } from './emails';
 import { ADMIN_HTML } from './admin-page';
@@ -101,6 +101,50 @@ export async function adminApi(request: Request, env: BEnv): Promise<Response> {
     // the owner's official confirmation, pre-filled for copy/paste (never sent automatically)
     const official = r.status === 'CONFIRMED' ? M.customerConfirmed(r) : null;
     return json({ ok: true, booking: safe, audit: a.results, emails: e.results, payments: p.results, official: official && { subject: official.subject.replace(/^\[TEST\] /, ''), text: official.text } });
+  }
+  // "Needs action" (2026-11-27): one short list built from the real statuses and the email log — each line opens the booking.
+  if (path === 'todo' && request.method === 'GET') {
+    await runSweep(d);
+    const today = localToday(), soon = addDays(today, 3);
+    const items: { id: string; ref: string; date: string; boat: number; status: string; test: number; why: string; due: string | null; kind: string }[] = [];
+    const row = (r: any, why: string, kind: string, due: string | null = null) => items.push({ id: r.id, ref: r.ref, date: r.date, boat: r.boat_number, status: r.status, test: r.is_test, why, due, kind });
+    const base = `SELECT r.id, r.ref, r.date, r.status, r.is_test, r.hold_expires_at, r.email, r.customer_notified_at, r.owner_notified_at, r.payment_method, b.number boat_number FROM reservations r JOIN boats b ON b.id = r.boat_id`;
+    const [wise, exc, refund, soonRes, mails] = await Promise.all([
+      d.prepare(`${base} WHERE r.status = 'AWAITING_PAYMENT_VERIFICATION' AND r.holds_slot = 1 ORDER BY r.hold_expires_at`).all<any>(),
+      d.prepare(`${base} WHERE r.status = 'PAYMENT_EXCEPTION' ORDER BY r.date`).all<any>(),
+      d.prepare(`${base} WHERE r.status = 'REFUND_PENDING' ORDER BY r.date`).all<any>(),
+      d.prepare(`${base} WHERE r.date BETWEEN ? AND ? AND (r.status IN ('HELD','AWAITING_PAYMENT') OR (r.status = 'CONFIRMED' AND (r.customer_notified_at IS NULL OR trim(coalesce(r.email,'')) = ''))) ORDER BY r.date`).bind(today, soon).all<any>(),
+      // last attempt of each (booking, email kind) that ended in failure, with no later success for the same kind
+      d.prepare(`SELECT e.reservation_id id, e.kind, e.status, e.at FROM email_log e
+                 WHERE e.id IN (SELECT MAX(id) FROM email_log WHERE reservation_id IS NOT NULL GROUP BY reservation_id, kind)
+                   AND (e.status LIKE 'failed%' OR e.status LIKE 'rejected%')
+                   AND NOT EXISTS (SELECT 1 FROM email_log x WHERE x.reservation_id = e.reservation_id AND x.id > e.id
+                                   AND x.kind IN (e.kind, e.kind || '_resend') AND x.status IN ('sent', 'dry_run'))`).all<any>(),
+    ]);
+    for (const r of wise.results) row(r, 'Wise deposit to verify', 'wise', r.hold_expires_at);
+    for (const r of exc.results) row(r, 'Payment received but booking NOT confirmed — check it', 'exception');
+    for (const r of refund.results) row(r, 'Refund to process', 'refund');
+    for (const r of soonRes.results) row(r, r.status === 'CONFIRMED' ? (String(r.email || '').trim() ? 'Trip within 3 days — deposit receipt not sent to the customer' : 'Trip within 3 days — no customer email on file') : 'Trip within 3 days — deposit not paid yet', 'soon', r.hold_expires_at);
+    if (mails.results.length) {
+      const ids: string[] = [...new Set((mails.results as any[]).map((m) => String(m.id)))];
+      const info = new Map<string, any>();
+      for (const id of ids) { const r = await d.prepare(`${base} WHERE r.id = ?`).bind(id).first<any>(); if (r) info.set(id, r); }
+      for (const m of mails.results) { const r = info.get(m.id); if (r && !['CANCELED', 'EXPIRED', 'REFUNDED'].includes(r.status)) row(r, `${m.kind.startsWith('owner') ? 'Owner' : 'Customer'} email failed (${m.kind}, ${m.status})`, 'email', m.at); }
+    }
+    const rank: Record<string, number> = { exception: 0, email: 1, wise: 2, soon: 3, refund: 4 };
+    items.sort((a, b) => (rank[a.kind] - rank[b.kind]) || String(a.due || a.date).localeCompare(String(b.due || b.date)));
+    return json({ ok: true, today, items });
+  }
+  // Team link tool (2026-11-27): same engine as /book-now and the site assistant (findOptions). Returns ready-to-send /book-now links.
+  if (path === 'find' && request.method === 'GET') {
+    const { sel, errors } = parseSel({ date: u.searchParams.get('date'), hours: u.searchParams.get('hours'), people: u.searchParams.get('people'), boat: u.searchParams.get('boat') });
+    if (!sel.date) errors.push({ code: 'DATE', field: 'date', error: 'Choose a date.' });
+    if (!sel.hours) errors.push({ code: 'DURATION', field: 'hours', error: 'Choose 6 or 8 hours.' });
+    if (errors.length) return json({ ok: false, error: errors.map((e) => e.error).join(' ') }, 400);
+    const o = await findOptions(d, { date: sel.date!, hours: sel.hours!, people: sel.people ?? null, boat: sel.boat ?? null });
+    const link = (boat: string, date = sel.date!) => `${u.origin}/book-now?` + new URLSearchParams({ boat, date, hours: String(sel.hours), ...(sel.people ? { people: String(sel.people) } : {}) });
+    return json({ ok: true, ...o, links: Object.fromEntries(o.boats.map((b) => [b.id, link(b.id)])),
+      dateLinks: o.nextDatesFor ? Object.fromEntries(o.nextDates.map((x) => [x, link(o.nextDatesFor!, x)])) : {} });
   }
   if (path === 'calendar' && request.method === 'GET') {
     const month = u.searchParams.get('month') || localToday().slice(0, 7);
@@ -295,9 +339,17 @@ async function action(request: Request, env: BEnv, d: D1Database, body: Record<s
     case 'resend_confirmation': {
       if (r.status !== 'CONFIRMED') return fail('Only confirmed bookings');
       if (!r.email) return fail('No customer email on this booking');
-      await sendLogged(env, d, r, 'customer_deposit_receipt_resend', r.email, M.customerDepositReceipt(r), env.CONTACT_TO);
-      await audit(d, 'admin', 'resend_deposit_receipt', r.id).run();
-      return json({ ok: true });
+      // double click / second tab guard (2026-11-27): one resend per booking every 2 minutes — the claim is one conditional INSERT
+      const m = M.customerDepositReceipt(r);
+      const claim = await d.prepare(`INSERT INTO email_log (reservation_id, kind, recipient, subject, status, at, body)
+          SELECT ?1, 'customer_deposit_receipt_resend', ?2, ?3, 'sending', ?4, ?5
+          WHERE NOT EXISTS (SELECT 1 FROM email_log WHERE reservation_id = ?1 AND kind = 'customer_deposit_receipt_resend' AND at > ?6 AND status NOT LIKE 'failed%' AND status NOT LIKE 'rejected%')
+          RETURNING id`).bind(r.id, r.email, m.subject, now, m.text, new Date(Date.now() - 120e3).toISOString()).first<{ id: number }>();
+      if (!claim) return fail('The receipt was just sent (less than 2 minutes ago). Check the Emails list below before sending again.');
+      const res = await M.sendEmail(env, r.email, m.subject, m.text, m.html, env.CONTACT_TO);
+      await d.prepare(`UPDATE email_log SET status = ?, at = ? WHERE id = ?`).bind(res.dryRun ? 'dry_run' : res.ok ? 'sent' : `failed_${res.status ?? 0}`, nowIso(), claim.id).run();
+      await audit(d, 'admin', 'resend_deposit_receipt', r.id, { result: res.dryRun ? 'dry_run' : res.ok ? 'sent' : 'failed' }).run();
+      return res.ok ? json({ ok: true }) : fail('The email could not be sent. It is listed in “Needs action”; try again later.');
     }
   }
   return json({ ok: false, error: 'Unknown action' }, 400);

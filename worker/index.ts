@@ -35,7 +35,7 @@ export interface Env {
 }
 import REDIRECTS from '../src/data/redirects.json';
 import { publishNotify } from './notify';
-import { apiBoats, apiAvailability, apiQuote, apiSummary, apiReserve, apiStatus, apiCancelCheckout, apiPay, apiStripeWebhook, cron, isProductionEnv, isStagingEnv, adminUrl, bookingOpen } from './booking/core';
+import { apiBoats, apiAvailability, apiOptions, apiQuote, apiSummary, apiReserve, apiStatus, apiCancelCheckout, apiPay, apiStripeWebhook, cron, isProductionEnv, isStagingEnv, adminUrl, bookingOpen } from './booking/core';
 import { adminPage, adminApi } from './booking/admin';
 import { apiPaypalReturn, apiPaypalWebhook } from './booking/paypal';
 import { reconcile as gcalReconcile } from './booking/gcal';
@@ -195,6 +195,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
         switch (url.pathname) {
           case '/api/booking/boats': return await apiBoats(env);
           case '/api/booking/availability': return await apiAvailability(request, env);
+          case '/api/booking/options': return await apiOptions(request, env);
           case '/api/booking/quote': return await apiQuote(request, env);
           case '/api/booking/summary': return await apiSummary(request, env);
           case '/api/booking/reserve': return await apiReserve(request, env);
