@@ -93,10 +93,11 @@ export function parse(text: string, today: string): Parsed {
 }
 
 /* ------------------------------------------------------------------ understanding (AI, free quota, capped) ------------------------------------------------------------------ */
+export const diag: { ai?: string } = {};
 async function aiParse(env: AiEnv, d: D1Database, text: string, today: string): Promise<Parsed | null> {
-  if (!env.AI || env.ASSIST_AI === 'off') return null;
+  if (!env.AI || env.ASSIST_AI === 'off') { diag.ai = 'no binding'; return null; }
   const max = Number(env.ASSIST_AI_DAILY_MAX || 150);
-  if (!(await rateLimit(d, `assist:ai:${today}`, max, 86400))) return null; // daily cap: back to rules, never a bill
+  if (!(await rateLimit(d, `assist:ai:${today}`, max, 86400))) { diag.ai = 'daily cap'; return null; } // daily cap: back to rules, never a bill
   const instructions = `Extract a fishing-charter booking request. Today is ${today} (Los Cabos). Reply with ONE minified JSON object only, keys:
 date (YYYY-MM-DD or null), date_choices (array of 2 candidate dates when ambiguous, else null), hours (6, 8 or null — trip DURATION, "full day"=8, "3/4 day"/"half day"=6, never a clock time), people (integer or null), boat (1-10 or null), price (true if they ask a price), handoff ("tournament","custom","human","today" or null).`;
   try {
@@ -104,6 +105,7 @@ date (YYYY-MM-DD or null), date_choices (array of 2 candidate dates when ambiguo
     const raw = String((out as { response?: string }).response ?? (out as { output_text?: string }).output_text
       ?? ((out as { output?: { type?: string; content?: { text?: string }[] }[] }).output || []).filter((x) => x.type === 'message').flatMap((x) => x.content || []).map((c) => c.text || '').join('')
       ?? '');
+    diag.ai = `raw: ${raw.slice(0, 300) || JSON.stringify(out).slice(0, 300)}`;
     const m = raw.match(/\{[\s\S]*\}/); if (!m) return null;
     const j = JSON.parse(m[0]) as Record<string, unknown>;
     const p: Parsed = {};
@@ -115,7 +117,7 @@ date (YYYY-MM-DD or null), date_choices (array of 2 candidate dates when ambiguo
     if (j.price === true) p.wantsPrice = true;
     if (['tournament', 'custom', 'human', 'today'].includes(String(j.handoff))) p.handoff ??= j.handoff as Parsed['handoff'];
     return p;
-  } catch (e) { console.log('assist ai error', String(e).slice(0, 120)); return null; }
+  } catch (e) { diag.ai = `error: ${String(e).slice(0, 200)}`; console.log('assist ai error', String(e).slice(0, 120)); return null; }
 }
 
 /* ------------------------------------------------------------------ answers (templates; facts from D1) ------------------------------------------------------------------ */
@@ -239,7 +241,9 @@ export async function apiAssist(request: Request, env: BEnv) {
   if (r.hours === 6 || r.hours === 8) prev.hours = r.hours;
   if (Number.isInteger(r.people) && (r.people as number) >= 1 && (r.people as number) <= 10) prev.people = r.people as number;
   if (Number.isInteger(r.boat) && (r.boat as number) >= 1 && (r.boat as number) <= 10) prev.boat = r.boat as number;
+  diag.ai = undefined;
   const reply = await answer(env as AiEnv, d, text, prev, ip);
-  return json(reply ? { ok: true, reply } : { ok: false }, 200, { 'cache-control': 'no-store' });
+  const dbg = (env as { SITE_ENV?: string }).SITE_ENV !== 'production' && new URL(request.url).searchParams.has('debug') ? { diag: { ...diag } } : {};
+  return json(reply ? { ok: true, reply, ...dbg } : { ok: false, ...dbg }, 200, { 'cache-control': 'no-store' });
 }
 export type { Boat };
