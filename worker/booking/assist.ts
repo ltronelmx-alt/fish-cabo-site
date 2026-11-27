@@ -83,6 +83,8 @@ export function parse(text: string, today: string): Parsed {
     const mdY = a <= 12 && c <= 31 ? nextOf(today, a, c, y) : ''; // month/day
     if (dmY && mdY && dmY !== mdY) p.choices = [dmY, mdY].sort(); else date = dmY || mdY;
   } else if (rel) date = addDays(today, /after|apres|pasado/.test(rel[1]) ? 2 : 1);
+  // "2nd Saturday of December", "Friday after next", "samedi en huit"…: too subtle for the rules → left to the AI
+  else if (wd && new RegExp(`\\b(\\d+(st|nd|rd|th|eme|e)|first|second|third|fourth|last|premier|deuxieme|troisieme|dernier|primer|segundo|tercer|ultimo|after next|en huit|en quinze|dans \\w+ semaines?|in \\w+ weeks?|of (${MON})|de (${MON})|(${MON}))\\b`).test(td)) { /* AI */ }
   else if (wd) {
     const cur = new Date(`${today}T12:00:00Z`).getUTCDay(); let diff = (DOW[wd[2]] - cur + 7) % 7; if (diff === 0) diff = 7;
     const first = addDays(today, diff);
