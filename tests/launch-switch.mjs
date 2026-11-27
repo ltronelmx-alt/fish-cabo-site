@@ -133,7 +133,7 @@ try {
   const ws = await wisePaymentStep();
   t('Wise-only journey (Pixel 7): price shown, card disabled, Wise pre-selected with its 24 h notice, no card fee, PayPal still offered (+6%), contact + WhatsApp present', ws.cardDisabled && ws.wiseChecked && !ws.paypalDisabled && ws.wiseNote && /None \(Wise\)/.test(ws.sum) && !/Card processing fee/.test(ws.sum) && /\$800 USD/.test(ws.quoteTxt) && !/Card and PayPal payments carry/.test(ws.quoteTxt) && /PayPal \(6% processing fee on the deposit\)/.test(ws.quoteTxt) && ws.help >= 2, JSON.stringify(ws));
   const cw = await chatAnswer('how do I pay the deposit?');
-  t('Wise-only: chat payment answer = card temporarily unavailable, Wise or PayPal (+6%)', /card payments temporarily unavailable; deposit by Wise \(no fee\) or PayPal \(\+6% processing fee\)\./.test(cw) && !/Stripe \(\+6%/.test(cw), cw);
+  t('Wise-only: chat payment answer = card temporarily unavailable, Wise; PayPal currently unavailable', /card payments temporarily unavailable; deposit by Wise \(no fee\)\. PayPal payments are currently unavailable\./.test(cw) && !/Stripe \(\+6%/.test(cw), cw);
   await stop(w);
 
   // cards enabled later by configuration only (owner adds the live key + this flag): no rebuild of the booking system

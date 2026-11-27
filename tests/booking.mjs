@@ -110,7 +110,12 @@ try {
   let [ps, html, hd] = await get('/book-now');
   t('/book-now 200 with SEO title + H1', ps === 200 && html.includes('<title>Book a Fishing Charter in San Jose del Cabo | Exotic Fish Cabo</title>') && html.includes('Book Your San Jose del Cabo Fishing Charter'));
   t('/book-now has no price/availability schema', !/"@type":\s*"(Offer|Product|AggregateOffer)"/.test(html));
-  t('/book-now HTML contains no price or deposit amount', !/\$\s?\d/.test(html) && !/depositUsd|price6|price8/.test(html));
+  // the public $ → $$$$ price scale (owner 2026-11-10, src/components/PriceScale.astro) is the only allowed amount: it must show
+  // exactly the approved tier ranges from boat-showcase.json; nothing else (no boat price, no deposit) may appear (2026-11-27)
+  { const sc = JSON.parse(readFileSync('src/data/boat-showcase.json', 'utf8')).priceScale; const scale = html.match(/<p class="price-scale[^"]*"[^>]*>[\s\S]*?<\/p>/g) || [];
+    const tiers = scale.join(' ').replace(/<[^>]+>/g, ' ').match(/\$[\d,]+(?:\s*[–-]\s*[\d,]+)?\+?/g) || [];
+    const approved = [1, 2, 3, 4].map((n) => String(sc[n])).join(' ');
+    t('/book-now HTML contains no price or deposit amount (only the approved $ price scale)', scale.length === 1 && tiers.length > 0 && tiers.every((x) => approved.includes(x)) && !/\$\s?\d/.test(html.replace(scale[0], '')) && !/depositUsd|price6|price8/.test(html), JSON.stringify(tiers)); }
   t('/book-now: SHOW MY PRICE, exact card label, legal statement (no checkbox), WhatsApp request', html.includes('SHOW MY PRICE') && html.includes('Card via Stripe (+6% processing fee)') && html.includes('By completing your booking, you agree to our <a href="/terms-conditions"') && html.includes('acknowledge our <a href="/privacy-policy"') && !/name="consent"/.test(html) && /id="req" href="https:\/\/wa\.me\/526241223506"/.test(html));
   [ps, html, hd] = await get('/book-now/confirmation');
   t('/book-now/confirmation noindex (meta + header)', ps === 200 && html.includes('content="noindex, nofollow"') && /noindex/.test(hd.get('x-robots-tag') || ''));
@@ -181,7 +186,7 @@ try {
     const [qs2, qj2] = d >= todayLocal ? await quote({ boat: b, hours: 6, date: d }) : [409, {}];
     const [, cal] = await get(`/api/admin/calendar?month=${d.slice(0, 7)}`, { admin: true });
     const blk = (cal.blocks || []).find((x) => x.boat_id === b && x.date === d);
-    t(`#${+b.slice(5)} ${d}: unavailable on /book-now, quote refused, visible in /booking-admin as MANUAL BOOKING`, (pub === 'unavailable' || pub === 'past') && qs2 === 409 && !!blk && /^MANUAL BOOKING/.test(blk.reason) && cal.states[b][d] === 'blocked', JSON.stringify({ pub, qs2, blk }));
+    t(`#${+b.slice(5)} ${d}: unavailable on /book-now, quote refused, visible in /booking-admin as MANUAL BOOKING`, (pub === 'unavailable' || pub === 'past') && qs2 === 409 && !!blk && /^MANUAL BOOKING/.test(blk.reason) && (cal.states[b][d] === 'blocked' || (pub === 'past' && cal.states[b][d] === 'past')), JSON.stringify({ pub, qs2, blk, state: cal.states[b][d] })); // a past manual booking stays listed as a block; its day shows as past (2026-11-27)
   }
   t('imported once (no duplicates), no customer/price/payment invented, no reservation, no email', sql(`SELECT COUNT(*) n FROM blocked_dates WHERE reason LIKE 'MANUAL BOOKING%'`)[0].n === 3 && sql(`SELECT COUNT(*) n FROM reservations`)[0].n === 0 && sql(`SELECT COUNT(*) n FROM email_log`)[0].n === 0 && sql(`SELECT COUNT(*) n FROM audit_log WHERE action='import_manual_bookings'`)[0].n === 1);
   t('other boats stay available on those dates', (await avail('boat-03', '2026-12-15')) === 'available');

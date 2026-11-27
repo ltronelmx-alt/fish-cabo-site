@@ -79,35 +79,29 @@ for (const l of langs) {
 }
 
 
-// 6b PayPal policy (permanent regression guard): PayPal is mentioned, never "unavailable", no PayPal link, WhatsApp handoff
+// 6b PayPal policy (owner 2026-11-27): PayPal payments are currently unavailable — the chat says so in every language and
+// points to the options of the official form (card via Stripe +6 %, Wise no fee). No PayPal link, WhatsApp handoff kept.
 {
   const src = (await import('node:fs')).readFileSync('public/js/efc-chat.js', 'utf8');
-  rec('PayPal', 'source never says PayPal is unavailable (EN/FR/ES)', !/PayPal is temporarily unavailable|PayPal est momentan[ée]ment indisponible|PayPal no est[áa] disponible/i.test(src) && !/paypal[^"\n]{0,60}(unavailable|indisponible|no est[áa] disponible)/i.test(src));
+  rec('PayPal', 'source never promises PayPal as a payment option (no "PayPal (+6"/"PayPal — 6")', !/PayPal \(\+6|PayPal — 6|o PayPal|ou PayPal|or PayPal/.test(src));
   rec('PayPal', 'source contains no PayPal URL', !/paypal\.(com|me)/i.test(src));
   const QP = {
-    en: ['Can I pay with PayPal?', 'How do I pay the deposit?', 'Do you accept Stripe?', 'Can I pay with Wise?'],
-    fr: ['Je peux payer avec PayPal ?', "Comment payer l'acompte ?", 'Vous acceptez Stripe ?', 'Je peux payer avec Wise ?'],
-    es: ['¿Puedo pagar con PayPal?', '¿Cómo pago el depósito?', '¿Aceptan Stripe?', '¿Puedo pagar con Wise?'],
+    en: ['Can I pay with PayPal?', 'Do you take paypal for the deposit', 'How do I pay the deposit?', 'Do you accept Stripe?', 'Can I pay with Wise?'],
+    fr: ['Je peux payer avec PayPal ?', 'paypal accepté ?', "Comment payer l'acompte ?", 'Vous acceptez Stripe ?', 'Je peux payer avec Wise ?'],
+    es: ['¿Puedo pagar con PayPal?', 'aceptan paypal?', '¿Cómo pago el depósito?', '¿Aceptan Stripe?', '¿Puedo pagar con Wise?'],
   };
-  // open build (staging / after the launch switch): online booking only, PayPal a permanent option, +6 % (owner 2026-11-09 evening; earlier: coming soon) (owner 2026-11-09:
-  // the old boat-page payment buttons disappear at the launch). The pre-launch wording is checked in tests/launch-switch.mjs.
-  const NEED = { en: /Stripe \(\+6% processing fee\), PayPal \(\+6% processing fee\) or Wise \(no fee\)\./, fr: /Stripe \(\+6 % de frais\), PayPal \(\+6 % de frais\) ou Wise \(sans frais\)\./, es: /Stripe \(\+6 % de comisión\), PayPal \(\+6 % de comisión\) o Wise \(sin comisión\)\./ };
+  const OFF = { en: /PayPal payments are currently unavailable/, fr: /Le paiement PayPal est actuellement indisponible/, es: /El pago con PayPal no está disponible actualmente/ };
+  const OPTS = { en: /card via Stripe \(\+6% processing fee\)[^.]*Wise \(no fee\)/, fr: /carte via Stripe \(\+6 % de frais\)[^.]*Wise \(sans frais\)/, es: /tarjeta vía Stripe \(\+6 % de comisión\)[^.]*Wise \(sin comisión\)/ };
   for (const l of langs) {
     const p = await page('en-US'); await open(p); await p.click('#btn-' + l);
-    const YES = { en: 'Yes.', fr: 'Oui.', es: 'Sí.' };
-    const pq = QP[l][0];
-    const ptxt = await ask(p, pq);
-    const pbody = ptxt.replace(/\s*\d{1,2}:\d{2}\s*$/, '').trim(); // strip the message time
-    const plinks = await p.locator('#efc-messages .efc-bot').last().locator('a').count();
-    rec('PayPal', `${l.toUpperCase()} "${pq}" → exactly "${YES[l]}" (owner rule), no link`, pbody === YES[l] && plinks === 0, JSON.stringify(pbody));
-    for (const q of QP[l].slice(1)) {
+    for (const q of QP[l]) {
       const txt = await ask(p, q);
       const links = await p.locator('#efc-messages .efc-bot').last().locator('a').evaluateAll((a) => a.map((x) => x.href));
-      const wa = await waText(p);
-      const ok = /PayPal/.test(txt) && NEED[l].test(txt) && /Stripe/.test(txt) && /6 ?%/.test(txt) && /Wise/.test(txt)
-        && !/unavailable|indisponible|no est[áa] disponible/i.test(txt) && !links.some((h) => /paypal\./i.test(h))
-        && wa.host === 'wa.me' && wa.path === '/526241223506' && !MIX[l].test(txt);
-      rec('PayPal', `${l.toUpperCase()} "${q}" → payment answer: Stripe +6 %, PayPal +6 % (permanent, owner 2026-11-09), Wise + WhatsApp button wa.me/526241223506`, ok, txt.replace(/\s+/g, ' ').slice(0, 160));
+      const direct = /paypal/i.test(q);
+      const ok = OFF[l].test(txt) && OPTS[l].test(txt) && !links.some((h) => /paypal\./i.test(h)) && !MIX[l].test(txt)
+        && (!direct || links.some((h) => /\/book-now/.test(h)));
+      const wa = direct ? null : await waText(p);
+      rec('PayPal', `${l.toUpperCase()} "${q}" → PayPal currently unavailable + Stripe (+6 %) / Wise options${direct ? ' + official form link' : ' + WhatsApp wa.me/526241223506'}`, ok && (direct || (wa.host === 'wa.me' && wa.path === '/526241223506')), txt.replace(/\s+/g, ' ').slice(0, 180));
     }
     await p.context().close();
   }

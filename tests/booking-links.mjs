@@ -1,9 +1,10 @@
 import { createRequire } from 'node:module';
-const { chromium } = createRequire(import.meta.url)('playwright');
+const { chromium, devices } = createRequire(import.meta.url)('playwright');
 const U = process.argv[2] || 'http://127.0.0.1:8787'; // needs boat-03 blocked on 2026-12-14 and boat-09 on 2026-12-15 (test data)
 const b = await chromium.launch(); const results = [];
+const MOBILE = process.env.MOBILE === '1'; const newPage = () => (MOBILE ? b.newPage({ ...devices['Pixel 7'] }) : b.newPage());
 async function run(name, qs, check) {
-  const p = await b.newPage(); const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+  const p = await newPage(); const errs = []; p.on('pageerror', (e) => errs.push(e.message));
   await p.goto(U + '/book-now' + qs); await p.waitForTimeout(2500);
   const st = await p.evaluate(() => ({
     boat: document.querySelector('input[name=boat]:checked')?.value || '',
@@ -33,10 +34,25 @@ await run('unknown boat', '?boat=boat-77&date=2026-12-14&hours=8', (s) => /canno
 await run('contact params ignored', '?boat=boat-04&email=x@y.z&fname=Evil', (s) => s.boat === 'boat-04');
 for (const r of results) console.log(r.ok ? 'PASS' : 'FAIL', r.name, r.ok ? '' : JSON.stringify(r.st) + r.errs.join(';'));
 // click another boat from the alternatives keeps the selection
-const p = await b.newPage(); await p.goto(U + '/book-now?boat=boat-03&date=2026-12-14&hours=8&people=4'); await p.waitForTimeout(2500);
+const p = await newPage(); await p.goto(U + '/book-now?boat=boat-03&date=2026-12-14&hours=8&people=4'); await p.waitForTimeout(2500);
 await p.click('#balts [data-ob="boat-05"]'); await p.waitForTimeout(2500);
 console.log('switch boat:', await p.evaluate(() => [document.querySelector('input[name=boat]:checked').value, document.querySelector('input[name=duration]:checked')?.value, document.querySelector('input[name=date]').value, document.querySelector('select[name=people]').value, !document.getElementById('quote').hidden, document.querySelector('.bk-total')?.textContent].join(' | ')));
-const p2 = await b.newPage(); await p2.goto(U + '/book-now?boat=boat-03&date=2026-12-14&hours=8'); await p2.waitForTimeout(2500);
+const p2 = await newPage(); await p2.goto(U + '/book-now?boat=boat-03&date=2026-12-14&hours=8'); await p2.waitForTimeout(2500);
 await p2.selectOption('#balts [data-altp]', '6'); await p2.click('#balts [data-altgo]'); await p2.waitForTimeout(1500);
 console.log('ask people → ', await p2.evaluate(() => document.getElementById('balts').textContent.replace(/\s+/g, ' ').slice(0, 160)));
+// search failure (options API down): the customer still has REQUEST AVAILABILITY (WhatsApp with the request) + other dates
+{ const p3 = await newPage(); await p3.route('**/api/booking/options*', (r) => r.abort());
+  await p3.goto(U + '/book-now?boat=boat-03&date=2026-12-14&hours=8&people=4'); await p3.waitForTimeout(2500);
+  const st = await p3.evaluate(() => ({ booked: !document.getElementById('booked').hidden, req: document.getElementById('req').href, help: document.querySelector('#s-date a[data-track="booking_help_whatsapp"]').href }));
+  const ok = st.booked && /wa\.me\/526241223506\?text=.*Boat%20%233.*December%2014.*8%20hours/.test(st.req) && /wa\.me/.test(st.help);
+  console.log(ok ? 'PASS' : 'FAIL', 'options API failure → REQUEST AVAILABILITY WhatsApp with boat/date/duration still offered', ok ? '' : JSON.stringify(st)); }
+// a link copied from the admin tool opens the right selection
+if (process.env.ADMIN_PW) {
+  const ctx = await b.newContext(); const pa = await ctx.newPage(); await pa.goto(U + '/booking-admin'); await pa.fill('#pw', process.env.ADMIN_PW); await pa.click('#lf button'); await pa.waitForTimeout(1500);
+  await pa.click('nav button[data-t=find]'); await pa.fill('#ff2 input[name=date]', '2026-12-14'); await pa.fill('#ff2 input[name=people]', '4'); await pa.selectOption('#fpb', 'boat-03'); await pa.click('#ff2 button'); await pa.waitForTimeout(1500);
+  const link = await pa.locator('#fres [data-copy]').first().getAttribute('data-copy');
+  const pp = await ctx.newPage(); await pp.goto(link); await pp.waitForTimeout(2500);
+  const st = await pp.evaluate(() => [document.querySelector('input[name=boat]:checked')?.value, document.querySelector('input[name=duration]:checked')?.value, document.querySelector('input[name=date]').value, document.querySelector('select[name=people]').value, !document.getElementById('s-price').hidden].join('|'));
+  const u = new URL(link); const ok = st === `${u.searchParams.get('boat')}|8|2026-12-14|4|true` && !/email|phone|name/.test(link);
+  console.log(ok ? 'PASS' : 'FAIL', 'admin "Copy link" opens the same selection in /book-now (no customer data in the link)', link, st); await ctx.close(); }
 await b.close();
