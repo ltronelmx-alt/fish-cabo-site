@@ -139,7 +139,18 @@ export async function answer(env: AiEnv, d: D1Database, text: string, prev: Ctx,
   const today = localToday();
   let p = parse(text, today), source: Reply['source'] = 'rules';
   const understood = (x: Parsed) => !!(x.date || x.choices || x.pastDate || x.hours || x.people || x.boat || x.handoff || x.status);
-  if (!understood(p)) { const a = await aiParse(env, d, text, today); if (a && understood(a)) { p = { ...a, wantsPrice: a.wantsPrice || p.wantsPrice, wantsBooking: p.wantsBooking }; source = 'ai'; } }
+  // the AI only fills what the rules could not read ("mes trois potes" = 4 people, "le jour de Noël" = 25 Dec…)
+  const partial = !p.handoff && !p.status && (!(p.date || p.choices || p.pastDate) || p.people == null) && text.split(/\s+/).length >= 4;
+  if (!understood(p) || partial) {
+    const a = await aiParse(env, d, text, today);
+    if (a && understood(a)) {
+      const before = understood(p);
+      for (const k of ['hours', 'people', 'boat', 'handoff'] as const) if (p[k] == null && a[k] != null) (p as Record<string, unknown>)[k] = a[k];
+      if (!(p.date || p.choices || p.pastDate)) { if (a.date) p.date = a.date; else if (a.choices) p.choices = a.choices; else if (a.pastDate) p.pastDate = a.pastDate; }
+      p.wantsPrice = p.wantsPrice || a.wantsPrice;
+      if (!before || understood(p)) source = 'ai';
+    }
+  }
   const c: Ctx = { ...prev };
   for (const k of ['date', 'hours', 'people', 'boat'] as const) if (p[k] != null) (c as Record<string, unknown>)[k] = p[k];
   if (p.choices || p.pastDate) delete c.date;
