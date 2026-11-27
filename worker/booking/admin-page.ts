@@ -25,7 +25,7 @@ tr.click{cursor:pointer}tr.click:hover{background:#fff7ef}.row{display:flex;gap:
 @media(max-width:640px){main{padding:10px}.kv{grid-template-columns:1fr}.kv div:nth-child(odd){margin-top:6px}.row label,.row input,.row select{width:100%}button.b{min-height:44px}nav button{padding:10px 12px}#detail{padding:8px}}
 </style></head><body>
 <header><b>EXOTIC FISH CABO · BOOKINGS</b><nav id="nav" class="hide">
-<button data-t="list" class="on">Bookings</button><button data-t="cal">Calendar</button><button data-t="phone">New phone booking</button><button data-t="second">Record second trip</button>
+<button data-t="todo">Needs action <span id="todon"></span></button><button data-t="list" class="on">Bookings</button><button data-t="find">Find a boat · link</button><button data-t="cal">Calendar</button><button data-t="phone">New phone booking</button><button data-t="second">Record second trip</button>
 <button data-t="clients">Clients</button><button data-t="boats">Boats &amp; prices</button><button data-t="settings">Settings</button><button data-t="audit">Audit log</button>
 <button id="ready" title="What is configured and working (no secret values)">Launch readiness</button><button id="runjob" class="hide" title="Staging only: runs the hourly job now (expires holds past their deadline, sends the expiry notices once)">Run hourly job (staging)</button><button id="csv">Export CSV</button><button id="logout">Sign out</button></nav></header>
 <main>
@@ -63,6 +63,13 @@ tr.click{cursor:pointer}tr.click:hover{background:#fff7ef}.row{display:flex;gap:
 <table><thead><tr><th>#</th><th>Boat</th><th>6 h price</th><th>8 h price</th><th>Deposit</th><th>Capacity</th><th>Online</th></tr></thead><tbody id="brows"></tbody></table><p class="msg" id="bmsg"></p></div></section>
 <section id="t-settings" class="hide"><div class="card"><form id="setf" class="row"></form><p class="msg" id="setmsg"></p><p><small>Times use the business timezone America/Mazatlan.</small></p></div>
 <div class="card" id="tfa"><h3>Two-factor authentication (Google Authenticator)</h3><div id="tfab"></div><p class="msg" id="tfam"></p></div></section>
+<section id="t-todo" class="hide"><div class="card"><h2>Needs action</h2><p><small>Only what needs you: Wise deposits to verify, payments not confirmed, emails that failed, trips within 3 days with a problem, refunds to do. Click a line to open the booking (history, emails, actions).</small></p>
+<div style="overflow:auto"><table><thead><tr><th>Why</th><th>Deadline</th><th>Ref</th><th>Trip date</th><th>Boat</th><th>Status</th></tr></thead><tbody id="trows"></tbody></table></div></div></section>
+<section id="t-find" class="hide"><div class="card"><h2>Find a boat &amp; send a booking link</h2>
+<p><small>Same rules as the website (capacity, 6 / 8 hours, 24 h minimum, blocks, bookings and holds). The link only pre-fills /book-now: no booking, no hold, no payment. No customer data goes in the link.</small></p>
+<form id="ff2" class="row"><label>Date<input type="date" name="date" required></label><label>Duration<select name="hours"><option value="8">8 hours</option><option value="6">6 hours</option></select></label>
+<label>People<input type="number" name="people" min="1" max="10" placeholder="optional"></label><label>Preferred boat<select name="boat" id="fpb"><option value="">Any</option></select></label><button class="b o">Search</button></form>
+<p class="msg" id="fmsg"></p><div id="fres"></div></div></section>
 <section id="t-audit" class="hide"><div class="card" style="overflow:auto"><table><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Booking</th><th>Details</th></tr></thead><tbody id="arows"></tbody></table></div></section>
 </main>
 <div id="detail"><div class="card" id="dc"></div></div>
@@ -76,10 +83,10 @@ const money=c=>'$'+(c/100).toFixed(2);
 function show(on){$('#login').classList.toggle('hide',on);$('#nav').classList.toggle('hide',!on);if(!on)document.querySelectorAll('main>section[id^=t-]').forEach(s=>s.classList.add('hide'));}
 async function boot(){const o=await api('overview');if(!o.ok){show(false);return}O=o;show(true);month=o.today.slice(0,7);
  $('#fs').innerHTML='<option value="">All</option>'+o.statuses.map(s=>'<option>'+s+'</option>').join('');
- const bo=o.boats.map(b=>'<option value="'+b.id+'">#'+b.number+' '+H(b.name)+'</option>').join('');$('#fb').innerHTML='<option value="">All</option>'+bo;$('#sb').innerHTML=bo;$('#pb').innerHTML=bo;
+ const bo=o.boats.map(b=>'<option value="'+b.id+'">#'+b.number+' '+H(b.name)+'</option>').join('');$('#fb').innerHTML='<option value="">All</option>'+bo;$('#sb').innerHTML=bo;$('#pb').innerHTML=bo;$('#fpb').innerHTML='<option value="">Any</option>'+bo;todoCount();
  tab('list')}
 function tab(t){document.querySelectorAll('#nav button[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===t));document.querySelectorAll('main>section[id^=t-]').forEach(s=>s.classList.toggle('hide',s.id!=='t-'+t));
- ({list,cal,boats:boatsTab,settings:settingsTab,audit:auditTab,second:()=>{},phone:phoneTab,clients:clientsTab})[t]()}
+ ({todo:todoTab,find:()=>{},list,cal,boats:boatsTab,settings:settingsTab,audit:auditTab,second:()=>{},phone:phoneTab,clients:clientsTab})[t]()}
 async function list(){const p=new URLSearchParams({q:$('#q').value,status:$('#fs').value,boat:$('#fb').value,from:$('#ff').value,to:$('#ft').value});const j=await api('bookings?'+p);
  $('#rows').innerHTML=(j.bookings||[]).map(b=>'<tr class="click" data-id="'+b.id+'"><td><b>'+H(b.ref)+'</b>'+(b.source==='override'?' <span class="pill">2nd trip</span>':'')+'</td><td>'+H(b.date)+'</td><td>#'+b.boat_number+' '+H(b.boat_name)+'</td><td><b>'+b.hours+' HOURS</b></td><td>'+H(b.first_name+' '+b.last_name)+'<br><small>'+H(b.email)+' · '+H(b.phone)+'</small></td><td>'+b.people+'</td><td>'+H(b.payment_method)+'<br><small>'+money(b.charge_cents)+'</small></td><td>'+pill(b.status,b.is_test)+'</td></tr>').join('')||'<tr><td colspan="8">No bookings.</td></tr>';}
 $('#rows').onclick=e=>{const tr=e.target.closest('tr[data-id]');if(tr)detail(tr.dataset.id)};
@@ -160,5 +167,21 @@ function phoneSync(){const b=O.boats.find(x=>x.id===$('#pb').value)||O.boats[0];
 $('#pb').onchange=()=>{$('#pa').value='';phoneSync()};$('#ph').onchange=phoneSync;$('#pp').onchange=phoneSync;
 $('#pf').onsubmit=async e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));f.hours=+f.hours;f.people=+f.people;const r=await api('phone-booking',f);
  $('#pmsg').className='msg '+(r.ok?'okm':'err');$('#pmsg').innerHTML=r.ok?'Created '+H(r.ref)+' — '+H(r.status)+' · total '+r.total+' USD, balance '+r.balance+' USD.'+(r.payUrl?' Card payment link '+(r.emailSent?'emailed':'NOT emailed')+': <a href="'+H(r.payUrl)+'">'+H(r.payUrl)+'</a>':'')+(r.status==='CONFIRMED'?(r.emailSent?' Confirmation emailed.':' No customer email given.'):''):H(r.error);if(r.ok){e.target.reset();phoneSync()}};
+async function todoCount(){const j=await api('todo');$('#todon').textContent=j.ok&&j.items.length?'('+j.items.length+')':'';return j}
+async function todoTab(){const j=await todoCount();if(!j.ok)return;
+ $('#trows').innerHTML=j.items.map(x=>'<tr class="click" data-id="'+x.id+'"><td><b>'+H(x.why)+'</b></td><td>'+H(x.due?new Date(x.due).toLocaleString('en-US',{timeZone:'America/Mazatlan',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' (Cabo)':'')+'</td><td>'+H(x.ref)+(x.test?' <span class="pill test">TEST</span>':'')+'</td><td>'+H(x.date)+'</td><td>#'+x.boat+'</td><td><span class="pill '+x.status+'">'+x.status+'</span></td></tr>').join('')||'<tr><td colspan="6">Nothing to do right now.</td></tr>'}
+$('#trows').onclick=e=>{const tr=e.target.closest('tr[data-id]');if(tr)detail(tr.dataset.id)};
+function copyBtn(link){return '<button type="button" class="b l" data-copy="'+H(link)+'">Copy link</button> <a href="'+H(link)+'" target="_blank" rel="noopener"><small>open</small></a>'}
+$('#ff2').onsubmit=async e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));const p=new URLSearchParams();for(const k of ['date','hours','people','boat'])if(f[k])p.set(k,f[k]);
+ $('#fmsg').className='msg';$('#fmsg').textContent='Searching…';$('#fres').innerHTML='';const j=await api('find?'+p);
+ if(!j.ok){$('#fmsg').className='msg err';$('#fmsg').textContent=j.error;return}$('#fmsg').textContent='';let h='';
+ if(j.dateState!=='ok')h+='<p class="err">This date cannot be booked online ('+(j.dateState==='past'?'in the past':'outside the booking window')+').</p>';
+ if(j.preferred){const pr=j.preferred;h+='<p>Boat #'+pr.number+': <b>'+(pr.available?'available':!pr.offersDuration?'does not offer '+j.hours+' hours':!pr.fits?'too small for '+j.people+' people':'not available')+'</b></p>'}
+ if(j.boats.length)h+='<table><thead><tr><th>Available boat</th><th>Size</th><th>Up to</th><th>Booking link</th></tr></thead><tbody>'+j.boats.map(b=>'<tr><td>#'+b.number+'</td><td>'+b.sizeFt+' ft</td><td>'+b.capacity+'</td><td>'+copyBtn(j.links[b.id])+'</td></tr>').join('')+'</tbody></table>';
+ else h+='<p><b>No boat available online on '+H(j.date)+' for '+j.hours+' hours'+(j.people?' and '+j.people+' people':'')+'.</b></p>';
+ if(j.nextDates.length)h+='<p>Next bookable dates'+(j.nextDatesFor?' for this boat':' (any suitable boat)')+': '+j.nextDates.map(d=>j.dateLinks[d]?H(d)+' '+copyBtn(j.dateLinks[d]):H(d)).join(' · ')+'</p>';
+ if(!j.people)h+='<p><small>Tip: add the number of people so only boats that fit the group are listed.</small></p>';
+ $('#fres').innerHTML=h};
+$('#fres').onclick=async e=>{const b=e.target.closest('[data-copy]');if(!b)return;try{await navigator.clipboard.writeText(b.dataset.copy);b.textContent='Copied ✓'}catch{prompt('Copy this link:',b.dataset.copy)}};
 boot();
 </script></body></html>`;

@@ -16,7 +16,7 @@ async function run(label, ctxOpts, boatId, number, hours, total, deposit) {
   const reqs = []; p.on('request', (r) => { if (r.url().includes('/api/')) reqs.push(r.url()); });
   await p.goto(`${BASE}/book-now?boat=${boatId}`, { waitUntil: 'networkidle' });
   const html = await p.content();
-  t(`${label}: page source has no price/deposit amount`, !/\$\s?\d/.test(html.replace(/<script[\s\S]*?<\/script>/g, '')));
+  t(`${label}: page source has no price/deposit amount (the approved $ price scale aside)`, !/\$\s?\d/.test(html.replace(/<script[\s\S]*?<\/script>/g, '').replace(/<p class="price-scale[^"]*"[^>]*>[\s\S]*?<\/p>/, '')) && (html.match(/class="price-scale/g) || []).length === 1);
   t(`${label}: boat #${number} preselected from the boat page link`, await p.locator(`input[name=boat][value=${boatId}]`).isChecked());
   const d6 = await p.locator('label[data-h="6"]').isVisible(), d8 = await p.locator('label[data-h="8"]').isVisible();
   t(`${label}: durations shown = ${number === 1 ? '6 h only' : '6 h and 8 h'}`, d6 && d8 === (number !== 1));

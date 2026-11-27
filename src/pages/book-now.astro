@@ -50,6 +50,8 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     <div class="container">
       <form id="bk" class="bk" novalidate data-wa={wa}>
         <noscript><p class="bk-note">Online booking needs JavaScript. You can also <a href="/contact">contact us</a> or WhatsApp +52 624 122 3506.</p></noscript>
+        <p class="bk-msg bk-lmsg" id="lmsg" role="status" aria-live="polite" hidden></p>
+        <div class="bk-alts" id="lalts" hidden></div>
         <div class="bk-step bk-pick">
           <h2><span>1</span> Choose your boat</h2>
           <PriceScale />
@@ -90,6 +92,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
             <p><strong>This date is not available online for this boat. A trip may still be possible upon request — please contact us to check availability.</strong></p>
             <a class="btn btn-primary no-arrow" id="req" href={`https://wa.me/${wa}`} target="_blank" rel="noopener" data-track="request_availability_whatsapp">REQUEST AVAILABILITY</a>
             <small>Opens WhatsApp with your request ready — just press Send.</small>
+            <div class="bk-alts" id="balts" hidden></div>
           </div>
           <BookingHelp />
         </div>
@@ -219,11 +222,21 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
   }
 
   /** Prefilled WhatsApp message (free click-to-chat; the customer presses Send). */
+  function tripLines() {
+    const b = boat(), l: string[] = [];
+    if (b) l.push(`Boat #${b.number}`);
+    if (val('date')) l.push(`Date: ${longDate(val('date'))}`);
+    if (dur()) l.push(`Duration: ${dur()} hours`);
+    return l;
+  }
+  /** "Questions? WHATSAPP" buttons (2026-11-27): the message carries the trip being looked at — boat, date, duration, group size only. */
+  function helpLinks() {
+    const l = tripLines(); if (val('people')) l.push(`People aboard: ${val('people')}`);
+    const text = l.length ? `Hello Exotic Fish Cabo, I have a question about booking:\n${l.join('\n')}` : '';
+    f.querySelectorAll<HTMLAnchorElement>('a[data-track="booking_help_whatsapp"]').forEach((a) => { a.href = `https://wa.me/${f.dataset.wa}` + (text ? `?text=${encodeURIComponent(text)}` : ''); });
+  }
   function waUrl() {
-    const b = boat(); const lines = ['Hello Exotic Fish Cabo, I would like to request availability:'];
-    if (b) lines.push(`Boat #${b.number}`);
-    if (val('date')) lines.push(`Date: ${longDate(val('date'))}`);
-    if (dur()) lines.push(`Duration: ${dur()} hours`);
+    const lines = ['Hello Exotic Fish Cabo, I would like to request availability:', ...tripLines()];
     const name = [val('fname'), val('lname')].filter(Boolean).join(' ');
     if (name) lines.push(`Name: ${name}`);
     if (val('email')) lines.push(`Email: ${val('email')}`);
@@ -239,7 +252,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     $('#qmsg').textContent = ''; ['qalts', 'dalts', 'palts'].forEach((id) => show(id, false));
     const ready = !!boat() && !!dur() && days[val('date')] === 'available';
     show('s-price', ready);
-    save();
+    save(); helpLinks();
   }
 
   /** Wise-only (owner 2026-11-09): card option shown but disabled; Wise is selected for the customer. */
@@ -275,8 +288,65 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     });
     // ?boat=boat-03 (boat page buttons) or ?boat=3 (short link the owner can send); otherwise resume this tab's booking
     const raw = q.get('boat') || ''; const pre = /^\d{1,2}$/.test(raw) ? `boat-${raw.padStart(2, '0')}` : raw;
+    if (['date', 'hours', 'duration', 'people'].some((k) => q.has(k))) { await fromLink(pre); return; }
     await restore(pre);
   }
+  /* ---- booking link (2026-11-27): /book-now?boat=boat-03&date=2026-12-14&hours=8&people=4 ----
+   * Pre-fills the steps only: no booking, no hold, no payment. Each invalid value gets its own message; valid ones are kept.
+   * Never reads contact details from the URL. The date is the fishing day in Los Cabos (America/Mazatlan, the server's "today"). */
+  const lmsg = (t: string[]) => { const el = $('#lmsg'); el.innerHTML = t.join('<br>'); el.hidden = !t.length; };
+  async function fromLink(pre: string) {
+    const notes: string[] = [];
+    const rawD = (q.get('date') || '').trim(), rawH = (q.get('hours') || q.get('duration') || '').trim().replace(/h(ours?)?$/i, ''), rawP = (q.get('people') || '').trim();
+    let date = '', hours = 0, people = 0;
+    if (rawD) {
+      const ok = /^\d{4}-\d{2}-\d{2}$/.test(rawD) && new Date(rawD + 'T00:00:00Z').toISOString().slice(0, 10) === rawD;
+      if (!ok) notes.push('The date in your link is not valid — please pick your date in the calendar.');
+      else if (rawD < today) notes.push(`${longDate(rawD)} has already passed — please pick another date.`);
+      else if (lastMonth && rawD.slice(0, 7) > lastMonth) notes.push(`${longDate(rawD)} is too far ahead to book online — please pick another date or contact us.`);
+      else date = rawD;
+    }
+    if (rawH) { if (rawH === '6' || rawH === '8') hours = Number(rawH); else notes.push('Trips last 6 or 8 hours — please choose your trip duration.'); }
+    if (rawP) { const n = Number(rawP); if (Number.isInteger(n) && n >= 1 && n <= 10) people = n; else notes.push('Our boats take 1 to 10 people — please choose the number of people aboard.'); }
+    restoring = true;
+    try {
+      for (const k of FIELDS) setVal(k, String((load() as Saved)[k] ?? '')); // contact details typed earlier in this tab, never from the link
+      const r = pre ? f.querySelector<HTMLInputElement>(`input[name=boat][value="${CSS.escape(pre)}"]`) : null;
+      if (pre && (!r || r.disabled)) notes.push('The boat in your link cannot be booked online — please choose a boat.');
+      if (!r || r.disabled) { lmsg(notes); if (date && hours) await linkOptions(date, hours, people); return; }
+      r.checked = true; await pickBoat();
+      const b = boat()!;
+      if (people) linkPeople = people;
+      if (people) { if (people > Math.min(b.capacity, 10)) { notes.push(`Boat #${b.number} takes up to ${Math.min(b.capacity, 10)} people.`); people = 0; } else setVal('people', String(people)); }
+      if (hours) {
+        if (b.durations.includes(hours)) { (f.querySelector(`input[name=duration][value="${hours}"]`) as HTMLInputElement).checked = true; await onDuration(); }
+        else notes.push(`Boat #${b.number} offers ${b.durations.join(' or ')}-hour trips only — please choose the trip duration.`);
+      }
+      if (date && dur()) {
+        month = date.slice(0, 7); await loadMonth();
+        if (days[date] === 'available') { pickDay(date, false); }
+        else { pickDay(date, false); notes.push(`${longDate(date)} is not available online for Boat #${b.number}.`); }
+      } else if (date) { (f.elements.namedItem('date') as HTMLInputElement).value = ''; if (!dur()) notes.push(`Choose a trip duration to check ${longDate(date)}.`); pending = date; }
+      if (rawP && !people && boat()) { /* invalid people: the select stays empty */ }
+      lmsg(notes);
+      const last = ['s-price', 's-date', 's-dur'].find((id) => !document.getElementById(id)!.hidden);
+      restoring = false;
+      if (!document.getElementById('booked')!.hidden) goTo('booked', true); else if (last) goTo(last, true);
+    } finally { restoring = false; save(); helpLinks(); }
+  }
+  let pending = ''; // date from a link that is waiting for a duration
+  /** Link without a (bookable) boat: list the boats that can really be booked for that date, duration and group. */
+  async function linkOptions(date: string, hours: number, people: number) {
+    const box = $('#lalts');
+    const j = await fetch(`/api/booking/options?${new URLSearchParams({ date, hours: String(hours), ...(people ? { people: String(people) } : {}) })}`).then((r) => r.json()).catch(() => ({ ok: false }));
+    if (!j.ok) return;
+    box.innerHTML = j.boats.length
+      ? `<p>Boats available on ${longDate(date)} for a ${hours}-hour trip${people ? ` (${people} ${people > 1 ? 'people' : 'person'})` : ''}:</p>` + j.boats.map((x: { id: string; number: number; capacity: number }) => `<button type="button" class="bk-alt" data-ob="${x.id}" data-obd="${date}" data-obh="${hours}">Boat #${x.number} · up to ${Math.min(x.capacity, 10)}</button>`).join('')
+      : `<p>No boat is available online on ${longDate(date)} for a ${hours}-hour trip. Choose a boat below to see its calendar, or <a href="${waUrl()}" target="_blank" rel="noopener" data-track="link_no_boat_whatsapp">ask us on WhatsApp</a>.</p>`;
+    box.hidden = false;
+    if (people) linkPeople = people;
+  }
+  let linkPeople = 0;
 
   /** Resume a booking in progress (after /contact, WhatsApp, Stripe "back", a reload…). A ?boat= link wins over the saved boat. */
   async function restore(pre: string) {
@@ -330,6 +400,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
   async function onDuration(scroll = false) {
     show('s-date', !!boat() && !!dur());
     resetQuote();
+    if (boat() && dur() && pending) { const d = pending; pending = ''; month = d.slice(0, 7); await loadMonth(); pickDay(d, scroll); lmsg([]); return; }
     if (boat() && dur()) { await loadMonth(); if (scroll) goTo('s-date'); } // 2. duration chosen → calendar, once it is drawn
   }
   async function fetchMonth(b: B, m: string): Promise<Record<string, string>> {
@@ -357,13 +428,14 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     (f.querySelector('.bk-nav[data-m="-1"]') as HTMLButtonElement).disabled = month <= today.slice(0, 7);
     (f.querySelector('.bk-nav[data-m="1"]') as HTMLButtonElement).disabled = !!lastMonth && month >= lastMonth;
   }
-  function pickDay(d: string, scroll = true) {
+  function pickDay(d: string, scroll = true, offer = true) {
     (f.elements.namedItem('date') as HTMLInputElement).value = d;
     f.querySelectorAll('.day.sel').forEach((x) => x.classList.remove('sel'));
     f.querySelector(`.day[data-d="${d}"]`)?.classList.add('sel');
     const taken = days[d] === 'unavailable';
     show('booked', taken); ($('#req') as HTMLAnchorElement).href = waUrl();
     resetQuote();
+    show('balts', false); if (offer && days[d] && days[d] !== 'available') void offerAlternatives('balts', d);
     if (!scroll) return;
     goTo(taken ? 'booked' : 's-price'); // 3. date chosen → SHOW MY PRICE (or the request-availability box)
   }
@@ -381,6 +453,56 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     out = [...new Set(out)].slice(0, 4).sort();
     box.innerHTML = out.length ? `<p>Other available dates for Boat #${b.number}:</p>${out.map((d) => `<button type="button" class="bk-alt" data-alt="${d}">${longDate(d)}</button>`).join('')}<p><small>Your details are kept — choose a date and continue.</small></p>` : '<p>No other date is available online soon for this boat. Please contact us — we will help you find a trip.</p>';
     box.hidden = false;
+  }
+  /** Alternatives that can really be booked (2026-11-27): other boats on the same date, same duration and group size
+   * (server: /api/booking/options, same rules as the booking itself); if none, the next dates for this boat. Never a reason. */
+  async function offerAlternatives(boxId: string, d: string, keep = { details: false, pay: false }) {
+    const b = boat(), h = dur(); const box = document.getElementById(boxId)!; if (!b || !h) return;
+    keepAfterAlt = keep;
+    const people = Number(val('people')) || linkPeople || 0;
+    if (!people) {
+      box.innerHTML = `<p>Other boats may be free on ${longDate(d)}. How many people will be aboard?</p><select data-altp aria-label="People aboard">${Array.from({ length: 10 }, (_, i) => `<option value="${i + 1}">${i + 1} ${i ? 'people' : 'person'}</option>`).join('')}</select><button type="button" class="bk-alt" data-altgo="${boxId}" data-altd="${d}">SHOW OTHER BOATS</button><p><small>Or pick another date for Boat #${b.number}:</small></p>`;
+      box.hidden = false; await sameBoatDates(box, d); return;
+    }
+    const j = await fetch(`/api/booking/options?${new URLSearchParams({ date: d, hours: String(h), people: String(people), boat: b.id })}`).then((r) => r.json()).catch(() => ({ ok: false }));
+    const others = j.ok ? (j.boats as { id: string; number: number; capacity: number }[]).filter((x) => x.id !== b.id) : [];
+    if (others.length) {
+      box.innerHTML = `<p>Available on ${longDate(d)} for ${people} ${people > 1 ? 'people' : 'person'}, ${h} hours:</p>` + others.map((x) => `<button type="button" class="bk-alt" data-ob="${x.id}" data-obd="${d}" data-obh="${h}">Boat #${x.number} · up to ${Math.min(x.capacity, 10)}</button>`).join('') + `<p><small>Your details are kept — choose a boat and check its price.</small></p>`;
+      box.hidden = false; return;
+    }
+    await alternatives(boxId, d, keep); // none: the next available dates for this boat
+  }
+  const altBox = () => 'qalts'; // price / checkout: shown under the message, next to the step the customer is on
+  async function sameBoatDates(box: HTMLElement, d: string) {
+    const b = boat(); if (!b) return; const ds: string[] = [];
+    let m = d.slice(0, 7);
+    for (let i = 0; i < 3 && ds.length < 3; i++) {
+      if (lastMonth && m > lastMonth) break;
+      const x = m === month ? days : await fetchMonth(b, m);
+      ds.push(...Object.entries(x).filter(([k, v]) => v === 'available' && k > d).map(([k]) => k).sort());
+      const [y, mm] = m.split('-').map(Number); m = new Date(Date.UTC(y, mm, 1)).toISOString().slice(0, 7);
+    }
+    box.insertAdjacentHTML('beforeend', ds.slice(0, 3).map((x) => `<button type="button" class="bk-alt" data-alt="${x}">${longDate(x)}</button>`).join('') || '<p><small>No other date is open online soon — tap REQUEST AVAILABILITY.</small></p>');
+  }
+  /** Customer picked another boat for the same date and duration: everything already entered is kept, the price is checked again. */
+  async function useBoat(id: string, d: string, h: number) {
+    const keep = keepAfterAlt, people = val('people') || (linkPeople ? String(linkPeople) : '');
+    const r = f.querySelector<HTMLInputElement>(`input[name=boat][value="${CSS.escape(id)}"]`); if (!r || r.disabled) return;
+    restoring = true;
+    try {
+      r.checked = true; await pickBoat();
+      const di = f.querySelector<HTMLInputElement>(`input[name=duration][value="${h}"]`); if (di && !di.disabled) { di.checked = true; await onDuration(); }
+      setVal('people', people);
+      month = d.slice(0, 7); await loadMonth(); pickDay(d, false);
+    } finally { restoring = false; }
+    ['lalts', 'balts'].forEach((x) => show(x, false)); lmsg([]);
+    if (days[d] !== 'available') { goTo('booked', true); return; }
+    await showPrice();
+    if (!quote) return;
+    if (keep.details) details(false);
+    if (keep.pay) await toPay(false);
+    ['qalts', 'dalts', 'palts'].forEach((x) => show(x, false));
+    goTo(keep.pay ? 's-pay' : keep.details ? 's-details' : 'quote', true);
   }
   /** Customer picked an alternative date: re-check it and its price, keep everything already entered. */
   async function useAlt(d: string) {
@@ -404,7 +526,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     if (b !== boat() || h !== dur() || d !== val('date')) return;
     if (!j.ok) {
       $('#qmsg').textContent = j.error || 'Sorry, the price could not be loaded. Please try again or contact us on WhatsApp.';
-      if (j.code === 'UNAVAILABLE') { await loadMonth(); pickDay(d, false); $('#qmsg').textContent = UNAVAILABLE; show('s-price', true); await alternatives('qalts', d); }
+      if (j.code === 'UNAVAILABLE') { await loadMonth(); pickDay(d, false, false); $('#qmsg').textContent = UNAVAILABLE; show('s-price', true); await offerAlternatives(altBox(), d); }
       return;
     }
     quote = j as Q; $('#qmsg').textContent = '';
@@ -427,7 +549,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     const [, qj] = await POST('/api/booking/quote', { boat: quote.boat, hours: quote.hours, date: quote.date }).catch(() => [0, {}] as const);
     if (!qj.ok) {
       $('#dmsg').textContent = qj.code === 'UNAVAILABLE' ? `${UNAVAILABLE} Your details are kept.` : (qj.error || 'Please try again.');
-      if (qj.code === 'UNAVAILABLE') { show('s-pay', false); await alternatives('dalts', quote.date, { details: true, pay: true }); }
+      if (qj.code === 'UNAVAILABLE') { show('s-pay', false); await offerAlternatives('dalts', quote.date, { details: true, pay: true }); }
       return;
     }
     const [, j] = await POST('/api/booking/summary', { boat: quote.boat, hours: quote.hours }).catch(() => [0, {}] as const);
@@ -459,7 +581,7 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
     if (t.name === 'boat') pickBoat(true);
     if (t.name === 'duration') onDuration(true);
     if (t.name === 'payment') { summary(); save(); wiseNote(); }
-    if (FIELDS.includes(t.name)) { ($('#req') as HTMLAnchorElement).href = waUrl(); save(); }
+    if (FIELDS.includes(t.name)) { ($('#req') as HTMLAnchorElement).href = waUrl(); save(); helpLinks(); }
   });
   f.addEventListener('input', (e) => { if (FIELDS.includes((e.target as HTMLInputElement).name)) save(); });
   f.addEventListener('click', (e) => {
@@ -471,6 +593,8 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
       month = new Date(Date.UTC(y, m - 1 + Number(t.dataset.m), 1)).toISOString().slice(0, 7); loadMonth();
     }
     if (t.dataset.alt) useAlt(t.dataset.alt);
+    if (t.dataset.ob) useBoat(t.dataset.ob, t.dataset.obd!, Number(t.dataset.obh));
+    if (t.dataset.altgo) { const sel = t.parentElement!.querySelector<HTMLSelectElement>('[data-altp]'); linkPeople = Number(sel?.value) || 0; if (Number(sel?.value) <= Math.min(boat()?.capacity ?? 0, 10)) setVal('people', sel!.value); offerAlternatives(t.dataset.altgo, t.dataset.altd!, keepAfterAlt); }
     if (t.id === 'show-price') showPrice();
     if (t.id === 'continue') details();
     if (t.id === 'change') { resetQuote(); goTo('bk'); }
@@ -510,10 +634,10 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
       }
       if (j.code === 'PAYPAL_UNAVAILABLE') { paypalOn = false; wiseNote(); msg.textContent = j.error; (window as any).turnstile?.reset?.(); btn.disabled = false; return; }
       if (j.code === 'UNAVAILABLE') {
-        const d = val('date'); await loadMonth(); pickDay(d, false); show('s-price', true);
+        const d = val('date'); await loadMonth(); pickDay(d, false, false); show('s-price', true);
         $('#quote').hidden = true; msg.textContent = '';
         $('#qmsg').textContent = `${UNAVAILABLE} Your details are kept.`;
-        await alternatives('qalts', d, { details: true, pay: true }); goTo('s-price');
+        await offerAlternatives(altBox(), d, { details: true, pay: true }); goTo('s-price');
       } else msg.textContent = j.error || 'Sorry, something went wrong. Please try again or contact us on WhatsApp.';
       (window as any).turnstile?.reset?.();
     } catch { msg.textContent = 'Network error. Please try again.'; }
@@ -599,7 +723,9 @@ const wa = SITE.whatsapp.replace(/\D/g, '');
   .bk-help a:hover { border-color: var(--orange); }
   @media (max-width: 640px) { .bk-help span { flex-basis: 100%; } .bk-help a { flex: 1 1 0; width: auto; } }
   .bk-alts { margin-top: 12px; padding: 14px 16px; background: #fff7ef; border-left: 4px solid var(--orange); border-radius: var(--radius-sm); font-family: var(--font-ui); display: flex; flex-wrap: wrap; gap: 8px; }
-  .bk-alts[hidden] { display: none; }
+  .bk-alts[hidden], .bk-lmsg[hidden] { display: none; }
+  .bk-lmsg { margin: 0 0 14px; padding: 12px 16px; background: #fff7ef; border-left: 4px solid var(--orange); border-radius: var(--radius-sm); }
+  .bk-alts select { min-height: 44px; padding: 0 10px; border: 1.5px solid var(--line, #ccc); border-radius: 8px; font: inherit; }
   .bk-alts p { flex-basis: 100%; margin: 0; }
   .bk-alt { min-height: 44px; padding: 0 14px; border: 1.5px solid #9ad5a8; border-radius: 8px; background: #f0fbf3; font: inherit; font-weight: 700; cursor: pointer; }
   .bk-ok { color: #1a7f37; font-weight: 700; }
