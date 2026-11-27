@@ -99,7 +99,7 @@ async function aiParse(env: AiEnv, d: D1Database, text: string, today: string): 
   const max = Number(env.ASSIST_AI_DAILY_MAX || 120);
   if (!(await rateLimit(d, `assist:ai:${today}`, max, 86400))) { diag.ai = 'daily cap'; return null; } // daily cap: back to rules, never a bill
   const instructions = `Extract a fishing-charter booking request. Today is ${today} (Los Cabos). Reply with ONE minified JSON object only, keys:
-date (YYYY-MM-DD or null), date_choices (array of 2 candidate dates when ambiguous, else null), hours (6, 8 or null — trip DURATION, "full day"=8, "3/4 day"/"half day"=6, never a clock time), people (integer or null), boat (1-10 or null), price (true if they ask a price), handoff ("tournament","custom","human","today" or null).`;
+date (YYYY-MM-DD or null), date_choices (array of 2 candidate dates when ambiguous, else null), hours (6, 8 or null — trip DURATION, "full day"=8, "3/4 day"/"half day"=6, never a clock time), people (integer or null — the TOTAL aboard, counting the writer: "me and my 3 friends" = 4, "my wife and I" = 2), boat (1-10 or null), price (true if they ask a price), handoff ("tournament","custom","human","today" or null).`;
   try {
     const out = (await env.AI.run(AI_MODEL, { instructions, input: text.slice(0, 500), reasoning: { effort: 'low' }, max_output_tokens: 1200 })) as Record<string, unknown>;
     const raw = String((out as { response?: string }).response ?? (out as { output_text?: string }).output_text
@@ -109,8 +109,10 @@ date (YYYY-MM-DD or null), date_choices (array of 2 candidate dates when ambiguo
     const m = raw.match(/\{[\s\S]*\}/); if (!m) return null;
     const j = JSON.parse(m[0]) as Record<string, unknown>;
     const p: Parsed = {};
-    if (typeof j.date === 'string' && isDate(j.date)) { if (j.date < today) p.pastDate = j.date; else p.date = j.date; }
-    if (Array.isArray(j.date_choices) && j.date_choices.length === 2 && j.date_choices.every((x) => typeof x === 'string' && isDate(x) && x >= today)) { p.choices = (j.date_choices as string[]).sort(); delete p.date; }
+    // the year always comes from our calendar (next occurrence of that day), never from the model
+    const reYear = (x: string) => nextOf(today, Number(x.slice(5, 7)), Number(x.slice(8, 10)));
+    if (typeof j.date === 'string' && isDate(j.date)) { const x = reYear(j.date); if (x) p.date = x; }
+    if (Array.isArray(j.date_choices) && j.date_choices.length === 2 && j.date_choices.every((x) => typeof x === 'string' && isDate(x))) { const ch = (j.date_choices as string[]).map(reYear).filter(Boolean).sort(); if (ch.length === 2 && ch[0] !== ch[1]) { p.choices = ch; delete p.date; } }
     if (j.hours === 6 || j.hours === 8) p.hours = j.hours;
     if (Number.isInteger(j.people) && (j.people as number) >= 1) { if ((j.people as number) > 10) p.handoff = 'big_group'; else p.people = j.people as number; }
     if (Number.isInteger(j.boat) && (j.boat as number) >= 1 && (j.boat as number) <= 10) p.boat = j.boat as number;
