@@ -65,7 +65,7 @@ const Q = {
   boats: { en: 'Tell me about your boats', es: 'Háblame de sus botes', fr: 'Parlez-moi de vos bateaux', re: { en: /Fleet/, es: /flota/, fr: /flotte/ } },
   season: { en: 'Best time of the year?', es: '¿Mejor época?', fr: 'Quelle saison ?', re: { en: /year round/, es: /todo el año/, fr: /toute l'année/ } },
   fish: { en: 'What fish can we catch?', es: '¿Qué peces hay?', fr: 'Quels poissons ?', re: { en: /Main Targets/, es: /objetivos/, fr: /cibles/ } },
-  contact: { en: 'Contact phone number', es: 'Número de teléfono', fr: 'Numéro de téléphone', re: { en: /\+52 624 122 3506/, es: /\+52 624 122 3506/, fr: /\+52 624 122 3506/ } },
+  contact: { en: 'Contact phone number', es: 'Número de teléfono', fr: 'Numéro de téléphone', re: { en: /pass your request to our team/, es: /Paso tu solicitud a nuestro equipo/, fr: /Je transmets votre demande à notre équipe/ } },
   reviews: { en: 'Reviews?', es: '¿Reseñas?', fr: 'Des avis ?', re: { en: /Google/, es: /Google/, fr: /Google/ } },
   thanks: { en: 'Thanks!', es: '¡Gracias!', fr: 'Merci !', re: { en: /welcome/, es: /De nada/, fr: /De rien/ } },
 };
@@ -78,6 +78,12 @@ for (const l of langs) {
   await p.context().close();
 }
 
+
+// owner 2026-11-27: the chat never shows a phone number or an email address (WhatsApp button + contact form only)
+{
+  const src = (await import('node:fs')).readFileSync('public/js/efc-chat.js', 'utf8').replace(/const WHATSAPP_NUMBER = "[^"]+";/, '');
+  rec('Contact', 'no phone number and no email address in any chat text (EN/FR/ES)', !/\+?52 ?624|624 ?122|@fish-cabo|contact@|mailto:/i.test(src));
+}
 
 // 6b PayPal policy (owner 2026-11-27): PayPal payments are currently unavailable — the chat says so in every language and
 // points to the options of the official form (card via Stripe +6 %, Wise no fee). No PayPal link, WhatsApp handoff kept.
