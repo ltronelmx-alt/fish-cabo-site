@@ -275,6 +275,8 @@ let unknownCount = 0;
 const MAX_UNKNOWN = 2;
 const history = [];          // [{who:'user', text}] | [{who:'bot', kind, ctx}] — bot messages are re-rendered on language change
 const facts = { question: '', charter: '', date: '', guests: '' };  // only what the visitor actually wrote
+// Booking context understood by the booking system (2026-11-27): date / hours / people / boat — sent back with each live question
+const ctx = {};
 
 const store = {
   get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -420,7 +422,7 @@ function renderEntry(entry) {
     return div;
   }
   const t = I18N[currentLang];
-  const r = RESPONSES[entry.kind](t);
+  const r = entry.live ? liveResponse(entry.live) : RESPONSES[entry.kind](t);
   div.className = 'efc-msg efc-bot';
   let html = fmt(r.text);
   if (r.actions.length) {
@@ -429,6 +431,7 @@ function renderEntry(entry) {
       if (a.type === 'link') html += `<a href="${esc(a.url)}" class="efc-btn"${/^https?:/.test(a.url) ? ' target="_blank" rel="noopener"' : ''}>${esc(a.label)}</a>`;
       else if (a.type === 'book') html += `<a href="${esc(a.url)}" class="efc-btn-primary">📅 ${esc(a.label)}</a>`;
       else if (a.type === 'whatsapp') html += `<a href="${esc(waLink())}" class="efc-btn-primary efc-wa" target="_blank" rel="noopener">💬 ${esc(a.label)}</a>`;
+      else if (a.type === 'live') html += `<a href="${esc(a.url)}" class="efc-btn-primary">📅 ${esc(a.label)}</a>`;
     }
     html += '</div>';
   }
@@ -462,6 +465,30 @@ function showTyping() {
   $('efc-messages').scrollTop = $('efc-messages').scrollHeight;
 }
 function removeTyping() { const el = $('efc-typing'); if (el) el.remove(); }
+
+/* ---- live answers from the booking system (POST /api/booking/assist) — same bubbles and buttons as every other answer ---- */
+function liveResponse(live) {
+  const L = (o) => (o && (o[currentLang] || o.en)) || '';
+  return { text: L(live.text), actions: (live.actions || []).map((a) => a.type === 'whatsapp' ? { type: 'whatsapp', label: I18N[currentLang].whatsappLabel }
+    : { type: a.type === 'book' ? 'live' : 'link', label: L(a.label), url: /^\/[a-z]/.test(a.url || '') ? a.url : '/book-now' }) };
+}
+const CONCRETE = /\d|\b(tomorrow|demain|mañana|manana|today|aujourd|hoy|monday|tuesday|wednesday|thursday|friday|saturday|sunday|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo|tournament|tournoi|torneo|full day|journée|journee|día completo|dia completo|half day|demi|medio día|one|two|three|four|five|six|eight|ten|deux|trois|quatre|cinq|huit|dix|dos|tres|cuatro|cinco|seis|ocho|diez)\b/i;
+async function askLive(text, kind) {
+  if (!BOOKING_OPEN) return null;
+  if (kind && !['price', 'booking', 'boats', 'payment', 'contact', 'hello'].includes(kind) && !CONCRETE.test(text)) return null; // the chat's own answer
+  if (kind && !CONCRETE.test(text) && !Object.keys(ctx).length) return null; // general question ("what are the prices?") → same answer as before
+  try {
+    const ac = new AbortController(); const tm = setTimeout(() => ac.abort(), 9000);
+    const r = await fetch('/api/booking/assist', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text, ctx, lang: currentLang }), signal: ac.signal });
+    clearTimeout(tm);
+    const j = await r.json();
+    if (!j || !j.ok || !j.reply) return null;
+    const c = j.reply.ctx || {};
+    for (const k of ['date', 'hours', 'people', 'boat']) { if (c[k] != null) ctx[k] = c[k]; else delete ctx[k]; }
+    if (ctx.date) facts.date = ctx.date; if (ctx.hours) facts.charter = 'h' + ctx.hours; if (ctx.people) facts.guests = String(ctx.people);
+    return j.reply;
+  } catch (e) { return null; } // offline, timeout, quota: the chat answers as before
+}
 
 function showWelcome() { push({ who: 'bot', kind: 'welcome' }); }
 
@@ -499,13 +526,20 @@ function sendMessage() {
   extractFacts(text);
   refreshWaLinks();
   showTyping();
-  setTimeout(() => {
-    removeTyping();
-    if (cut) push({ who: 'bot', kind: 'tooLong' });
-    let kind = findKind(text);
-    if (!kind) { unknownCount++; kind = unknownCount >= MAX_UNKNOWN ? 'unknown2' : 'unknown1'; }
-    push({ who: 'bot', kind });
-  }, 700 + Math.random() * 500);
+  const started = Date.now();
+  const found = findKind(text);
+  // concrete booking questions (and questions the rules do not understand) are answered from the booking system;
+  // everything else keeps the chat's own answers. Any failure → the original answer.
+  askLive(text, found).then((live) => {
+    setTimeout(() => {
+      removeTyping();
+      if (cut) push({ who: 'bot', kind: 'tooLong' });
+      if (live) { unknownCount = 0; push({ who: 'bot', live }); refreshWaLinks(); return; }
+      let kind = found;
+      if (!kind) { unknownCount++; kind = unknownCount >= MAX_UNKNOWN ? 'unknown2' : 'unknown1'; }
+      push({ who: 'bot', kind });
+    }, Math.max(0, 700 + Math.random() * 500 - (Date.now() - started)));
+  });
 }
 
 // ============================================

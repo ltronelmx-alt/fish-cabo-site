@@ -32,10 +32,14 @@
   // `npx wrangler preview`, which REQUIRES this block (error "Your Wrangler configuration is missing a `previews` block").
   // Previews inherit NOTHING from production: no vars, no D1, no secrets. Assets, compatibility_date and cron triggers
   // stay at the top level (crons never run on Previews). Secrets for Previews are set separately (Previews base config).
+  // Workers AI (2026-11-27): the chat assistant uses it only to understand messages its rules cannot parse, within the
+  // FREE daily allocation (Free plan: over the allocation calls fail, nothing is billed) + its own daily cap (ASSIST_AI_DAILY_MAX).
+  "ai": { "binding": "AI" },
   "previews": {
     // Plain-text staging variables live here (the source of truth for every Preview deploy; values typed in the dashboard
     // would be replaced by this block on the next deploy). Secrets (ADMIN_PASSWORD, STRIPE_*, RESEND_API_KEY) stay in
     // the dashboard and are NOT affected. Production vars (top-level "vars") are unchanged.
+    "ai": { "binding": "AI" },
     "vars": {
       "SITE_ENV": "staging",
       "CONTACT_TO": "contact@fish-cabo.com",
