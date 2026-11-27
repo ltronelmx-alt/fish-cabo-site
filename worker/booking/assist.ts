@@ -113,7 +113,10 @@ date (YYYY-MM-DD or null), date_choices (array of 2 candidate dates when ambiguo
     const p: Parsed = {};
     // the year always comes from our calendar (next occurrence of that day), never from the model
     const reYear = (x: string) => nextOf(today, Number(x.slice(5, 7)), Number(x.slice(8, 10)));
-    if (typeof j.date === 'string' && isDate(j.date)) { const x = reYear(j.date); if (x) p.date = x; }
+    // a weekday written by the customer must match the model's date, otherwise we ask (never guess a date)
+    const wdm = strip(text).match(new RegExp(`\\b(${DOWRE})\\b`));
+    const dayOk = (x: string) => !wdm || new Date(`${x}T12:00:00Z`).getUTCDay() === DOW[wdm[1]];
+    if (typeof j.date === 'string' && isDate(j.date)) { const x = reYear(j.date); if (x && dayOk(x)) p.date = x; }
     if (Array.isArray(j.date_choices) && j.date_choices.length === 2 && j.date_choices.every((x) => typeof x === 'string' && isDate(x))) { const ch = (j.date_choices as string[]).map(reYear).filter(Boolean).sort(); if (ch.length === 2 && ch[0] !== ch[1]) { p.choices = ch; delete p.date; } }
     if (j.hours === 6 || j.hours === 8) p.hours = j.hours;
     if (Number.isInteger(j.people) && (j.people as number) >= 1) { if ((j.people as number) > 10) p.handoff = 'big_group'; else p.people = j.people as number; }
